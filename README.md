@@ -19,7 +19,7 @@
 
 1.（建议）使用[HACS安装](https://github.com/custom-components/hacs)
 
-在HACS里输入：https://github.com/shaonianzhentan/ha-cloud-music 即可安装成功
+在HACS里输入：https://github.com/shaonianzhentan/ha-cloud-music 即可安装成功（类型选择Integration）
 
 2.自定义安装
 
