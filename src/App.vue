@@ -76,23 +76,23 @@ export default {
         loadDOM.removeEventListener("webkitAnimationEnd", animationendFunc);
         document.body.removeChild(loadDOM);
 
-        fetch(`config.json?r=${Date.now()}`)
-          .then(res => res.json())
-          .then(res => {
-            const link = `${location.pathname}?ver=${res.ver}${location.hash}`;
-            //如果链接中不含这个，则提示使用这个
-            if (location.href.indexOf(res.ver) < 0) {
-              this.versionBody = `<div class="mm-dialog-text text-left">
-版本更新 （${res.ver}）<br/>
-更新后的链接（请复制下面的链接使用）：<br/>
-<a href='${link}' target='_blank'>${link}</a> <br/><br/>
-更新功能： <br/>
-1、 全面更新播放插件，支持所有媒体播放组件
-</div>`;
-              this.updateLink = link;
-              this.$refs.versionDialog.show();
-            }
-          });
+//         fetch(`config.json?r=${Date.now()}`)
+//           .then(res => res.json())
+//           .then(res => {
+//             const link = `${location.pathname}?ver=${res.ver}${location.hash}`;
+//             //如果链接中不含这个，则提示使用这个
+//             if (location.href.indexOf(res.ver) < 0) {
+//               this.versionBody = `<div class="mm-dialog-text text-left">
+// 版本更新 （${res.ver}）<br/>
+// 更新后的链接（请复制下面的链接使用）：<br/>
+// <a href='${link}' target='_blank'>${link}</a> <br/><br/>
+// 更新功能： <br/>
+// 1、 全面更新播放插件，支持所有媒体播放组件
+// </div>`;
+//               this.updateLink = link;
+//               this.$refs.versionDialog.show();
+//             }
+//           });
         // const version = getVersion()
         // if (version !== null) {
         //   setVersion(VERSION)

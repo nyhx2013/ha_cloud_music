@@ -1,8 +1,9 @@
 {
-  "domain": "small_baby",
-  "name": "小宝贝",
+  "domain": "ha-cloud-music",
+  "name": "ha-cloud-music",
   "documentation": "https://www.home-assistant.io/components/vlc",
-  "requirements": [],
+  "requirements": [
+  ],
   "dependencies": [],
   "codeowners": []
 }

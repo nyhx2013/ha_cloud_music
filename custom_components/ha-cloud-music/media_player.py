@@ -1,11 +1,21 @@
-"""Provide functionality to interact with vlc devices on the network."""
-import logging
 import json
+import os
+import logging
+import voluptuous as vol
 import requests
 import time 
 
-import voluptuous as vol
+from homeassistant.helpers import config_validation as cv
 
+from homeassistant.components.http import HomeAssistantView
+from aiohttp import web
+from aiohttp.web import FileResponse
+from typing import Optional
+from datetime import timedelta
+from homeassistant.helpers.state import AsyncTrackStates
+from urllib.request import urlopen
+
+###################媒体播放器##########################
 from homeassistant.components.media_player import (
     MediaPlayerDevice, PLATFORM_SCHEMA)
 from homeassistant.components.media_player.const import (
@@ -15,32 +25,92 @@ from homeassistant.const import (
     CONF_NAME, STATE_IDLE, STATE_PAUSED, STATE_PLAYING)
 import homeassistant.helpers.config_validation as cv
 import homeassistant.util.dt as dt_util
-
-_LOGGER = logging.getLogger(__name__)
-
-DEFAULT_NAME = ''
+from homeassistant.helpers import discovery, device_registry as dr
 
 SUPPORT_VLC = SUPPORT_PAUSE | SUPPORT_VOLUME_SET | SUPPORT_VOLUME_MUTE | SUPPORT_STOP | SUPPORT_SELECT_SOUND_MODE | SUPPORT_TURN_ON | SUPPORT_TURN_OFF | \
     SUPPORT_PLAY_MEDIA | SUPPORT_PLAY | SUPPORT_STOP | SUPPORT_NEXT_TRACK | SUPPORT_PREVIOUS_TRACK | SUPPORT_SELECT_SOURCE | SUPPORT_CLEAR_PLAYLIST
+###################媒体播放器##########################
 
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
-    vol.Optional(CONF_NAME): cv.string,
-})
+_LOGGER = logging.getLogger(__name__)
 
+DOMAIN = 'ha-cloud-music'
+
+_hass = None
+
+#
+# 读取所有静态文件
+#
+#
+allpath=[]
+allname=[]
+def getallfile(path):
+    allfilelist=os.listdir(path)
+    # 遍历该文件夹下的所有目录或者文件
+    for file in allfilelist:
+        filepath=os.path.join(path,file)
+        # 如果是文件夹，递归调用函数
+        if os.path.isdir(filepath):
+            getallfile(filepath)
+        # 如果不是文件夹，保存文件路径及文件名
+        elif os.path.isfile(filepath):
+            allpath.append(filepath)
+            allname.append(file)
+    return allpath, allname
+
+__dirname = os.path.dirname(__file__)
+files, names = getallfile(__dirname+'\\dist')
+
+extra_urls = []
+for file in files:
+    extra_urls.append('/'+ DOMAIN + file.replace(__dirname,'').replace('\\','/'))
+
+##### 网关控制
+class CloudMusicGateView(HomeAssistantView):
+    """View to handle Configuration requests."""
+
+    url = '/' + DOMAIN
+    name = DOMAIN
+    extra_urls = extra_urls
+    requires_auth = False
+
+    async def get(self, request):    
+        # _LOGGER.info(request.rel_url.raw_path)
+        return FileResponse(os.path.dirname(__file__) + request.rel_url.raw_path.replace(self.url,''))
+
+    async def post(self, request):
+        """Update state of entity."""
+        response = await request.json()
+        return self.json(response)
+
+        
+##### 安装平台
 def setup_platform(hass, config, add_entities, discovery_info=None):
     """Set up the vlc platform."""
-    add_entities([VlcDevice(config.get(CONF_NAME, DEFAULT_NAME), hass)])
+    global _hass
+    _hass = hass
+    _hass.http.register_view(CloudMusicGateView)
+    add_entities([VlcDevice(hass)])
+    # 添加到侧边栏
+    hass.components.frontend.async_register_built_in_panel(
+        "iframe",
+        "云音乐",
+        "mdi:music",
+        DOMAIN.replace("-", "_"),
+        {"url": "/"+DOMAIN+"/dist/index.html"},
+        require_admin=True,
+    )
+    return True
 
-
+###################媒体播放器##########################
 class VlcDevice(MediaPlayerDevice):
     """Representation of a vlc player."""
 
-    def __init__(self, name, hass):
+    def __init__(self, hass):
         """Initialize the vlc device."""
         self._hass = hass
         self.music_playlist = None
         self.music_index = 0
-        self._name = '云音乐' + name
+        self._name = DOMAIN
         self._media_title = None
         self._volume = None
         self._muted = None
@@ -63,7 +133,7 @@ class VlcDevice(MediaPlayerDevice):
         if self._sound_mode == None:
             # 过滤云音乐
             entity_list = self._hass.states.entity_ids('media_player')
-            filter_list = filter(lambda x: x.count('media_player.yun_yin_le') == 0, entity_list)
+            filter_list = filter(lambda x: x.count('media_player.' + DOMAIN) == 0, entity_list)
             self._sound_mode_list = list(filter_list)
             if len(self._sound_mode_list) > 0:
                 self._sound_mode = self._sound_mode_list[0]
@@ -344,3 +414,5 @@ class VlcDevice(MediaPlayerDevice):
         elif self.music_index < 0:
            self.music_index = playlist_count - 1
         self.play_media('music_load', self.music_index)
+        
+###################媒体播放器##########################

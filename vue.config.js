@@ -6,6 +6,7 @@ function resolve (dir) {
 
 module.exports = {
   publicPath: '',
+  outputDir: './custom_components/ha-cloud-music/dist',
   productionSourceMap: process.env.NODE_ENV === 'production' ? false : true,
   chainWebpack (config) {
     config.resolve.alias
