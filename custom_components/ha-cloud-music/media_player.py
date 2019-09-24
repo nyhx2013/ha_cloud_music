@@ -34,6 +34,7 @@ SUPPORT_VLC = SUPPORT_PAUSE | SUPPORT_VOLUME_SET | SUPPORT_VOLUME_MUTE | SUPPORT
 _LOGGER = logging.getLogger(__name__)
 
 DOMAIN = 'ha-cloud-music'
+_DOMAIN = DOMAIN.replace('-','_')
 
 _hass = None
 
@@ -95,7 +96,7 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
         "iframe",
         "云音乐",
         "mdi:music",
-        DOMAIN.replace("-", "_"),
+        _DOMAIN,
         {"url": "/"+DOMAIN+"/dist/index.html"},
         require_admin=True,
     )
@@ -133,7 +134,7 @@ class VlcDevice(MediaPlayerDevice):
         if self._sound_mode == None:
             # 过滤云音乐
             entity_list = self._hass.states.entity_ids('media_player')
-            filter_list = filter(lambda x: x.count('media_player.' + DOMAIN) == 0, entity_list)
+            filter_list = filter(lambda x: x.count('media_player.' + _DOMAIN) == 0, entity_list)
             self._sound_mode_list = list(filter_list)
             if len(self._sound_mode_list) > 0:
                 self._sound_mode = self._sound_mode_list[0]
