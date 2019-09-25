@@ -145,17 +145,21 @@ class VlcDevice(MediaPlayerDevice):
         self._media_position_updated_at = None
         self._media_position = None
         self._media_duration = None
+        self._media_type = None
         # 错误计数
         self.error_count = 0
         # 定时器操作计数
         self.next_count = 0
         
         self._media = None
+        # 是否启用定时器
+        self._timer_enable = True
         # 定时器
         track_time_interval(hass, self.interval, TIME_BETWEEN_UPDATES)
 
     def interval(self, now):
-        if self._media != None:
+        # 如果有源播放器，并且选择的是列表，才进行检测
+        if self._media != None and self._timer_enable == True:
             # 如果进度条结束了，则执行下一曲
             # 执行下一曲之后，15秒内不能再次执行操作
             if self.media_duration > 2 and self.media_duration - 2 <= self.media_position and self.next_count > 0:
@@ -321,9 +325,9 @@ class VlcDevice(MediaPlayerDevice):
 		
     def play_media(self, media_type, media_id, **kwargs):
         """Play media from a URL or file."""        
-        _log('类型：%s', media_type)        
-        
+        _log('类型：%s', media_type)                
         if media_type == MEDIA_TYPE_MUSIC:
+            self._timer_enable = False
             url = media_id
         elif media_type == 'music_load':
             self.music_index = int(media_id)
@@ -367,13 +371,17 @@ class VlcDevice(MediaPlayerDevice):
                 "不受支持的媒体类型 %s",media_type)
             return
         _log('title：%s ，play url：%s' , self._media_title, url)
+        # 保存当前媒体类型
+        self._media_type = media_type
         # 如果没有url则下一曲（如果超过3个错误，则停止）
-        if url == None or url.find(".mp3") < 0:
+        # 如果是云音乐播放列表 并且格式不是mp3，则下一曲
+        if url == None or (media_type == 'music_playlist' and url.find(".mp3") < 0):
+           _log("当前URL不能播放")
            self.error_count = self.error_count + 1
            if self.error_count < 3:
              self.media_next_track()
            return
-        
+        # 重置错误计数
         self.error_count = 0
         #播放音乐
         self.call('play_media', {"url": url,"type": "music"})
@@ -450,6 +458,7 @@ class VlcDevice(MediaPlayerDevice):
         if self.music_playlist == None:
            _log('结束播放，没有播放列表')
            return
+        self._timer_enable = True
         playlist_count = len(self.music_playlist)
         if self.music_index >= playlist_count:
            self.music_index = 0
