@@ -145,7 +145,6 @@ class VlcDevice(MediaPlayerDevice):
         self._media_position_updated_at = None
         self._media_position = None
         self._media_duration = None
-        self._media_type = None
         # 错误计数
         self.error_count = 0
         # 定时器操作计数
@@ -371,11 +370,9 @@ class VlcDevice(MediaPlayerDevice):
                 "不受支持的媒体类型 %s",media_type)
             return
         _log('title：%s ，play url：%s' , self._media_title, url)
-        # 保存当前媒体类型
-        self._media_type = media_type
         # 如果没有url则下一曲（如果超过3个错误，则停止）
         # 如果是云音乐播放列表 并且格式不是mp3，则下一曲
-        if url == None or (media_type == 'music_playlist' and url.find(".mp3") < 0):
+        if url == None or (media_type == 'music_load' and url.find(".mp3") < 0):
            _log("当前URL不能播放")
            self.error_count = self.error_count + 1
            if self.error_count < 3:
