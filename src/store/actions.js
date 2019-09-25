@@ -52,7 +52,7 @@ export const selectAddPlay = function ({ commit, state }, music) {
 
 // 清空播放列表
 export const clearPlayList = function ({ commit }) {
-  alert("如果加上这个功能，我还要改很多代码，所以不能用")
+  top.alert("如果加上这个功能，我还要改很多代码，所以不能用")
   return
   commit(types.SET_PLAYING, false)
   commit(types.SET_CURRENTINDEX, -1)

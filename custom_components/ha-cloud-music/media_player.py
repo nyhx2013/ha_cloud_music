@@ -17,7 +17,7 @@ from urllib.request import urlopen
 
 _LOGGER = logging.getLogger(__name__)
 ############## 日志记录
-_DEBUG = True
+_DEBUG = False
 def _log(*arg):
     if _DEBUG:
         _LOGGER.info(*arg)
@@ -97,6 +97,16 @@ class CloudMusicGateView(HomeAssistantView):
 ##### 安装平台
 def setup_platform(hass, config, add_entities, discovery_info=None):
     """Set up the vlc platform."""
+    _LOGGER.info('''
+-------------------------------------------------------------------
+    ha-cloud-music云音乐插件【作者QQ：635147515】
+    
+    版本：1.0.0
+    
+    这是一个网易云音乐的HomeAssistant播放器插件
+    
+    https://github.com/shaonianzhentan/ha-cloud-music
+-------------------------------------------------------------------''')    
     global _hass
     _hass = hass
     _hass.http.register_view(CloudMusicGateView)

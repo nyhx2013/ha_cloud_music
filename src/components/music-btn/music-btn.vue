@@ -22,10 +22,10 @@
         to="/music/fm"
         tag="span"
       >电台</router-link>
-      <router-link
+      <!-- <router-link
         to="/music/historylist"
         tag="span"
-      >我听过的</router-link>
+      >我听过的</router-link> -->
     </div>
   </div>
 </template>

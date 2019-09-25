@@ -214,7 +214,8 @@ export default {
             this._getLyric(attr.playlist[attr.index].id);
             //歌词进度条
             let media_position = Math.ceil(attr.media_position);
-            let position = media_position;
+            // 初始化加上11秒
+            let position = media_position + 11;
             setInterval(() => {
               window.clv.hass.then(({ attr, isPlaying }) => {
                 if (isPlaying) {
@@ -222,7 +223,8 @@ export default {
                   //时间还未更新时+1
                   if (media_position != _media_position) {
                     position = media_position = _media_position;
-                    position += 10;
+                    // 初始化加上11秒
+                    position += 11
                   } else {
                     position += 1;
                   }
@@ -367,7 +369,7 @@ export default {
     },
     // 切换播放顺序
     modeChange() {
-      alert("如果加上这个功能，我还要改很多代码，所以不能用");
+      top.alert("如果加上这个功能，我还要改很多代码，所以不能用");
       return;
       const mode = (this.mode + 1) % 4;
       this.setPlayMode(mode);

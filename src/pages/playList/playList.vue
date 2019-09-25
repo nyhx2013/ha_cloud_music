@@ -50,7 +50,7 @@ export default {
     },
     // 删除事件
     deleteItem(index) {
-      alert("如果加上这个功能，我还要改很多代码，所以不能用")
+      top.alert("如果加上这个功能，我还要改很多代码，所以不能用")
 
     },
     ...mapMutations({
