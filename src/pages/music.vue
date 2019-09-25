@@ -222,6 +222,7 @@ export default {
                   //时间还未更新时+1
                   if (media_position != _media_position) {
                     position = media_position = _media_position;
+                    position += 10;
                   } else {
                     position += 1;
                   }
