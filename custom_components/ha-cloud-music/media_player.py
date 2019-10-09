@@ -69,7 +69,7 @@ def getallfile(path):
     return allpath, allname
 
 __dirname = os.path.dirname(__file__)
-files, names = getallfile(__dirname+'\\dist')
+files, names = getallfile(__dirname+'/dist')
 
 extra_urls = []
 for file in files:
