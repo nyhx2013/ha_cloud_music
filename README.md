@@ -76,6 +76,9 @@ PC端界面自我感觉还行， 就是移动端界面总觉得怪怪的，奈�
 ![移动端二](https://raw.githubusercontent.com/maomao1996/Vue-mmPlayer/master/screenshots/8.jpg)
 
 ## 更新说明
+### V1.0.1（2019.10.09）
+- 解决反斜杠在Linux下出现错误的问题
+
 ### V1.0.0（2019.09.25）
 - 将前端播放器和插件集成到一起（安装更简单）
 - 解决flac无法播放不能跳到下一曲的问题

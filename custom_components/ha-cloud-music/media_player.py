@@ -101,7 +101,7 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
 -------------------------------------------------------------------
     ha-cloud-music云音乐插件【作者QQ：635147515】
     
-    版本：1.0.0
+    版本：1.0.1
     
     这是一个网易云音乐的HomeAssistant播放器插件
     
