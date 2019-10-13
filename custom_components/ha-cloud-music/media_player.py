@@ -101,7 +101,7 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
 -------------------------------------------------------------------
     ha-cloud-music云音乐插件【作者QQ：635147515】
     
-    版本：1.0.2
+    版本：1.0.3
     
     这是一个网易云音乐的HomeAssistant播放器插件
     
@@ -175,14 +175,11 @@ class VlcDevice(MediaPlayerDevice):
     def update(self):        
         """Get the latest details from the device."""
         if self._sound_mode == None:
-            # 过滤云音乐
-            entity_list = self._hass.states.entity_ids('media_player')
-            filter_list = filter(lambda x: x.count('media_player.' + _DOMAIN) == 0, entity_list)
-            self._sound_mode_list = list(filter_list)
-            if len(self._sound_mode_list) > 0:
-                self._sound_mode = self._sound_mode_list[0]
-            # _LOGGER.info(self._sound_mode_list)
+            self.init_sound_mode()            
             return False
+        # 如果播放器列表有变化，则更新
+        self.update_sound_mode_list() 
+        
         # 获取源播放器
         self._media = self._hass.states.get(self._sound_mode)
         _log('源播放器状态 %s，云音乐状态：%s', self._media.state, self._state)
@@ -418,6 +415,7 @@ class VlcDevice(MediaPlayerDevice):
     def select_sound_mode(self, sound_mode):        
         self._sound_mode = sound_mode
         self._state = STATE_IDLE
+        self.save_sound_mode()
         _log('选择声音模式：%s', sound_mode)
     
     def clear_playlist(self):
@@ -438,6 +436,41 @@ class VlcDevice(MediaPlayerDevice):
         self.clear_playlist()
     
     ## 自定义方法
+    
+    # 更新播放器列表
+    def update_sound_mode_list(self):
+        entity_list = self._hass.states.entity_ids('media_player')
+        if len(entity_list) != len(self._sound_mode_list):
+            self.init_sound_mode()
+        
+    # 保存当前选择的播放器
+    def save_sound_mode(self):
+        filename = os.path.dirname(__file__) + '/sound_mode.json'
+        entity_value = {'state': self._sound_mode}
+        with open(filename, 'w') as f_obj:
+            json.dump(entity_value, f_obj)
+    
+    # 读取当前保存的播放器
+    def init_sound_mode(self):
+        filename = os.path.dirname(__file__) + '/sound_mode.json'
+        sound_mode = None
+        if os.path.exists(filename) == True:
+            with open(filename, 'r') as f_obj:
+                entity = json.load(f_obj)
+                sound_mode = entity['state']
+                
+        # 过滤云音乐
+        entity_list = self._hass.states.entity_ids('media_player')
+        filter_list = filter(lambda x: x.count('media_player.' + _DOMAIN) == 0, entity_list)
+        self._sound_mode_list = list(filter_list)
+        if len(self._sound_mode_list) > 0:
+            # 判断存储的值是否为空
+            if sound_mode != None and self._sound_mode_list.index(sound_mode) >= 0:
+                self._sound_mode = sound_mode
+            else:
+                self._sound_mode = self._sound_mode_list[0]
+        _log(self._sound_mode_list)
+       
     def get_url(self, music_info):
         self._media_title = music_info['song'] + ' - ' + music_info['singer']
         self._source = str(self.music_index + 1) + '.' + self._media_title
