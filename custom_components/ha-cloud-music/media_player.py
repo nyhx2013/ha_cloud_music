@@ -242,7 +242,10 @@ class VlcDevice(MediaPlayerDevice):
         if self._media == None:
             return None
         
-        return self._media.attributes['volume_level']
+        if 'volume_level' in self._media.attributes:
+            return self._media.attributes['volume_level']
+            
+        return 1
 
     @property
     def is_volume_muted(self):
@@ -250,7 +253,10 @@ class VlcDevice(MediaPlayerDevice):
         if self._media == None:
             return None
         
-        return self._media.attributes['is_volume_muted']
+        if 'is_volume_muted' in self._media.attributes:
+            return self._media.attributes['is_volume_muted']
+            
+        return False
 
     @property
     def supported_features(self):
@@ -268,15 +274,21 @@ class VlcDevice(MediaPlayerDevice):
         if self._media == None:
             return None
         
-        return self._media.attributes['media_duration']
+        if 'media_duration' in self._media.attributes:
+            return self._media.attributes['media_duration']
+            
+        return 0
 
     @property
     def media_position(self):
         """Position of current playing media in seconds."""
         if self._media == None:
             return None
-        
-        return self._media.attributes['media_position']
+                        
+        if 'media_position' in self._media.attributes:
+            return self._media.attributes['media_position']
+            
+        return 0
 		
     @property
     def media_position_updated_at(self):
@@ -284,7 +296,10 @@ class VlcDevice(MediaPlayerDevice):
         if self._media == None:
             return None
         
-        return self._media.attributes['media_position_updated_at']
+        if 'media_position_updated_at' in self._media.attributes:
+            return self._media.attributes['media_position_updated_at']
+            
+        return None
 
     def media_seek(self, position):
         """Seek the media to a specific location."""
