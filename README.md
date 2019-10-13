@@ -76,6 +76,9 @@ PC端界面自我感觉还行， 就是移动端界面总觉得怪怪的，奈�
 ![移动端二](https://raw.githubusercontent.com/maomao1996/Vue-mmPlayer/master/screenshots/8.jpg)
 
 ## 更新说明
+### V1.0.2（2019.10.13）
+- 解决DLNA播放器在没有相关属性疯狂报错的问题
+
 ### V1.0.1（2019.10.09）
 - 解决反斜杠在Linux下出现错误的问题
 
