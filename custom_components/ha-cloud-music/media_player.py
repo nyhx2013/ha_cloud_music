@@ -76,7 +76,7 @@ for file in files:
     extra_urls.append('/'+ DOMAIN + file.replace(__dirname,'').replace('\\','/'))
 
 ##### 网关控制
-class CloudMusicGateView(HomeAssistantView):
+class HassGateView(HomeAssistantView):
     """View to handle Configuration requests."""
 
     url = '/' + DOMAIN
@@ -95,6 +95,13 @@ class CloudMusicGateView(HomeAssistantView):
 
         
 ##### 安装平台
+PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
+    vol.Optional("sidebar_title", default="云音乐"): cv.string,
+    vol.Optional("sidebar_icon", default="mdi:music"): cv.string,
+    # 显示模式 全屏：fullscreen
+    vol.Optional("show_mode", default="default"): cv.string
+})
+
 def setup_platform(hass, config, add_entities, discovery_info=None):
     """Set up the vlc platform."""
     _LOGGER.info('''
@@ -109,15 +116,15 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
 -------------------------------------------------------------------''')    
     global _hass
     _hass = hass
-    _hass.http.register_view(CloudMusicGateView)
+    _hass.http.register_view(HassGateView)
     add_entities([VlcDevice(hass)])
     # 添加到侧边栏
     hass.components.frontend.async_register_built_in_panel(
         "iframe",
-        "云音乐",
-        "mdi:music",
+        config.get("sidebar_title"),
+        config.get("sidebar_icon"),
         _DOMAIN,
-        {"url": "/"+DOMAIN+"/dist/index.html"},
+        {"url": "/"+DOMAIN+"/dist/index.html?show_mode=" + config.get("show_mode")},
         require_admin=True,
     )
     return True

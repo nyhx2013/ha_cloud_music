@@ -34,6 +34,19 @@ media_player:
 
 ```
 
+```
+# 可选配置
+# sidebar_title: 侧边栏名称
+# sidebar_icon: 侧边栏图标
+# show_mode: 显示模式（全屏显示: fullscreen）
+
+media_player:
+  - platform: ha-cloud-music
+    sidebar_title: 云音乐
+    sidebar_icon: mdi:music
+    show_mode: fullscreen
+```
+
 # 请一定要在HomeAssistant里使用，不然没啥用
 
 ## 功能
@@ -76,9 +89,10 @@ PC端界面自我感觉还行， 就是移动端界面总觉得怪怪的，奈�
 ![移动端二](https://raw.githubusercontent.com/maomao1996/Vue-mmPlayer/master/screenshots/8.jpg)
 
 ## 更新说明
-### V1.0.3
+### V1.0.3（2019.10.14）
 - 记录选中的播放器，解决每次重启服务，播放器初始化选择第一个的问题
 - 解决v1.0.2里，无法读取所有播放器的问题
+- 可更改侧边栏名称和图标，和显示模式（全屏显示）
 
 ### V1.0.2（2019.10.13）
 - 解决DLNA播放器在没有相关属性疯狂报错的问题

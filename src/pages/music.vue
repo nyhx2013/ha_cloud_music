@@ -233,14 +233,10 @@ export default {
                 //当标题不一样时，更新设置
                 this.setCurrentIndex(attr.index);
                 this.setPlaying(isPlaying);
-                //设置自动高度
-                this.setDOM();
               });
             }, 1000);
           });
         }
-
-        this.setDOM();
       })
       .finally(() => {
         this.$nextTick(() => {
@@ -250,23 +246,6 @@ export default {
       });
   },
   methods: {
-    setDOM() {
-      try {
-        let ha_card = top.document.body
-          .querySelector("home-assistant")
-          .shadowRoot.querySelector("home-assistant-main")
-          .shadowRoot.querySelector("ha-panel-lovelace")
-          .shadowRoot.querySelector("hui-root")
-          .shadowRoot.querySelector("#view hui-iframe-card")
-          .shadowRoot.querySelector("ha-card");
-        //console.log(ha_card)
-        ha_card.style = "height:calc(100vh - 112px)";
-        let root = ha_card.querySelector("#root");
-        root.style = "height:100%; padding-top:0;";
-      } catch (ex) {
-        //console.log(ex);
-      }
-    },
     // 按键事件
     initKeyDown() {
       document.onkeydown = e => {

@@ -86,7 +86,22 @@ window.clv = {
   },
   ready() {
     this.hass.then(({ attr, isPlaying }) => {
-      top.document.body.style.overflow = 'hidden'
+      try {
+        let ha_card = top.document.body
+          .querySelector("home-assistant")
+          .shadowRoot.querySelector("home-assistant-main")
+          .shadowRoot.querySelector("app-drawer-layout partial-panel-resolver ha-panel-iframe")
+          .shadowRoot.querySelector("iframe");
+        ha_card.style.position = 'absolute'
+        let url = new URLSearchParams(location.search)
+        if (url.get('show_mode') === 'fullscreen') {
+          ha_card.style.top = '0'
+          ha_card.style.height = '100%'
+        }
+      } catch (ex) {
+        console.log(ex)
+      }
+
       let list = attr.playlist
       if (list.length > 0) {
         store.dispatch('setPlaylist', { list })
