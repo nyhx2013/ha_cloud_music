@@ -40,6 +40,19 @@ const routes = [
         component: () => import('pages/fm/fmlist')
       },
       {
+        path: '/music/video', // 看视频
+        component: () => import('pages/video/video'),
+        meta: {
+          title: '看视频',
+          keepAlive: true
+        }
+      },
+      {
+        name: 'music-videolist',
+        path: '/music/videolist', // 看视频
+        component: () => import('pages/video/videolist')
+      },
+      {
         path: '/music/toplist', // 排行榜列表
         component: () => import('pages/topList/topList'),
         meta: {

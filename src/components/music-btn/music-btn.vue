@@ -22,6 +22,10 @@
         to="/music/fm"
         tag="span"
       >电台</router-link>
+      <router-link
+        to="/music/video"
+        tag="span"
+      >看视频</router-link>
       <!-- <router-link
         to="/music/historylist"
         tag="span"

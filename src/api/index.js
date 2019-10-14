@@ -121,7 +121,6 @@ export function getCategories() {
       }
     })
   })
-
 }
 
 //获取电台列表
@@ -150,6 +149,26 @@ export function getFmList({ id, page, size }) {
           list: arr,
           total: res.total
         })
+      }
+    })
+  })
+}
+
+//获取视频列表
+export function getVideoList({ keywords }) {
+  return new Promise((resolve, reject) => {
+    axios.get(`https://api.jiluxinqing.com/api/service/vipvideo/video?url=${keywords}`).then((res) => {
+      let { code, data, msg } = res.data
+      if (code === 0) {
+        let arr = []
+        data.data.forEach(ele => {
+          arr.push({
+            name: ele.name,
+            source: ele.source.eps,
+            picUrl: 'https://p2.music.126.net/WEIm9ckMQ9AmN7kKDn30VQ==/109951163686912767.jpg?param=180y180'
+          })
+        })
+        resolve(arr)
       }
     })
   })
