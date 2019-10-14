@@ -31,7 +31,7 @@ export default {
     };
   },
   mounted() {
-    let { source } = this.$route.params
+    let { name, source } = this.$route.params
 
     if (!source) {
       this.$router.replace('/music/video')
@@ -39,10 +39,14 @@ export default {
     }
 
     let arr = []
-    source.forEach(ele => {
+    source.forEach((ele,index) => {
       arr.push({
+        album: '专辑',
+        image: 'http://p4.music.126.net/3DCZrxJ4svHIobxLcg_KyQ==/109951164240032297.jpg?param=180y180',            
+        id: index,
         name: ele.name,
-        singer: ele.name,
+        media_type: 'video',
+        singer: name,
         clv_url: ele.url
       })
     })

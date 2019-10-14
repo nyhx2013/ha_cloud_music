@@ -29,7 +29,7 @@ from homeassistant.components.media_player.const import (
     MEDIA_TYPE_MUSIC,MEDIA_TYPE_URL, SUPPORT_PAUSE, SUPPORT_PLAY, SUPPORT_NEXT_TRACK, SUPPORT_PREVIOUS_TRACK, SUPPORT_TURN_ON, SUPPORT_TURN_OFF,
     SUPPORT_PLAY_MEDIA, SUPPORT_STOP, SUPPORT_VOLUME_MUTE, SUPPORT_VOLUME_SET, SUPPORT_SELECT_SOURCE, SUPPORT_CLEAR_PLAYLIST, SUPPORT_STOP, SUPPORT_SELECT_SOUND_MODE)
 from homeassistant.const import (
-    CONF_NAME, STATE_IDLE, STATE_PAUSED, STATE_PLAYING)
+    CONF_NAME, STATE_IDLE, STATE_PAUSED, STATE_PLAYING, STATE_OFF)
 import homeassistant.helpers.config_validation as cv
 import homeassistant.util.dt as dt_util
 from homeassistant.helpers import discovery, device_registry as dr
@@ -238,6 +238,10 @@ class VlcDevice(MediaPlayerDevice):
     @property
     def state(self):
         """Return the state of the device."""
+        # 如果状态是关，则显示idle
+        if self._state == STATE_OFF:
+            return STATE_IDLE
+            
         return self._state
 
     @property
@@ -389,9 +393,13 @@ class VlcDevice(MediaPlayerDevice):
                 "不受支持的媒体类型 %s",media_type)
             return
         _log('title：%s ，play url：%s' , self._media_title, url)
+        
+        play_type = "music"
+        if 'media_type' in music_info and music_info['media_type'] == 'video':
+            play_type = "video"
         # 如果没有url则下一曲（如果超过3个错误，则停止）
         # 如果是云音乐播放列表 并且格式不是mp3，则下一曲
-        if url == None or (media_type == 'music_load' and url.find(".mp3") < 0):
+        elif url == None or (media_type == 'music_load' and url.find(".mp3") < 0):
            _log("当前URL不能播放")
            self.error_count = self.error_count + 1
            if self.error_count < 3:
@@ -399,8 +407,9 @@ class VlcDevice(MediaPlayerDevice):
            return
         # 重置错误计数
         self.error_count = 0
+            
         #播放音乐
-        self.call('play_media', {"url": url,"type": "music"})
+        self.call('play_media', {"url": url,"type": play_type})
 
     def media_next_track(self):
         self.music_index = self.music_index + 1
