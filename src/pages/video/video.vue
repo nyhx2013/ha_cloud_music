@@ -10,7 +10,9 @@
         v-model.trim="searchValue"
         @keyup.enter="onEnter"
       />
+      <div style="padding-top:10px;">注意：这是一个测试功能，可以使用DLNA将视频投到电视上观看</div>
     </div>
+
     <template v-if="!mmLoadShow">
       <div class="topList-head">视频列表</div>
       <div class="topList-content">
@@ -67,13 +69,11 @@ export default {
 @import "~assets/css/mixin";
 
   .search-head {
-    display: flex;
-    height: 40px;
+    width:100%;
     padding: 10px 15px;
-    overflow: hidden;
     background: @search_bg_coloe;
     .search-input {
-      flex: 1;
+      width:90%;
       height: 40px;
       box-sizing: border-box;
       padding: 0 15px;

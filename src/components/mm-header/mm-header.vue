@@ -2,13 +2,12 @@
   <!--头部-->
   <header class="mm-header">
     <h1 class="header">
-      <a
-      >mmPlayer在线音乐播放器</a>
+      <a>mmPlayer在线音乐播放器&nbsp;<span style="font-size:12px;">{{ver}}</span></a>
     </h1>
     <dl class="user">
       <template v-if="user.userId">
         <router-link class="user-info" to="/music/userlist" tag="dt">
-          <img :src="`${user.avatarUrl}?param=50y50`">
+          <img :src="`${user.avatarUrl}?param=50y50`" />
           <span>{{user.nickname}}</span>
         </router-link>
         <dd class="user-btn" @click="openDialog(2)">退出</dd>
@@ -31,7 +30,7 @@
           placeholder="请输入您的网易云UID"
           v-model.trim="uidValue"
           @keyup.enter="login"
-        >
+        />
       </div>
       <div slot="btn" @click="openDialog(1)">帮助</div>
     </mm-dialog>
@@ -46,10 +45,7 @@
       <div class="mm-dialog-text">
         <p>
           1、
-          <a
-            target="_blank"
-            href="http://music.163.com"
-          >点我(http://music.163.com)</a>打开网易云音乐官网
+          <a target="_blank" href="http://music.163.com">点我(http://music.163.com)</a>打开网易云音乐官网
         </p>
         <p>2、点击页面右上角的“登录”</p>
         <p>3、点击您的头像，进入我的主页</p>
@@ -57,7 +53,7 @@
       </div>
     </mm-dialog>
     <!--退出-->
-    <mm-dialog ref="outDialog" @confirm="out" bodyText="确定退出当前用户吗？"/>
+    <mm-dialog ref="outDialog" @confirm="out" bodyText="确定退出当前用户吗？" />
   </header>
 </template>
 
@@ -71,8 +67,9 @@ export default {
   components: {
     MmDialog
   },
-  data () {
+  data() {
     return {
+      ver: '',
       user: {}, // 用户数据
       uidValue: '' // 记录用户 UID
     }
@@ -80,12 +77,14 @@ export default {
   computed: {
     ...mapGetters(['uid'])
   },
-  created () {
+  created() {
     this.uid && this._getUserPlaylist(this.uid)
+    let url = new URLSearchParams(location.search)
+    this.ver = url.get('ver')
   },
   methods: {
     // 打开对话框
-    openDialog (key) {
+    openDialog(key) {
       switch (key) {
         case 0:
           this.$refs.loginDialog.show()
@@ -103,13 +102,13 @@ export default {
       }
     },
     // 退出登录
-    out () {
+    out() {
       this.user = {}
       this.setUid(null)
       this.$mmToast('退出成功！')
     },
     // 登录
-    login () {
+    login() {
       if (this.uidValue === '') {
         this.$mmToast('UID不能为空')
         this.openDialog(0)
@@ -119,7 +118,7 @@ export default {
       this._getUserPlaylist(this.uidValue)
     },
     // 获取用户数据
-    _getUserPlaylist (uid) {
+    _getUserPlaylist(uid) {
       getUserPlaylist(uid).then(res => {
         if (res.data.code === 200) {
           this.uidValue = ''

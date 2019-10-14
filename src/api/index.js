@@ -165,7 +165,7 @@ export function getVideoList({ keywords }) {
           arr.push({
             name: ele.name,
             source: ele.source.eps,
-            picUrl: 'https://p2.music.126.net/WEIm9ckMQ9AmN7kKDn30VQ==/109951163686912767.jpg?param=180y180'
+            picUrl: 'http://p4.music.126.net/3DCZrxJ4svHIobxLcg_KyQ==/109951164240032297.jpg?param=180y180'
           })
         })
         resolve(arr)

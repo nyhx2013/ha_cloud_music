@@ -42,7 +42,7 @@ TIME_BETWEEN_UPDATES = timedelta(seconds=1)
 ###################媒体播放器##########################
 
 
-
+VERSION = '1.0.4'
 DOMAIN = 'ha-cloud-music'
 _DOMAIN = DOMAIN.replace('-','_')
 
@@ -73,7 +73,7 @@ files, names = getallfile(__dirname+'/dist')
 
 extra_urls = []
 for file in files:
-    extra_urls.append('/'+ DOMAIN + file.replace(__dirname,'').replace('\\','/'))
+    extra_urls.append('/'+ DOMAIN + '/' + VERSION + file.replace(__dirname,'').replace('\\','/'))
 
 ##### 网关控制
 class HassGateView(HomeAssistantView):
@@ -86,7 +86,7 @@ class HassGateView(HomeAssistantView):
 
     async def get(self, request):    
         # _LOGGER.info(request.rel_url.raw_path)
-        return FileResponse(os.path.dirname(__file__) + request.rel_url.raw_path.replace(self.url,''))
+        return FileResponse(os.path.dirname(__file__) + request.rel_url.raw_path.replace(self.url + '/' + VERSION,''))
 
     async def post(self, request):
         """Update state of entity."""
@@ -108,7 +108,7 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
 -------------------------------------------------------------------
     ha-cloud-music云音乐插件【作者QQ：635147515】
     
-    版本：1.0.3
+    版本：''' + VERSION + '''    
     
     这是一个网易云音乐的HomeAssistant播放器插件
     
@@ -124,7 +124,7 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
         config.get("sidebar_title"),
         config.get("sidebar_icon"),
         _DOMAIN,
-        {"url": "/"+DOMAIN+"/dist/index.html?show_mode=" + config.get("show_mode")},
+        {"url": "/" + DOMAIN+"/" + VERSION + "/dist/index.html?ver="+VERSION+"&show_mode=" + config.get("show_mode")},
         require_admin=True,
     )
     return True
