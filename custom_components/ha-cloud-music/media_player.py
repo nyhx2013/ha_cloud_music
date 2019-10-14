@@ -394,6 +394,7 @@ class VlcDevice(MediaPlayerDevice):
             return
         _log('title：%s ，play url：%s' , self._media_title, url)
         
+        # 默认为music类型，如果指定视频，则替换
         play_type = "music"
         if 'media_type' in music_info and music_info['media_type'] == 'video':
             play_type = "video"
