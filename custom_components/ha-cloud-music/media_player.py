@@ -42,7 +42,7 @@ TIME_BETWEEN_UPDATES = timedelta(seconds=1)
 ###################媒体播放器##########################
 
 
-VERSION = '1.0.4'
+VERSION = '1.0.4.1'
 DOMAIN = 'ha-cloud-music'
 _DOMAIN = DOMAIN.replace('-','_')
 
