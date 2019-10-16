@@ -28,7 +28,7 @@
 </template>
 
 <script>
-import { getVideoList } from "api";
+import { getVideoList, searchVideoList } from "api";
 import MmLoading from "base/mm-loading/mm-loading";
 import { loadMixin } from "assets/js/mixin";
 
@@ -46,17 +46,16 @@ export default {
     };
   },
   created() {
-    this._hideLoad();
-    // Promise.all([getCategories()]).then(([hotList]) => {
-    //   this.hotList = hotList;
-    //   this._hideLoad();
-    // });
+    Promise.all([getVideoList()]).then(([hotList]) => {
+      this.hotList = hotList;
+      this._hideLoad();
+    });
   },
   methods: {
     onEnter() {
       let { searchValue } = this
       if (searchValue) {
-        getVideoList({ keywords: searchValue }).then(res => {
+        searchVideoList({ keywords: searchValue }).then(res => {
           this.hotList = res;
         })
       }

@@ -25,7 +25,7 @@
       <router-link
         to="/music/video"
         tag="span"
-      >看视频</router-link>
+      >电视</router-link>
       <!-- <router-link
         to="/music/historylist"
         tag="span"

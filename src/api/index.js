@@ -154,8 +154,48 @@ export function getFmList({ id, page, size }) {
   })
 }
 
+
 //获取视频列表
-export function getVideoList({ keywords }) {
+export function getVideoList() {
+  return new Promise((resolve, reject) => {
+    fetch('./data/tv.json')
+      .then((res) => res.json())
+      .then(data => {
+        let obj = data
+        let arr = []
+        Object.keys(obj).forEach(key => {
+          let name = key
+          let picUrl = 'http://p4.music.126.net/3DCZrxJ4svHIobxLcg_KyQ==/109951164240032297.jpg?param=180y180'
+          if (key == 'radio') return
+          if (key == 'cctv') {
+            name = 'CCTV'
+            picUrl = 'http://p2.music.126.net/kkmHDFjiuTtNn5eCBjIROg==/109951164396161803.jpg?param=180y180'
+          }
+          if (key == 'local'){
+            name = '本地电视台'
+            picUrl = 'http://p1.music.126.net/21aO_ib-TzcdrWfSUZVqDg==/18829136627850148.jpg?param=180y180'
+          }
+          if (key == 'other'){
+            name = '其它电视'
+            picUrl = 'http://p1.music.126.net/QAjQi911eIc7EtMwIuXLww==/18755469348422762.jpg?param=180y180'
+          } 
+
+          obj[key].map(item => {
+            return item['name'] = item.title
+          })
+          arr.push({
+            name: name,
+            source: obj[key],
+            picUrl: picUrl
+          })
+        })
+        resolve(arr)
+      })
+  })
+}
+
+//获取视频列表
+export function searchVideoList({ keywords }) {
   return new Promise((resolve, reject) => {
     axios.get(`https://api.jiluxinqing.com/api/service/vipvideo/video?url=${keywords}`).then((res) => {
       let { code, data, msg } = res.data
