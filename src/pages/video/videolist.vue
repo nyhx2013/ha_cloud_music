@@ -33,7 +33,7 @@ export default {
     };
   },
   mounted() {
-    let { name, type, source } = this.$route.params
+    let { name, album,  type, source } = this.$route.params
 
     if (!source) {
       this.$router.replace('/music/video')
@@ -44,7 +44,7 @@ export default {
     source.forEach((ele, index) => {
       arr.push({
         type,
-        album: '专辑',
+        album,
         image: 'http://p4.music.126.net/3DCZrxJ4svHIobxLcg_KyQ==/109951164240032297.jpg?param=180y180',
         id: index,
         name: ele.name,
@@ -65,7 +65,7 @@ export default {
     selectItem(item, index) {
       if (item.type === 'movie') {
         if (Hls.isSupported()) {
-          if (confirm('是否在本地播放')) {
+          if (top.confirm('是否在本地播放')) {
             this.isPlay = true
             let video = this.$refs['video']
             let hls = new Hls();

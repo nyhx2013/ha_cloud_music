@@ -171,20 +171,21 @@ export function getVideoList() {
             name = 'CCTV'
             picUrl = 'http://p2.music.126.net/kkmHDFjiuTtNn5eCBjIROg==/109951164396161803.jpg?param=180y180'
           }
-          if (key == 'local'){
+          if (key == 'local') {
             name = '本地电视台'
             picUrl = 'http://p1.music.126.net/21aO_ib-TzcdrWfSUZVqDg==/18829136627850148.jpg?param=180y180'
           }
-          if (key == 'other'){
+          if (key == 'other') {
             name = '其它电视'
             picUrl = 'http://p1.music.126.net/QAjQi911eIc7EtMwIuXLww==/18755469348422762.jpg?param=180y180'
-          } 
+          }
 
           obj[key].map(item => {
             return item['name'] = item.title
           })
           arr.push({
             type: 'tv',
+            album: '电视',
             name: name,
             source: obj[key],
             picUrl: picUrl
@@ -205,6 +206,7 @@ export function searchVideoList({ keywords }) {
         data.data.forEach(ele => {
           arr.push({
             type: 'movie',
+            album: '电影',
             name: ele.name,
             source: ele.source.eps,
             picUrl: 'http://p4.music.126.net/3DCZrxJ4svHIobxLcg_KyQ==/109951164240032297.jpg?param=180y180'
