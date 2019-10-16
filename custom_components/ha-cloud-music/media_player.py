@@ -42,7 +42,7 @@ TIME_BETWEEN_UPDATES = timedelta(seconds=1)
 ###################媒体播放器##########################
 
 
-VERSION = '1.0.4.1'
+VERSION = '1.0.4.2'
 DOMAIN = 'ha-cloud-music'
 _DOMAIN = DOMAIN.replace('-','_')
 
@@ -119,7 +119,7 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
     _hass.http.register_view(HassGateView)
     add_entities([VlcDevice(hass)])
     # 添加到侧边栏
-    hass.components.frontend.async_register_built_in_panel(
+    coroutine = hass.components.frontend.async_register_built_in_panel(
         "iframe",
         config.get("sidebar_title"),
         config.get("sidebar_icon"),
@@ -127,6 +127,10 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
         {"url": "/" + DOMAIN+"/" + VERSION + "/dist/index.html?ver="+VERSION+"&show_mode=" + config.get("show_mode")},
         require_admin=True,
     )
+    try:
+        coroutine.send(None)
+    except StopIteration:
+        pass
     return True
 
 ###################媒体播放器##########################
