@@ -184,6 +184,7 @@ export function getVideoList() {
             return item['name'] = item.title
           })
           arr.push({
+            type: 'tv',
             name: name,
             source: obj[key],
             picUrl: picUrl
@@ -203,6 +204,7 @@ export function searchVideoList({ keywords }) {
         let arr = []
         data.data.forEach(ele => {
           arr.push({
+            type: 'movie',
             name: ele.name,
             source: ele.source.eps,
             picUrl: 'http://p4.music.126.net/3DCZrxJ4svHIobxLcg_KyQ==/109951164240032297.jpg?param=180y180'

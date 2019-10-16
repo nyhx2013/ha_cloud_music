@@ -50,7 +50,11 @@ const routes = [
       {
         name: 'music-videolist',
         path: '/music/videolist', // 看视频
-        component: () => import('pages/video/videolist')
+        component: () => import('pages/video/videolist'),
+        meta: {
+          title: '看视频',
+          keepAlive: false
+        }
       },
       {
         path: '/music/toplist', // 排行榜列表
