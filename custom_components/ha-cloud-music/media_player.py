@@ -169,11 +169,12 @@ class VlcDevice(MediaPlayerDevice):
 
     def interval(self, now):
         # 如果当前状态是播放，则进度累加（虽然我定时的是1秒，但不知道为啥2秒执行一次）
-        if self._media != None and 'media_position' not in self._media.attributes:            
+        if self._media != None and 'media_position' not in self._media.attributes:        
+   
             newtime = datetime.datetime.now()
             # 如果当前进度大于总进度，则重置
             if self._media_position_updated_at == None or self.media_duration == 0 or self._media_position > self.media_duration or self._media_duration != self.media_duration:
-                self._media_position = 0
+                self._media_position = -3
                 self._media_position_updated_at = newtime
                 
             if self._state == STATE_PLAYING:
@@ -185,9 +186,25 @@ class VlcDevice(MediaPlayerDevice):
                     self._media_position += 1
             
             _log('当前时间：%s，当前进度：%s,总进度：%s', self._media_position_updated_at, self._media_position, self.media_duration)
+            _log('源播放器状态 %s，云音乐状态：%s', self._media.state, self._state)
+     
+              # 没有进度的，下一曲判断逻辑
+            if self._timer_enable == True:
+                # 如果进度条结束了，则执行下一曲
+                # 执行下一曲之后，15秒内不能再次执行操作
+                if ((self.media_duration > 3 and self.media_duration - 3 <= self.media_position) or (self._state != STATE_PLAYING and self.media_duration == 0 and self._media_position  > 0)) and self.next_count > 0:
+                    _log('播放器更新 下一曲')
+                    self.media_next_track()
+                    self.next_count = -15
+                # 计数器累加
+                self.next_count += 1
+                if self.next_count > 100:
+                    self.next_count = 100
+                
+                self.update()    
         
         # 如果有源播放器，并且选择的是列表，才进行检测
-        if self._media != None and self._timer_enable == True:
+        elif self._media != None and self._timer_enable == True:
             # 如果进度条结束了，则执行下一曲
             # 执行下一曲之后，15秒内不能再次执行操作
             if self.media_duration > 2 and self.media_duration - 2 <= self.media_position and self.next_count > 0:
