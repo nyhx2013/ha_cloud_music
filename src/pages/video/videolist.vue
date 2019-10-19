@@ -2,8 +2,16 @@
   <!--歌单详情-->
   <div class="details">
     <mm-loading v-model="mmLoadShow" />
-    <video ref="video" controls v-if="isPlay" style="width:100%;"></video>
-    <music-list :list="list" @select="selectItem"></music-list>
+    <video
+      ref="video"
+      controls
+      v-if="isPlay"
+      style="width:100%;"
+    ></video>
+    <music-list
+      :list="list"
+      @select="selectItem"
+    ></music-list>
   </div>
 </template>
 
@@ -33,49 +41,52 @@ export default {
     };
   },
   mounted() {
-    let { name, album,  type, source } = this.$route.params
+    let { name, album, type, source } = this.$route.params;
 
     if (!source) {
-      this.$router.replace('/music/video')
-      return
+      this.$router.replace("/music/video");
+      return;
     }
 
-    let arr = []
+    this.hls = new Hls();
+    let arr = [];
     source.forEach((ele, index) => {
       arr.push({
         type,
         album,
-        image: 'http://p4.music.126.net/3DCZrxJ4svHIobxLcg_KyQ==/109951164240032297.jpg?param=180y180',
+        image:
+          "http://p4.music.126.net/3DCZrxJ4svHIobxLcg_KyQ==/109951164240032297.jpg?param=180y180",
         id: index,
         name: ele.name,
-        media_type: 'video',
+        media_type: "video",
         singer: name,
         clv_url: ele.url
-      })
-    })
-    this.list = arr
+      });
+    });
+    this.list = arr;
     this._hideLoad();
   },
-  beforeRouteLeave (to, from, next){
-    this.hls && this.hls.destroy()
-    next()
+  beforeRouteLeave(to, from, next) {
+    this.hls && this.hls.destroy();
+    next();
   },
   methods: {
     // 播放暂停事件
     selectItem(item, index) {
-      if (item.type === 'movie') {
+      if (item.type === "movie") {
         if (Hls.isSupported()) {
-          if (top.confirm('是否在本地播放')) {
-            this.isPlay = true
-            let video = this.$refs['video']
-            let hls = new Hls();
-            hls.loadSource(item.clv_url);
-            hls.attachMedia(video);
-            hls.on(Hls.Events.MANIFEST_PARSED, function () {
-              video.play();
+          if (top.confirm("是否在本地播放")) {
+            this.isPlay = true;
+            this.$nextTick(() => {
+              let video = this.$refs["video"];
+              this.hls.attachMedia(video);
+              this.hls.loadSource(item.clv_url);
+              this.hls.on(Hls.Events.MANIFEST_PARSED, function() {
+                video.play();
+              });
             });
-            this.hls = hls
-            return
+
+            return;
           }
         }
       }

@@ -4,6 +4,7 @@ import logging
 import voluptuous as vol
 import requests
 import time 
+import datetime
 
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.event import track_time_interval
@@ -11,7 +12,6 @@ from homeassistant.components.http import HomeAssistantView
 from aiohttp import web
 from aiohttp.web import FileResponse
 from typing import Optional
-from datetime import timedelta
 from homeassistant.helpers.state import AsyncTrackStates
 from urllib.request import urlopen
 
@@ -29,7 +29,7 @@ from homeassistant.components.media_player.const import (
     MEDIA_TYPE_MUSIC,MEDIA_TYPE_URL, SUPPORT_PAUSE, SUPPORT_PLAY, SUPPORT_NEXT_TRACK, SUPPORT_PREVIOUS_TRACK, SUPPORT_TURN_ON, SUPPORT_TURN_OFF,
     SUPPORT_PLAY_MEDIA, SUPPORT_STOP, SUPPORT_VOLUME_MUTE, SUPPORT_VOLUME_SET, SUPPORT_SELECT_SOURCE, SUPPORT_CLEAR_PLAYLIST, SUPPORT_STOP, SUPPORT_SELECT_SOUND_MODE)
 from homeassistant.const import (
-    CONF_NAME, STATE_IDLE, STATE_PAUSED, STATE_PLAYING, STATE_OFF)
+    CONF_NAME, STATE_IDLE, STATE_PAUSED, STATE_PLAYING, STATE_OFF, STATE_UNAVAILABLE)
 import homeassistant.helpers.config_validation as cv
 import homeassistant.util.dt as dt_util
 from homeassistant.helpers import discovery, device_registry as dr
@@ -38,11 +38,11 @@ SUPPORT_VLC = SUPPORT_PAUSE | SUPPORT_VOLUME_SET | SUPPORT_VOLUME_MUTE | SUPPORT
     SUPPORT_PLAY_MEDIA | SUPPORT_PLAY | SUPPORT_STOP | SUPPORT_NEXT_TRACK | SUPPORT_PREVIOUS_TRACK | SUPPORT_SELECT_SOURCE | SUPPORT_CLEAR_PLAYLIST
 
 # 定时器时间
-TIME_BETWEEN_UPDATES = timedelta(seconds=1)
+TIME_BETWEEN_UPDATES = datetime.timedelta(seconds=1)
 ###################媒体播放器##########################
 
 
-VERSION = '1.0.4.2'
+VERSION = '1.0.4.4'
 DOMAIN = 'ha-cloud-music'
 _DOMAIN = DOMAIN.replace('-','_')
 
@@ -154,7 +154,7 @@ class VlcDevice(MediaPlayerDevice):
         self._sound_mode = None
         self._media_playlist = None
         self._media_position_updated_at = None
-        self._media_position = None
+        self._media_position = 0
         self._media_duration = None
         # 错误计数
         self.error_count = 0
@@ -168,6 +168,24 @@ class VlcDevice(MediaPlayerDevice):
         track_time_interval(hass, self.interval, TIME_BETWEEN_UPDATES)
 
     def interval(self, now):
+        # 如果当前状态是播放，则进度累加（虽然我定时的是1秒，但不知道为啥2秒执行一次）
+        if self._media != None and 'media_position' not in self._media.attributes:            
+            newtime = datetime.datetime.now()
+            # 如果当前进度大于总进度，则重置
+            if self._media_position_updated_at == None or self.media_duration == 0 or self._media_position > self.media_duration or self._media_duration != self.media_duration:
+                self._media_position = 0
+                self._media_position_updated_at = newtime
+                
+            if self._state == STATE_PLAYING:
+                _media_position = self._media_position
+                self._media_position += (newtime - self._media_position_updated_at).seconds                
+                self._media_position_updated_at = newtime
+                # 如果没有2秒，则再+1
+                if self._media_position == _media_position + 1:
+                    self._media_position += 1
+            
+            _log('当前时间：%s，当前进度：%s,总进度：%s', self._media_position_updated_at, self._media_position, self.media_duration)
+        
         # 如果有源播放器，并且选择的是列表，才进行检测
         if self._media != None and self._timer_enable == True:
             # 如果进度条结束了，则执行下一曲
@@ -193,13 +211,15 @@ class VlcDevice(MediaPlayerDevice):
         
         # 获取源播放器
         self._media = self._hass.states.get(self._sound_mode)
-        _log('源播放器状态 %s，云音乐状态：%s', self._media.state, self._state)
+        # _log('源播放器状态 %s，云音乐状态：%s', self._media.state, self._state)
                 
         # 如果状态不一样，则更新源播放器
         if self._state != self._media.state:
             self._hass.services.call('homeassistant', 'update_entity', {"entity_id": self._sound_mode})
             self._hass.services.call('homeassistant', 'update_entity', {"entity_id": 'media_player.'+_DOMAIN})
         
+        
+        self._media_duration = self.media_duration
         self._state = self._media.state
             
         return True
@@ -243,9 +263,9 @@ class VlcDevice(MediaPlayerDevice):
     def state(self):
         """Return the state of the device."""
         # 如果状态是关，则显示idle
-        if self._state == STATE_OFF:
+        if self._state == STATE_OFF or self._state == STATE_UNAVAILABLE:
             return STATE_IDLE
-            
+
         return self._state
 
     @property
@@ -287,7 +307,7 @@ class VlcDevice(MediaPlayerDevice):
             return None
         
         if 'media_duration' in self._media.attributes:
-            return self._media.attributes['media_duration']
+            return int(self._media.attributes['media_duration'])
             
         return 0
 
@@ -298,9 +318,9 @@ class VlcDevice(MediaPlayerDevice):
             return None
                         
         if 'media_position' in self._media.attributes:
-            return self._media.attributes['media_position']
+            return int(self._media.attributes['media_position'])
             
-        return 0
+        return self._media_position
 		
     @property
     def media_position_updated_at(self):
@@ -327,7 +347,7 @@ class VlcDevice(MediaPlayerDevice):
     def set_volume_level(self, volume):
         """Set volume level, range 0..1."""
         #self._vlc.audio_set_volume(int(volume * 100))
-        _log('设置音量：%s', volume)
+        #_log('设置音量：%s', volume)
         self.call('volume_set', {"volume": volume})
         #self._volume = volume
 
@@ -351,11 +371,11 @@ class VlcDevice(MediaPlayerDevice):
 		
     def play_media(self, media_type, media_id, **kwargs):
         """Play media from a URL or file."""        
-        _log('类型：%s', media_type)                
+        #_log('类型：%s', media_type)                
         if media_type == MEDIA_TYPE_MUSIC:
             self._timer_enable = False
             url = media_id
-        elif media_type == 'music_load':
+        elif media_type == 'music_load':                    
             self.music_index = int(media_id)
             music_info = self.music_playlist[self.music_index]
             url = self.get_url(music_info)
@@ -448,7 +468,7 @@ class VlcDevice(MediaPlayerDevice):
         self._source = None
         self._media_playlist = None
         self._media_position_updated_at = None
-        self._media_position = None
+        self._media_position = 0
         self._media_duration = None                
         self.media_stop()
                 
@@ -490,7 +510,7 @@ class VlcDevice(MediaPlayerDevice):
                 self._sound_mode = sound_mode
             else:
                 self._sound_mode = self._sound_mode_list[0]
-        _log(self._sound_mode_list)
+        #_log(self._sound_mode_list)
        
     def get_url(self, music_info):
         self._media_title = music_info['song'] + ' - ' + music_info['singer']

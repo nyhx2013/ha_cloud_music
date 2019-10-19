@@ -203,15 +203,17 @@ export function searchVideoList({ keywords }) {
       let { code, data, msg } = res.data
       if (code === 0) {
         let arr = []
-        data.data.forEach(ele => {
-          arr.push({
-            type: 'movie',
-            album: '电影',
-            name: ele.name,
-            source: ele.source.eps,
-            picUrl: 'http://p4.music.126.net/3DCZrxJ4svHIobxLcg_KyQ==/109951164240032297.jpg?param=180y180'
+        if (data.type == 'movie') {
+          data.data.forEach(ele => {
+            arr.push({
+              type: 'movie',
+              album: '电影',
+              name: ele.name,
+              source: ele.source.eps,
+              picUrl: 'http://p4.music.126.net/3DCZrxJ4svHIobxLcg_KyQ==/109951164240032297.jpg?param=180y180'
+            })
           })
-        })
+        }
         resolve(arr)
       }
     })

@@ -1,7 +1,7 @@
 {
   "domain": "ha-cloud-music",
   "name": "ha-cloud-music",
-  "documentation": "https://www.home-assistant.io/components/vlc",
+  "documentation": "https://github.com/shaonianzhentan/ha-cloud-music",
   "requirements": [
   ],
   "dependencies": [],

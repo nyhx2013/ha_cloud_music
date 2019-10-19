@@ -16,9 +16,21 @@
     <template v-if="!mmLoadShow">
       <div class="topList-head">视频列表</div>
       <div class="topList-content">
-        <div class="list-item" v-for="(item,index) in hotList" :key="index" :title="item.name">
-          <router-link :to="{name:`music-videolist`,params:item}" tag="div" class="topList-item">
-            <img class="cover-img" v-lazy="`${item.picUrl}?param=200y200`" />
+        <div
+          class="list-item"
+          v-for="(item,index) in hotList"
+          :key="index"
+          :title="item.name"
+        >
+          <router-link
+            :to="{name:`music-videolist`,params:item}"
+            tag="div"
+            class="topList-item"
+          >
+            <img
+              class="cover-img"
+              v-lazy="`${item.picUrl}?param=200y200`"
+            />
             <h3 class="name">{{item.name}}</h3>
           </router-link>
         </div>
@@ -40,7 +52,7 @@ export default {
   },
   data() {
     return {
-      searchValue: '',
+      searchValue: "",
       list: [], // 云音乐特色榜
       hotList: [] // 热门歌单
     };
@@ -53,11 +65,14 @@ export default {
   },
   methods: {
     onEnter() {
-      let { searchValue } = this
+      let { searchValue } = this;
       if (searchValue) {
         searchVideoList({ keywords: searchValue }).then(res => {
           this.hotList = res;
-        })
+          if (res.length === 0) {
+            this.$mmToast("没有搜索电影哦");
+          }
+        });
       }
     }
   }
@@ -67,27 +82,26 @@ export default {
 <style lang="less" scoped>
 @import "~assets/css/mixin";
 
-  .search-head {
-    width:100%;
-    padding: 10px 15px;
-    background: @search_bg_coloe;
-    .search-input {
-      width:90%;
-      height: 40px;
-      box-sizing: border-box;
-      padding: 0 15px;
-      border: 1px solid @btn_color;
-      outline: 0;
-      background: transparent;
-      color: @text_color_active;
-      font-size: @font_size_medium;
-      box-shadow: 0 0 1px 0 #fff inset;
-      &::placeholder {
-        color: @text_color;
-      }
+.search-head {
+  width: 100%;
+  padding: 10px 15px;
+  background: @search_bg_coloe;
+  .search-input {
+    width: 90%;
+    height: 40px;
+    box-sizing: border-box;
+    padding: 0 15px;
+    border: 1px solid @btn_color;
+    outline: 0;
+    background: transparent;
+    color: @text_color_active;
+    font-size: @font_size_medium;
+    box-shadow: 0 0 1px 0 #fff inset;
+    &::placeholder {
+      color: @text_color;
     }
   }
-
+}
 
 .topList {
   position: relative;
