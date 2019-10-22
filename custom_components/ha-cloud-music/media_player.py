@@ -42,7 +42,7 @@ TIME_BETWEEN_UPDATES = datetime.timedelta(seconds=1)
 ###################媒体播放器##########################
 
 
-VERSION = '1.0.4.4'
+VERSION = '1.0.4.5'
 DOMAIN = 'ha-cloud-music'
 _DOMAIN = DOMAIN.replace('-','_')
 
@@ -203,9 +203,11 @@ class VlcDevice(MediaPlayerDevice):
         
         # 如果有源播放器，并且选择的是列表，才进行检测
         elif self._media != None and self._timer_enable == True:
+            _log('当前时间：%s，当前进度：%s,总进度：%s', self.media_position_updated_at, self.media_position, self.media_duration)
             # 如果进度条结束了，则执行下一曲
+            # 如果当前是播放状态，并且进度为0，两边的长度一样，则执行下一曲
             # 执行下一曲之后，15秒内不能再次执行操作
-            if self.media_duration > 3 and self.media_duration - 3 <= self.media_position and self.next_count > 0:
+            if ((self.media_duration > 2 and self.media_duration - 2 <= self.media_position) or (self._state == STATE_PLAYING and  self.media_position == 0 and self.media_duration == int(self._media.attributes['media_duration']))) and self.next_count > 0:
                 _log('播放器更新 下一曲')
                 self.media_next_track()
             # 计数器累加
@@ -521,7 +523,7 @@ class VlcDevice(MediaPlayerDevice):
         self._sound_mode_list = list(filter_list)
         if len(self._sound_mode_list) > 0:
             # 判断存储的值是否为空
-            if sound_mode != None and self._sound_mode_list.index(sound_mode) >= 0:
+            if sound_mode != None and self._sound_mode_list.count(sound_mode) == 1:
                 self._sound_mode = sound_mode
             else:
                 self._sound_mode = self._sound_mode_list[0]

@@ -15,7 +15,6 @@ from typing import List, Set, Tuple, Optional
 import bluetooth
 import select
 import datetime
-from bt_proximity import BluetoothRSSI
 import voluptuous as vol
 
 from homeassistant.components.device_tracker import PLATFORM_SCHEMA
@@ -175,6 +174,7 @@ async def see_device(
         return None
     
     attributes = {
+        "name": result['name'],
         "services": result['services'],
         "rssi": result['rssi'],
         "type": result['type'],
@@ -183,7 +183,7 @@ async def see_device(
     
     await async_see(
         mac=f"{BT_PREFIX}{mac}",
-        host_name=result['name'],
+        host_name=result['mac'],
         attributes=attributes,
         source_type=SOURCE_TYPE_BLUETOOTH,
     )
