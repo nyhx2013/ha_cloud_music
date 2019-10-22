@@ -1,4 +1,11 @@
-"""蓝牙设备的跟踪."""
+"""
+蓝牙设备的跟踪.
+
+device_tracker:
+  - platform: ha-cloud-music
+    filter_mac: 'B4:C4:FC:66:A6:F0'
+
+"""
 import asyncio
 import logging
 from typing import List, Set, Tuple, Optional
