@@ -17,7 +17,7 @@ from urllib.request import urlopen
 
 _LOGGER = logging.getLogger(__name__)
 ############## 日志记录
-_DEBUG = False
+_DEBUG = True
 def _log(*arg):
     if _DEBUG:
         _LOGGER.info(*arg)
@@ -42,7 +42,7 @@ TIME_BETWEEN_UPDATES = datetime.timedelta(seconds=1)
 ###################媒体播放器##########################
 
 
-VERSION = '1.0.4.5'
+VERSION = '1.0.4.4'
 DOMAIN = 'ha-cloud-music'
 _DOMAIN = DOMAIN.replace('-','_')
 
@@ -207,7 +207,7 @@ class VlcDevice(MediaPlayerDevice):
             # 如果进度条结束了，则执行下一曲
             # 如果当前是播放状态，并且进度为0，两边的长度一样，则执行下一曲
             # 执行下一曲之后，15秒内不能再次执行操作
-            if ((self.media_duration > 2 and self.media_duration - 2 <= self.media_position) or (self._state == STATE_PLAYING and  self.media_position == 0 and self.media_duration == int(self._media.attributes['media_duration']))) and self.next_count > 0:
+            if ((self.media_duration > 2 and self.media_duration - 2 <= self.media_position) or (self._state == STATE_PLAYING and  self.media_position == 0 and self._media.state == STATE_PLAYING and self.media_duration == int(self._media.attributes['media_duration']))) and self.next_count > 0:
                 _log('播放器更新 下一曲')
                 self.media_next_track()
             # 计数器累加
