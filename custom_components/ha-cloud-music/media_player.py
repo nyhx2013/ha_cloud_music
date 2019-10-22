@@ -205,7 +205,7 @@ class VlcDevice(MediaPlayerDevice):
         elif self._media != None and self._timer_enable == True:
             # 如果进度条结束了，则执行下一曲
             # 执行下一曲之后，15秒内不能再次执行操作
-            if self.media_duration > 2 and self.media_duration - 2 <= self.media_position and self.next_count > 0:
+            if self.media_duration > 3 and self.media_duration - 3 <= self.media_position and self.next_count > 0:
                 _log('播放器更新 下一曲')
                 self.media_next_track()
             # 计数器累加
