@@ -16,6 +16,7 @@ import bluetooth
 import select
 import datetime
 import voluptuous as vol
+import requests
 
 from homeassistant.components.device_tracker import PLATFORM_SCHEMA
 from homeassistant.components.device_tracker.const import (
@@ -32,85 +33,6 @@ from homeassistant.components.device_tracker.legacy import (
 import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.event import async_track_time_interval
 from homeassistant.helpers.typing import HomeAssistantType
-
-
-###########################发现设备################################
-class MyDiscoverer(bluetooth.DeviceDiscoverer):
-    
-    def pre_inquiry(self):
-        self._devices = []
-        self.done = False
-    
-    def device_discovered(self, address, device_class, rssi, name):
-        # print("%s - %s" % (address, name))
-        
-        # get some information out of the device class and display it.
-        # voodoo magic specified at:
-        #
-        # https://www.bluetooth.org/foundry/assignnumb/document/baseband
-        major_classes = ( "Miscellaneous", 
-                          "Computer", 
-                          "Phone", 
-                          "LAN/Network Access point", 
-                          "Audio/Video", 
-                          "Peripheral", 
-                          "Imaging" )
-        major_class = (device_class >> 8) & 0xf
-        if major_class < 7:
-            # 类型
-            type = major_classes[major_class]
-            # print("  %s" % major_classes[major_class])
-        else:
-            print("  Uncategorized")
-
-        # print("  services:")
-        service_classes = ( (16, "positioning"), 
-                            (17, "networking"), 
-                            (18, "rendering"), 
-                            (19, "capturing"),
-                            (20, "object transfer"), 
-                            (21, "audio"), 
-                            (22, "telephony"), 
-                            (23, "information"))
-        services = []
-        for bitpos, classname in service_classes:
-            if device_class & (1 << (bitpos-1)):
-                services.append(classname)
-                # print("    %s" % classname)
-        # print("  RSSI: " + str(rssi))
-        
-        self._devices.append({
-            "name": name,
-            "mac": address,            
-            "services": services,
-            "type": type,
-            "rssi": rssi,
-            "mi": pow(10, (abs(rssi) - self._a)/(10 * self._n))
-        })
-
-    def inquiry_complete(self):
-        self.done = True
-        
-    def read_devices(self, timeout = 10):
-        readfiles = [ self, ]
-
-        now = datetime.datetime.now()
-
-        while (datetime.datetime.now() - now).seconds < timeout:
-            rfds = select.select( readfiles, [], [] )[0]
-            if self in rfds:
-                self.process_event()
-            if self.done: break
-    
-    def filter_devices(self, address):
-        # 查看指定设备
-        filter_list = filter(lambda x: x["mac"] == address.upper(), self._devices)
-        devices = list(filter_list)
-        if len(devices) > 0:
-            return devices[0]
-        return None
-        
-discoverer = MyDiscoverer()
 
 ###########################发现设备################################
 
@@ -140,50 +62,29 @@ def is_bluetooth_device(device) -> bool:
     return device.mac and device.mac[:3].upper() == BT_PREFIX
 
 
-def discover_devices(device_id: int, filter_mac):
-    """发现蓝牙设备.
-    result = bluetooth.discover_devices(
-        duration=8,
-        lookup_names=True,
-        flush_cache=True,
-        lookup_class=False,
-        device_id=device_id,
-    )
-    """
-    #_LOGGER.info("发现蓝牙设备 = %d", len(result))    
-    #_LOGGER.info(filter_mac)
-    #_LOGGER.info(result)    
-    #_LOGGER.info("获取所有设备")    
-    # 获取所有设备
-    global discoverer
-    discoverer = MyDiscoverer()
-    discoverer._a = 59 # 发射端和接收端相隔1米时的信号强度
-    discoverer._n = 2.0 # 环境衰减因子
-    discoverer.find_devices(lookup_names = True)
-    discoverer.read_devices(12)
-    filter_list = filter(lambda x: filter_mac.count(x["mac"]) == 1, discoverer._devices)
+def discover_devices(device_id: int, filter_mac):    
+    r = requests.get("http://localhost:8321/ble")
+    ble = r.json()
+    _LOGGER.info(ble)
+    filter_list = filter(lambda x: filter_mac.count(x["mac"]) == 1, ble)
     return list(filter_list)
 
 
 async def see_device(
-    hass: HomeAssistantType, async_see, mac: str
+    hass: HomeAssistantType, async_see, result
 ) -> None:
-    """将设备标记为可见."""
-    result = discoverer.filter_devices(mac)
-    if result == None:
-        return None
-    
+    mac = result['mac']
+    name = result['name']
     attributes = {
-        "name": result['name'],
+        "name": name,
         "services": result['services'],
         "rssi": result['rssi'],
         "type": result['type'],
         "mi": result['mi']
-    }
-    
+    }    
     await async_see(
         mac=f"{BT_PREFIX}{mac}",
-        host_name=result['mac'],
+        host_name=name,
         attributes=attributes,
         source_type=SOURCE_TYPE_BLUETOOTH,
     )
@@ -232,16 +133,8 @@ async def async_setup_scanner(
             devices = await hass.async_add_executor_job(discover_devices, device_id, filter_mac)
             # 遍历所有设备
             for item in devices:
-                # 判断mac值是否存在
-                mac = item['mac']
-                if mac not in devices_to_track and mac not in devices_to_not_track:
-                    devices_to_track.add(mac)
+                tasks.append(see_device(hass, async_see, item))
             
-            # 遍历所有已知设备
-            for mac in devices_to_track:
-                # 添加设备
-                tasks.append(see_device(hass, async_see, mac))
-
             if tasks:
                 await asyncio.wait(tasks)
 
