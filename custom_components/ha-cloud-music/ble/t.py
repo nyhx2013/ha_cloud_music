@@ -10,6 +10,7 @@ import bluetooth
 import select
 import json
 import datetime
+import time
 
 class MyDiscoverer(bluetooth.DeviceDiscoverer):
     
@@ -66,6 +67,7 @@ class MyDiscoverer(bluetooth.DeviceDiscoverer):
             "services": str(services),
             "type": str(type),
             "rssi": str(rssi),
+            "time": str(time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time()))),            
             "mi": str(pow(10, (abs(rssi) - self._a)/(10 * self._n)))
         })
 

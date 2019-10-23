@@ -80,6 +80,7 @@ async def see_device(
         "services": result['services'],
         "rssi": result['rssi'],
         "type": result['type'],
+        "time": result['time'],
         "mi": result['mi']
     }    
     await async_see(
