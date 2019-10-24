@@ -15,6 +15,7 @@ from typing import List, Set, Tuple, Optional
 import bluetooth
 import select
 import datetime
+import time
 import voluptuous as vol
 import requests
 
@@ -80,7 +81,8 @@ async def see_device(
         "services": result['services'],
         "rssi": result['rssi'],
         "type": result['type'],
-        "time": result['time'],
+        "scan_time": result['time'],
+        "update_time": str(time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time()))),
         "mi": result['mi']
     }    
     await async_see(
@@ -89,25 +91,6 @@ async def see_device(
         attributes=attributes,
         source_type=SOURCE_TYPE_BLUETOOTH,
     )
-
-async def get_tracking_devices(hass: HomeAssistantType) -> Tuple[Set[str], Set[str]]:
-    """
-    加载所有已知设备.
-    我们只需要这些设备，所以请将“家庭和家庭范围”设置为
-    """
-    yaml_path: str = hass.config.path(YAML_DEVICES)
-
-    devices = await async_load_config(yaml_path, hass, 0)
-    bluetooth_devices = [device for device in devices if is_bluetooth_device(device)]
-
-    devices_to_track: Set[str] = {
-        device.mac[3:] for device in bluetooth_devices if device.track
-    }
-    devices_to_not_track: Set[str] = {
-        device.mac[3:] for device in bluetooth_devices if not device.track
-    }
-
-    return devices_to_track, devices_to_not_track
     
 async def async_setup_scanner(
     hass: HomeAssistantType, config: dict, async_see, discovery_info=None
@@ -120,8 +103,6 @@ async def async_setup_scanner(
     filter_mac = config.get(CONF_FILTER_MAC, [])
         
     update_bluetooth_lock = asyncio.Lock()
-
-    devices_to_track, devices_to_not_track = await get_tracking_devices(hass)
 
     async def perform_bluetooth_update():
         """发现蓝牙设备并更新状态."""

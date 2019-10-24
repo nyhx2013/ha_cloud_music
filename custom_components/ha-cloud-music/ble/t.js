@@ -42,6 +42,8 @@ http.createServer(function (req, res) {//回调函数
   if (req.url === '/ble') {
     res.writeHead(200, { 'Content-Type': 'application/json;charset=UTF-8' })
     res.end(JSON.stringify(ble_list))
+  } else if (req.url === '/scan') {
+    res.end("重新扫描")
   } else {
     res.end('404')
   }
