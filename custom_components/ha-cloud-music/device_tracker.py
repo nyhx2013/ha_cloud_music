@@ -63,7 +63,7 @@ def is_bluetooth_device(device) -> bool:
     return device.mac and device.mac[:3].upper() == BT_PREFIX
 
 
-def discover_devices(device_id: int, filter_mac):    
+def discover_devices(device_id: int, filter_mac):
     r = requests.get("http://localhost:8321/ble")
     ble = r.json()
     _LOGGER.info(ble)
@@ -82,16 +82,16 @@ async def see_device(
         "rssi": result['rssi'],
         "type": result['type'],
         "scan_time": result['time'],
-        "update_time": str(time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time()))),
-        "mi": result['mi']
-    }    
+        "update_time": str(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())))
+    }
     await async_see(
         mac=f"{BT_PREFIX}{mac}",
         host_name=name,
         attributes=attributes,
         source_type=SOURCE_TYPE_BLUETOOTH,
     )
-    
+
+
 async def async_setup_scanner(
     hass: HomeAssistantType, config: dict, async_see, discovery_info=None
 ):
@@ -101,22 +101,22 @@ async def async_setup_scanner(
     interval = config.get(CONF_SCAN_INTERVAL, SCAN_INTERVAL)
     # 获取要过滤的蓝牙
     filter_mac = config.get(CONF_FILTER_MAC, [])
-        
+
     update_bluetooth_lock = asyncio.Lock()
 
     async def perform_bluetooth_update():
         """发现蓝牙设备并更新状态."""
 
-        #_LOGGER.info("执行蓝牙设备发现和更新")
+        # _LOGGER.info("执行蓝牙设备发现和更新")
         tasks = []
 
-        try:            
+        try:
             # 获取所有设备
             devices = await hass.async_add_executor_job(discover_devices, device_id, filter_mac)
             # 遍历所有设备
             for item in devices:
                 tasks.append(see_device(hass, async_see, item))
-            
+
             if tasks:
                 await asyncio.wait(tasks)
 
@@ -136,7 +136,7 @@ async def async_setup_scanner(
 
         async with update_bluetooth_lock:
             await perform_bluetooth_update()
-    
+
     hass.async_create_task(update_bluetooth())
     async_track_time_interval(hass, update_bluetooth, interval)
 
