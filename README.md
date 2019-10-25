@@ -39,12 +39,14 @@ media_player:
 # sidebar_title: 侧边栏名称
 # sidebar_icon: 侧边栏图标
 # show_mode: 显示模式（全屏显示: fullscreen）
+# uid: 网易云音乐的用户ID
 
 media_player:
   - platform: ha-cloud-music
     sidebar_title: 云音乐
     sidebar_icon: mdi:music
     show_mode: fullscreen
+    uid: 47445304
 ```
 
 # 请一定要在HomeAssistant里使用，不然没啥用
