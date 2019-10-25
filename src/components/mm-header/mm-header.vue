@@ -6,13 +6,24 @@
     </h1>
     <dl class="user">
       <template v-if="user.userId">
-        <router-link class="user-info" to="/music/userlist" tag="dt">
+        <router-link
+          class="user-info"
+          to="/music/userlist"
+          tag="dt"
+        >
           <img :src="`${user.avatarUrl}?param=50y50`" />
           <span>{{user.nickname}}</span>
         </router-link>
-        <dd class="user-btn" @click="openDialog(2)">退出</dd>
+        <dd
+          class="user-btn"
+          @click="openDialog(2)"
+        >退出</dd>
       </template>
-      <dd v-else class="user-btn" @click="openDialog(0)">登录</dd>
+      <dd
+        v-else
+        class="user-btn"
+        @click="openDialog(0)"
+      >登录</dd>
     </dl>
     <!--登录-->
     <mm-dialog
@@ -32,7 +43,10 @@
           @keyup.enter="login"
         />
       </div>
-      <div slot="btn" @click="openDialog(1)">帮助</div>
+      <div
+        slot="btn"
+        @click="openDialog(1)"
+      >帮助</div>
     </mm-dialog>
     <!--帮助-->
     <mm-dialog
@@ -45,7 +59,10 @@
       <div class="mm-dialog-text">
         <p>
           1、
-          <a target="_blank" href="http://music.163.com">点我(http://music.163.com)</a>打开网易云音乐官网
+          <a
+            target="_blank"
+            href="http://music.163.com"
+          >点我(http://music.163.com)</a>打开网易云音乐官网
         </p>
         <p>2、点击页面右上角的“登录”</p>
         <p>3、点击您的头像，进入我的主页</p>
@@ -53,90 +70,99 @@
       </div>
     </mm-dialog>
     <!--退出-->
-    <mm-dialog ref="outDialog" @confirm="out" bodyText="确定退出当前用户吗？" />
+    <mm-dialog
+      ref="outDialog"
+      @confirm="out"
+      bodyText="确定退出当前用户吗？"
+    />
   </header>
 </template>
 
 <script>
-import { getUserPlaylist } from 'api'
-import { mapGetters, mapActions } from 'vuex'
-import MmDialog from 'base/mm-dialog/mm-dialog'
+import { getUserPlaylist } from "api";
+import { mapGetters, mapActions } from "vuex";
+import MmDialog from "base/mm-dialog/mm-dialog";
 
 export default {
-  name: 'mm-header',
+  name: "mm-header",
   components: {
     MmDialog
   },
   data() {
     return {
-      ver: '',
+      ver: "",
       user: {}, // 用户数据
-      uidValue: '' // 记录用户 UID
-    }
+      uidValue: "" // 记录用户 UID
+    };
   },
   computed: {
-    ...mapGetters(['uid'])
+    ...mapGetters(["uid"])
   },
   created() {
-    this.uid && this._getUserPlaylist(this.uid)
-    let url = new URLSearchParams(location.search)
-    this.ver = url.get('ver')
+    let url = new URLSearchParams(location.search);
+    this.ver = url.get("ver");
+    let uid = url.get("uid");
+    if (uid && !this.uid) {
+      this._getUserPlaylist(uid);
+    } else {
+      this.uid && this._getUserPlaylist(this.uid);
+    }
   },
   methods: {
     // 打开对话框
     openDialog(key) {
       switch (key) {
         case 0:
-          this.$refs.loginDialog.show()
-          break
+          this.$refs.loginDialog.show();
+          break;
         case 1:
-          this.$refs.loginDialog.hide()
-          this.$refs.helpDialog.show()
-          break
+          this.$refs.loginDialog.hide();
+          this.$refs.helpDialog.show();
+          break;
         case 2:
-          this.$refs.outDialog.show()
-          break
+          this.$refs.outDialog.show();
+          break;
         case 3:
-          this.$refs.loginDialog.hide()
-          break
+          this.$refs.loginDialog.hide();
+          break;
       }
     },
     // 退出登录
     out() {
-      this.user = {}
-      this.setUid(null)
-      this.$mmToast('退出成功！')
+      this.user = {};
+      this.setUid(null);
+      this.$mmToast("退出成功！");
     },
     // 登录
     login() {
-      if (this.uidValue === '') {
-        this.$mmToast('UID不能为空')
-        this.openDialog(0)
-        return
+      if (this.uidValue === "") {
+        this.$mmToast("UID不能为空");
+        this.openDialog(0);
+        return;
       }
-      this.openDialog(3)
-      this._getUserPlaylist(this.uidValue)
+      this.openDialog(3);
+      this._getUserPlaylist(this.uidValue);
     },
     // 获取用户数据
     _getUserPlaylist(uid) {
       getUserPlaylist(uid).then(res => {
         if (res.data.code === 200) {
-          this.uidValue = ''
+          this.uidValue = "";
           if (res.data.playlist.length === 0 || !res.data.playlist[0].creator) {
-            this.$mmToast(`未查询找UID为 ${uid} 的用户信息`)
-            return
+            this.$mmToast(`未查询找UID为 ${uid} 的用户信息`);
+            return;
           }
-          this.setUid(uid)
-          this.user = res.data.playlist[0].creator
+          this.setUid(uid);
+          this.user = res.data.playlist[0].creator;
           setTimeout(() => {
-            this.$mmToast(`${this.user.nickname} 欢迎使用`)
-          }, 200)
+            this.$mmToast(`${this.user.nickname} 欢迎使用`);
+          }, 200);
         }
-      })
+      });
     },
-    ...mapActions(['setUid'])
+    ...mapActions(["setUid"])
   }
-}
+};
 </script>
 
 <style lang="less">
