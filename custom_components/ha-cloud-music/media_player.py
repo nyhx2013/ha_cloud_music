@@ -17,7 +17,7 @@ from urllib.request import urlopen
 
 _LOGGER = logging.getLogger(__name__)
 ############## 日志记录
-_DEBUG = True
+_DEBUG = False
 def _log(*arg):
     if _DEBUG:
         _LOGGER.info(*arg)
@@ -42,7 +42,7 @@ TIME_BETWEEN_UPDATES = datetime.timedelta(seconds=1)
 ###################媒体播放器##########################
 
 
-VERSION = '1.0.4.4'
+VERSION = '1.0.5'
 DOMAIN = 'ha-cloud-music'
 _DOMAIN = DOMAIN.replace('-','_')
 
@@ -98,6 +98,8 @@ class HassGateView(HomeAssistantView):
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
     vol.Optional("sidebar_title", default="云音乐"): cv.string,
     vol.Optional("sidebar_icon", default="mdi:music"): cv.string,
+    # 网易云音乐用户ID
+    vol.Optional("uid", default=""): cv.string,
     # 显示模式 全屏：fullscreen
     vol.Optional("show_mode", default="default"): cv.string
 })
@@ -124,7 +126,9 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
         config.get("sidebar_title"),
         config.get("sidebar_icon"),
         _DOMAIN,
-        {"url": "/" + DOMAIN+"/" + VERSION + "/dist/index.html?ver="+VERSION+"&show_mode=" + config.get("show_mode")},
+        {"url": "/" + DOMAIN+"/" + VERSION + "/dist/index.html?ver=" + VERSION 
+        + "&show_mode=" + config.get("show_mode")
+        + "&uid=" + config.get("uid")},
         require_admin=True,
     )
     try:
@@ -143,7 +147,11 @@ class VlcDevice(MediaPlayerDevice):
         self.music_playlist = None
         self.music_index = 0
         self._name = DOMAIN
+        self._media_image_url = None
         self._media_title = None
+        self._media_name = None
+        self._media_artist = None
+        self._media_album_name = None
         self._volume = None
         self._muted = None
         self._state = STATE_IDLE
@@ -169,7 +177,7 @@ class VlcDevice(MediaPlayerDevice):
 
     def interval(self, now):
         # 如果当前状态是播放，则进度累加（虽然我定时的是1秒，但不知道为啥2秒执行一次）
-        if self._media != None and 'media_position' not in self._media.attributes:
+        if self._media != None:
             _log('当前时间：%s，当前进度：%s,总进度：%s', self._media_position_updated_at, self._media_position, self.media_duration)
             _log('源播放器状态 %s，云音乐状态：%s', self._media.state, self._state)
             
@@ -177,7 +185,12 @@ class VlcDevice(MediaPlayerDevice):
             if self._timer_enable == True:
                 # 如果进度条结束了，则执行下一曲
                 # 执行下一曲之后，15秒内不能再次执行操作
-                if ((self.media_duration > 3 and self.media_duration - 3 <= self.media_position) or (self._state != STATE_PLAYING and self.media_duration == 0 and self._media_position  == -3)) and self.next_count > 0:
+                if (self._source_list != None 
+                    and len(self._source_list) > 0 
+                    and self.media_duration > 0 
+                    and ((self.media_duration > 3 and self.media_duration - 3 <= self.media_position) 
+                        or (self._state != STATE_PLAYING and self.media_duration == 0 and self._media_position  == -3)) 
+                    and self.next_count > 0):
                     _log('播放器更新 下一曲')
                     self.media_next_track()
                 # 计数器累加
@@ -185,38 +198,21 @@ class VlcDevice(MediaPlayerDevice):
                 if self.next_count > 100:
                     self.next_count = 100
                 
-                self.update()    
+                self.update()
             
-            newtime = datetime.datetime.now()
-            # 如果当前进度大于总进度，则重置
-            if self._media_position_updated_at == None or self.media_duration == 0 or self._media_position > self.media_duration or self._media_duration != self.media_duration:
-                self._media_position = -3
-                self._media_position_updated_at = newtime
-                
-            if self._state == STATE_PLAYING:
+            # 如果存在进度，则取源进度
+            if 'media_position' in self._media.attributes:
+                self._media_position = int(self._media.attributes['media_position'])
+            # 如果当前是播放状态，则进行进度累加。。。
+            elif self._state == STATE_PLAYING and self._media_position_updated_at != None:
                 _media_position = self._media_position
-                self._media_position += (newtime - self._media_position_updated_at).seconds                
-                self._media_position_updated_at = newtime
-                # 如果没有2秒，则再+1
-                if self._media_position == _media_position + 1:
-                    self._media_position += 1     
-        
-        # 如果有源播放器，并且选择的是列表，才进行检测
-        elif self._media != None and self._timer_enable == True:
-            _log('当前时间：%s，当前进度：%s,总进度：%s', self.media_position_updated_at, self.media_position, self.media_duration)
-            # 如果进度条结束了，则执行下一曲
-            # 如果当前是播放状态，并且进度为0，两边的长度一样，则执行下一曲
-            # 执行下一曲之后，15秒内不能再次执行操作
-            if ((self.media_duration > 2 and self.media_duration - 2 <= self.media_position) or (self._state == STATE_PLAYING and  self.media_position == 0 and self._media.state == STATE_PLAYING and self.media_duration == int(self._media.attributes['media_duration']))) and self.next_count > 0:
-                _log('播放器更新 下一曲')
-                self.media_next_track()
-            # 计数器累加
-            self.next_count += 1
-            if self.next_count > 100:
-                self.next_count = 100
+                _today = (now - self._media_position_updated_at)
+                _seconds = _today.seconds + _today.microseconds / 1000000.0
+                _log('当前相差的秒：%s', _seconds)
+                self._media_position += _seconds
             
-            self.update()            
-        
+            self._media_position_updated_at = now
+            
     def update(self):        
         """Get the latest details from the device."""
         if self._sound_mode == None:
@@ -244,6 +240,16 @@ class VlcDevice(MediaPlayerDevice):
     def name(self):
         """Return the name of the device."""
         return self._name
+    
+    @property
+    def friendly_name(self):
+        """Return the name of the device."""
+        return "网易云音乐"
+    
+    @property
+    def media_image_url(self):
+        """Image url of current playing media."""
+        return self._media_image_url        
         
     @property
     def source_list(self):
@@ -264,16 +270,26 @@ class VlcDevice(MediaPlayerDevice):
     def sound_mode(self):
         """Return the name of the device."""
         return self._sound_mode
-        
+    
+    @property
+    def media_album_name(self):
+        """专辑名称."""
+        return self._media_album_name
+    
     @property
     def media_playlist(self):
-        """Return the name of the device."""
-        return self._media_playlist
+        """当前播放的播放列表的标题"""
+        return self._media_name
     
     @property
     def media_title(self):
-        """Return the name of the device."""
+        """歌曲名称."""
         return self._media_title
+        
+    @property
+    def media_artist(self):
+        """歌手"""
+        return self._media_artist
 
     @property
     def state(self):
@@ -332,9 +348,6 @@ class VlcDevice(MediaPlayerDevice):
         """Position of current playing media in seconds."""
         if self._media == None:
             return None
-                        
-        if 'media_position' in self._media.attributes:
-            return int(self._media.attributes['media_position'])
             
         return self._media_position
 		
@@ -347,7 +360,7 @@ class VlcDevice(MediaPlayerDevice):
         if 'media_position_updated_at' in self._media.attributes:
             return self._media.attributes['media_position_updated_at']
             
-        return None
+        return self._media_position_updated_at
 
     def media_seek(self, position):
         """Seek the media to a specific location."""
@@ -432,7 +445,7 @@ class VlcDevice(MediaPlayerDevice):
             _LOGGER.error(
                 "不受支持的媒体类型 %s",media_type)
             return
-        _log('title：%s ，play url：%s' , self._media_title, url)
+        _log('title：%s ，play url：%s' , self._media_name, url)
         
         # 默认为music类型，如果指定视频，则替换
         play_type = "music"
@@ -448,7 +461,9 @@ class VlcDevice(MediaPlayerDevice):
            return
         # 重置错误计数
         self.error_count = 0
-            
+        # 重置播放进度
+        self._media_position = 0
+        self._media_position_updated_at = None
         #播放音乐
         self.call('play_media', {"url": url,"type": play_type})
 
@@ -481,8 +496,12 @@ class VlcDevice(MediaPlayerDevice):
         self.music_playlist = None
         self.music_index = 0
         self._media_title = None
+        self._media_name = None
         self._source_list = None
+        self._media_album_name = None
         self._source = None
+        self._media_image_url = None
+        self._media_artist = None
         self._media_playlist = None
         self._media_position_updated_at = None
         self._media_position = 0
@@ -530,8 +549,19 @@ class VlcDevice(MediaPlayerDevice):
         #_log(self._sound_mode_list)
        
     def get_url(self, music_info):
-        self._media_title = music_info['song'] + ' - ' + music_info['singer']
-        self._source = str(self.music_index + 1) + '.' + self._media_title
+        self._media_name = music_info['song'] + ' - ' + music_info['singer']
+        self._source = str(self.music_index + 1) + '.' + self._media_name
+        # 歌名
+        self._media_title = music_info['song']
+        # 歌手
+        self._media_artist = music_info['singer']
+        # 设置图片
+        if 'image' in music_info:
+            self._media_image_url = music_info['image']
+        # 设置专辑名称
+        if 'album' in music_info:
+            self._media_album_name = music_info['album']
+        
         if 'clv_url' in music_info:
            return music_info['clv_url']
         else:
