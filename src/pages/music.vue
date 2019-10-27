@@ -4,47 +4,24 @@
       <div class="music-left">
         <music-btn />
         <keep-alive>
-          <router-view
-            v-if="$route.meta.keepAlive"
-            class="music-list"
-          />
+          <router-view v-if="$route.meta.keepAlive" class="music-list" />
         </keep-alive>
-        <router-view
-          :key="$route.path"
-          v-if="!$route.meta.keepAlive"
-          class="music-list"
-        />
+        <router-view :key="$route.path" v-if="!$route.meta.keepAlive" class="music-list" />
       </div>
-      <lyric
-        class="music-right"
-        :lyric="lyric"
-        :nolyric="nolyric"
-        :lyricIndex="lyricIndex"
-      />
+      <lyric class="music-right" :lyric="lyric" :nolyric="nolyric" :lyricIndex="lyricIndex" />
     </div>
 
     <!--播放器-->
-    <div
-      class="music-bar"
-      :class="{disable:!musicReady||!currentMusic.id}"
-    >
+    <div class="music-bar" :class="{disable:!musicReady||!currentMusic.id}">
       <div class="music-bar-btns">
-        <i
-          class="bar-icon btn-prev"
-          title="上一曲 Ctrl + Left"
-          @click="prev"
-        ></i>
+        <i class="bar-icon btn-prev" title="上一曲 Ctrl + Left" @click="prev"></i>
         <i
           class="bar-icon btn-play"
           :class="{'btn-play-pause':playing}"
           title="播放暂停 Ctrl + Space"
           @click="play"
         ></i>
-        <i
-          class="bar-icon btn-next"
-          title="下一曲 Ctrl + Right"
-          @click="next"
-        ></i>
+        <i class="bar-icon btn-next" title="下一曲 Ctrl + Right" @click="next"></i>
       </div>
       <div class="music-music">
         <div class="music-bar-info">
@@ -65,37 +42,16 @@
           @percentChange="progressMusic"
         />
       </div>
-      <i
-        class="bar-icon btn-mode"
-        :class="modeClass"
-        :title="modeTitle"
-        @click="modeChange"
-      ></i>
-      <i
-        class="bar-icon btn-comment"
-        @click="openComment"
-      ></i>
-      <div
-        class="music-bar-volume"
-        title="音量加减 [Ctrl+Up/Down]"
-      >
-        <i
-          class="bar-icon btn-volume"
-          :class="{'btn-volume-no':isMute}"
-          @click="switchMute"
-        ></i>
-        <mm-progress
-          @percentChange="volumeChange"
-          :percent="volume"
-        />
+      <i class="bar-icon btn-mode" :class="modeClass" :title="modeTitle" @click="modeChange"></i>
+      <i class="bar-icon btn-comment" @click="openComment"></i>
+      <div class="music-bar-volume" title="音量加减 [Ctrl+Up/Down]">
+        <i class="bar-icon btn-volume" :class="{'btn-volume-no':isMute}" @click="switchMute"></i>
+        <mm-progress @percentChange="volumeChange" :percent="volume" />
       </div>
     </div>
 
     <!--遮罩-->
-    <div
-      class="mmPlayer-bg"
-      :style="{backgroundImage: picUrl}"
-    ></div>
+    <div class="mmPlayer-bg" :style="{backgroundImage: picUrl}"></div>
     <div class="mmPlayer-mask"></div>
   </div>
 </template>
@@ -237,6 +193,8 @@ export default {
             }, 1000);
           });
         }
+        // 初始化播放模式
+        this.setPlayMode(attr.shuffle ? 2 : 0)
       })
       .finally(() => {
         this.$nextTick(() => {
@@ -348,25 +306,38 @@ export default {
     },
     // 切换播放顺序
     modeChange() {
-      top.alert("如果加上这个功能，我还要改很多代码，所以不能用");
-      return;
-      const mode = (this.mode + 1) % 4;
+      // 这里调用随机值的方法
+      let msg, mode;
+      if (this.mode != 2) {
+        mode = 2
+        msg = "启用随机播放模式"
+      } else {
+        mode = 0
+        msg = "启用列表循环模式"
+      }
+      window.clv.exec({
+        cmd: 'shuffle',
+        shuffle: mode
+      });
       this.setPlayMode(mode);
-      if (mode === playMode.loop) {
-        return;
-      }
-      let list = [];
-      switch (mode) {
-        case playMode.listLoop:
-        case playMode.order:
-          list = this.orderList;
-          break;
-        case playMode.random:
-          list = randomSortArray(this.orderList);
-          break;
-      }
-      this.resetCurrentIndex(list);
-      this.setPlaylist(list);
+      this.$mmToast(msg)
+      //const mode = (this.mode + 1) % 4;
+      //this.setPlayMode(mode);
+      //if (mode === playMode.loop) {
+      //  return;
+      //}
+      // let list = [];
+      // switch (mode) {
+      //   case playMode.listLoop:
+      //   case playMode.order:
+      //     list = this.orderList;
+      //     break;
+      //   case playMode.random:
+      //     list = randomSortArray(this.orderList);
+      //     break;
+      // }
+      // this.resetCurrentIndex(list);
+      // this.setPlaylist(list);
     },
     // 修改当前歌曲索引
     resetCurrentIndex(list) {

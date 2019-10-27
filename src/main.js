@@ -136,6 +136,9 @@ window.clv = {
       } else if (args.cmd == 'volume') {
         media_action = 'volume_set'
         media_args['volume_level'] = parseFloat(args.index)
+      } else if (args.cmd == 'shuffle') {
+        media_action = 'shuffle_set'
+        media_args['shuffle'] = parseFloat(args.shuffle)
       }
       call(media_args, media_action, "media_player");
     })

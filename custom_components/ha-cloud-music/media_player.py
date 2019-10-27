@@ -5,6 +5,7 @@ import voluptuous as vol
 import requests
 import time 
 import datetime
+import random
 
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.event import track_time_interval
@@ -22,12 +23,28 @@ def _log(*arg):
     if _DEBUG:
         _LOGGER.info(*arg)
 
+def _log_info(*arg):
+    _LOGGER.info(*arg)
+
+# 获取重写向后的地址
+def get_redirect_url(url):
+    # 请求头，这里我设置了浏览器代理
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.87 Safari/537.36'}
+    # 请求网页
+    response = requests.get(url, headers=headers)
+    result_url = response.url
+    if result_url == 'https://music.163.com/404':
+        return None
+    return result_url
+
 ###################媒体播放器##########################
 from homeassistant.components.media_player import (
     MediaPlayerDevice, PLATFORM_SCHEMA)
 from homeassistant.components.media_player.const import (
     MEDIA_TYPE_MUSIC,MEDIA_TYPE_URL, SUPPORT_PAUSE, SUPPORT_PLAY, SUPPORT_NEXT_TRACK, SUPPORT_PREVIOUS_TRACK, SUPPORT_TURN_ON, SUPPORT_TURN_OFF,
-    SUPPORT_PLAY_MEDIA, SUPPORT_STOP, SUPPORT_VOLUME_MUTE, SUPPORT_VOLUME_SET, SUPPORT_SELECT_SOURCE, SUPPORT_CLEAR_PLAYLIST, SUPPORT_STOP, SUPPORT_SELECT_SOUND_MODE)
+    SUPPORT_PLAY_MEDIA, SUPPORT_STOP, SUPPORT_VOLUME_MUTE, SUPPORT_VOLUME_SET, SUPPORT_SELECT_SOURCE, SUPPORT_CLEAR_PLAYLIST, SUPPORT_STOP, 
+    SUPPORT_SELECT_SOUND_MODE, SUPPORT_SHUFFLE_SET, SUPPORT_SEEK, SUPPORT_VOLUME_STEP)
 from homeassistant.const import (
     CONF_NAME, STATE_IDLE, STATE_PAUSED, STATE_PLAYING, STATE_OFF, STATE_UNAVAILABLE)
 import homeassistant.helpers.config_validation as cv
@@ -35,14 +52,15 @@ import homeassistant.util.dt as dt_util
 from homeassistant.helpers import discovery, device_registry as dr
 
 SUPPORT_VLC = SUPPORT_PAUSE | SUPPORT_VOLUME_SET | SUPPORT_VOLUME_MUTE | SUPPORT_STOP | SUPPORT_SELECT_SOUND_MODE | SUPPORT_TURN_ON | SUPPORT_TURN_OFF | \
-    SUPPORT_PLAY_MEDIA | SUPPORT_PLAY | SUPPORT_STOP | SUPPORT_NEXT_TRACK | SUPPORT_PREVIOUS_TRACK | SUPPORT_SELECT_SOURCE | SUPPORT_CLEAR_PLAYLIST
+    SUPPORT_PLAY_MEDIA | SUPPORT_PLAY | SUPPORT_STOP | SUPPORT_NEXT_TRACK | SUPPORT_PREVIOUS_TRACK | SUPPORT_SELECT_SOURCE | SUPPORT_CLEAR_PLAYLIST | \
+    SUPPORT_SHUFFLE_SET | SUPPORT_SEEK | SUPPORT_VOLUME_STEP
 
 # 定时器时间
 TIME_BETWEEN_UPDATES = datetime.timedelta(seconds=1)
 ###################媒体播放器##########################
 
 
-VERSION = '1.0.5'
+VERSION = '1.0.5.1'
 DOMAIN = 'ha-cloud-music'
 _DOMAIN = DOMAIN.replace('-','_')
 
@@ -155,7 +173,7 @@ class VlcDevice(MediaPlayerDevice):
         self._volume = None
         self._muted = None
         self._state = STATE_IDLE
-        
+        self._shuffle = False
         self._source_list = None
         self._source = None
         self._sound_mode_list = None
@@ -278,8 +296,8 @@ class VlcDevice(MediaPlayerDevice):
     
     @property
     def media_playlist(self):
-        """当前播放的播放列表的标题"""
-        return self._media_name
+        """当前播放列表"""
+        return self._media_playlist
     
     @property
     def media_title(self):
@@ -323,6 +341,11 @@ class VlcDevice(MediaPlayerDevice):
         return False
 
     @property
+    def shuffle(self):
+        """随机播放开关."""
+        return self._shuffle
+
+    @property
     def supported_features(self):
         """Flag media player features that are supported."""
         return SUPPORT_VLC
@@ -361,6 +384,10 @@ class VlcDevice(MediaPlayerDevice):
             return self._media.attributes['media_position_updated_at']
             
         return self._media_position_updated_at
+
+    def set_shuffle(self, shuffle):
+        """禁用/启用 随机模式."""
+        self._shuffle = shuffle
 
     def media_seek(self, position):
         """Seek the media to a specific location."""
@@ -445,7 +472,7 @@ class VlcDevice(MediaPlayerDevice):
             _LOGGER.error(
                 "不受支持的媒体类型 %s",media_type)
             return
-        _log('title：%s ，play url：%s' , self._media_name, url)
+        _log_info('title：%s ，play url：%s' , self._media_name, url)
         
         # 默认为music类型，如果指定视频，则替换
         play_type = "music"
@@ -454,7 +481,7 @@ class VlcDevice(MediaPlayerDevice):
         # 如果没有url则下一曲（如果超过3个错误，则停止）
         # 如果是云音乐播放列表 并且格式不是mp3，则下一曲
         elif url == None or (media_type == 'music_load' and url.find(".mp3") < 0):
-           _log("当前URL不能播放")
+           _log_info("当前URL不能播放")
            self.error_count = self.error_count + 1
            if self.error_count < 3:
              self.media_next_track()
@@ -500,6 +527,7 @@ class VlcDevice(MediaPlayerDevice):
         self._source_list = None
         self._media_album_name = None
         self._source = None
+        self._shuffle = False
         self._media_image_url = None
         self._media_artist = None
         self._media_playlist = None
@@ -565,10 +593,10 @@ class VlcDevice(MediaPlayerDevice):
         if 'clv_url' in music_info:
            return music_info['clv_url']
         else:
-           res = requests.get("https://api.jiluxinqing.com/api/music/song/url?id=" + str(music_info['id']))
-           obj = res.json()
-           url = obj['data'][0]['url']
-           return url
+           #res = requests.get("https://api.jiluxinqing.com/api/music/song/url?id=" + str(music_info['id']))
+           #obj = res.json()
+           #url = obj['data'][0]['url']           
+           return get_redirect_url(music_info['url'])
     
     def call(self, action, info = None):
         dict = {"entity_id": self._sound_mode}
@@ -597,6 +625,12 @@ class VlcDevice(MediaPlayerDevice):
            self.music_index = 0
         elif self.music_index < 0:
            self.music_index = playlist_count - 1
+
+        # 如果启用了随机模式，则每次都生成随机值
+        if self._shuffle == True:
+           self.music_index = random.randint(0, playlist_count - 1)
+           _log_info("当前总共有 %s 首音乐，随机播放第 %s 首", playlist_count, self.music_index)
+
         self.play_media('music_load', self.music_index)
         
 ###################媒体播放器##########################
