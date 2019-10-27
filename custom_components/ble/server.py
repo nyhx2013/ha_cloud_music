@@ -15,7 +15,7 @@ import time
 import _thread
 
 data = "[]"
-host = ('localhost', 8321)
+host = ('127.0.0.1', 8321)
 
 class MyDiscoverer(bluetooth.DeviceDiscoverer):
 
@@ -98,12 +98,15 @@ class MyDiscoverer(bluetooth.DeviceDiscoverer):
 def loop():
     while True:
         try:
+            print("开始扫描蓝牙设备")
             d = MyDiscoverer()
             d.find_devices(lookup_names=True)
             # 获取所有设备
             d.read_devices()
+            print("扫描完成，当前共有 %s 个蓝牙设备 ", len(d._devices))
             global data
             data = json.dumps(d._devices, ensure_ascii=False)
+            time.sleep(12)
         except Exception as e:
             print('Error:',e)
         
