@@ -1,3 +1,11 @@
+'''
+开启服务
+python3 server.py
+
+调用URL获取扫描到的蓝牙列表
+http://localhost:8321/ble
+'''
+
 from http.server import HTTPServer, BaseHTTPRequestHandler
 import bluetooth
 import select
