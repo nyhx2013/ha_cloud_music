@@ -69,7 +69,10 @@ media_player:
 PC端界面自我感觉还行， 就是移动端界面总觉得怪怪的，奈何审美有限，所以又去整了高仿网易云的 React 版本（如果小哥哥、小姐姐们有好看的界面，欢迎交流哈）
 
 ### PC
-
+#### 播放组件
+![播放组件](https://raw.githubusercontent.com/shaonianzhentan/lovelace-cloud-music/master/screenshots/微信截图_20191027173028.png)
+#### 服务页面
+![选择媒体插件](https://raw.githubusercontent.com/shaonianzhentan/lovelace-cloud-music/master/screenshots/微信截图_20191027172903.png)
 #### 选择媒体插件
 ![选择媒体插件](https://raw.githubusercontent.com/shaonianzhentan/lovelace-cloud-music/master/screenshots/select_mode.png)
 #### 正在播放
