@@ -560,40 +560,41 @@ class VlcDevice(MediaPlayerDevice):
     
     ## 自定义方法
     # 加载播放列表
-    def load_songlist(self, call):
+    def load_songlist(self, call):                
+        _id = call.data['id']
+        _log_info("加载歌单列表，歌单列表ID：%s", _id)
         
         if self.loading == True:
             self.notification("正在加载歌单，请勿重复调用服务", "load_songlist")
             return
-            
-        self.loading = True
-        
-        _id = call.data['id']
-        _log_info("加载歌单列表，歌单列表ID：%s", _id)        
-        # 获取播放列表
-        res = requests.get('https://api.jiluxinqing.com/api/music/playlist/detail?id=' + str(_id))
-        obj = res.json()
-        if obj['code'] == 200:
-            _list = obj['playlist']['tracks']
-            _newlist = map(lambda item: {
-                "id": int(item['id']),
-                "name": item['name'],
-                "album": item['al']['name'],
-                "image": item['al']['picUrl'],
-                "duration": int(item['dt']) / 1000,
-                "url": "https://music.163.com/song/media/outer/url?id=" + str(item['id']),
-                "song": item['name'],
-                "singer": len(item['ar']) > 0 and item['ar'][0]['name'] or '未知'
-                }, _list)            
-            #_log_info(_result)
-            self.play_media('music_playlist', list(_newlist))
-            self.notification("正在播放歌单【"+obj['playlist']['name']+"】", "load_songlist")
-        else:
-            # 这里弹出提示
-            self.notification("没有找到id为【"+_id+"】的歌单信息", "load_songlist")
-            
-        # 这里重置    
-        self.loading = False
+        self.loading = True        
+        try:
+            # 获取播放列表
+            res = requests.get('https://api.jiluxinqing.com/api/music/playlist/detail?id=' + str(_id))
+            obj = res.json()
+            if obj['code'] == 200:
+                _list = obj['playlist']['tracks']
+                _newlist = map(lambda item: {
+                    "id": int(item['id']),
+                    "name": item['name'],
+                    "album": item['al']['name'],
+                    "image": item['al']['picUrl'],
+                    "duration": int(item['dt']) / 1000,
+                    "url": "https://music.163.com/song/media/outer/url?id=" + str(item['id']),
+                    "song": item['name'],
+                    "singer": len(item['ar']) > 0 and item['ar'][0]['name'] or '未知'
+                    }, _list)            
+                #_log_info(_result)
+                self.play_media('music_playlist', list(_newlist))
+                self.notification("正在播放歌单【"+obj['playlist']['name']+"】", "load_songlist")
+            else:
+                # 这里弹出提示
+                self.notification("没有找到id为【"+_id+"】的歌单信息", "load_songlist")
+        except Exception as e:
+            self.notification("加载歌单的时候出现了异常", "load_songlist")
+        finally:
+            # 这里重置    
+            self.loading = False
         
     # 更新播放器列表
     def update_sound_mode_list(self):
