@@ -54,6 +54,17 @@ window.clv = {
         reject("检测到当前HomeAssistant没有安装媒体播放器，本功能无法使用")
         return;
       }
+      // 这里拦截所有请求信息，如果ID重用，则刷新页面
+      conn.socket.onmessage = function ({ data }) {
+        try {
+          let res = JSON.parse(data)
+          if (res.success == false && res.error.code == 'id_reuse') {
+            top.location.reload()
+          }
+        } catch (ex) {
+          console.log(data)
+        }
+      }
       // 查找自定义播放器
       let musicEntity = Object.keys(conn._ent.state).find(key => key.indexOf('media_player.ha_cloud_music') === 0)
       //console.log(musicEntity)

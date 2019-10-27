@@ -137,7 +137,12 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
     global _hass
     _hass = hass
     _hass.http.register_view(HassGateView)
-    add_entities([VlcDevice(hass)])
+    vlcDevice = VlcDevice(hass)
+    add_entities([vlcDevice])
+
+    # 注册服务hachina.change_state
+    hass.services.register(DOMAIN, 'load_songlist', vlcDevice.load_songlist)
+
     # 添加到侧边栏
     coroutine = hass.components.frontend.async_register_built_in_panel(
         "iframe",
@@ -150,10 +155,11 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
         require_admin=True,
     )
     try:
-        coroutine.send(None)
+        if coroutine != None:
+            coroutine.send(None)
     except StopIteration:
-        pass
-    return True
+        pass    
+    return True   
 
 ###################媒体播放器##########################
 class VlcDevice(MediaPlayerDevice):
@@ -184,6 +190,7 @@ class VlcDevice(MediaPlayerDevice):
         self._media_duration = None
         # 错误计数
         self.error_count = 0
+        self.loading = False
         # 定时器操作计数
         self.next_count = 0
         
@@ -454,10 +461,18 @@ class VlcDevice(MediaPlayerDevice):
             _log('绑定数据源：%s', self._source_list)
         elif media_type == 'music_playlist':
             _log('初始化播放列表')
-            dict = json.loads(media_id)
-            self._media_playlist = dict['list']
-            self.music_playlist = json.loads(self._media_playlist)
-            self.music_index = dict['index']
+            
+            # 如果是list类型，则进行操作
+            if isinstance(media_id, list):            
+                self._media_playlist = json.dumps(media_id)
+                self.music_playlist = media_id
+                self.music_index = 0
+            else:
+                dict = json.loads(media_id)    
+                self._media_playlist = dict['list']
+                self.music_playlist = json.loads(self._media_playlist)
+                self.music_index = dict['index']
+                
             music_info = self.music_playlist[self.music_index]
             url = self.get_url(music_info)
             #数据源
@@ -481,7 +496,7 @@ class VlcDevice(MediaPlayerDevice):
         # 如果没有url则下一曲（如果超过3个错误，则停止）
         # 如果是云音乐播放列表 并且格式不是mp3，则下一曲
         elif url == None or (media_type == 'music_load' and url.find(".mp3") < 0):
-           _log_info("当前URL不能播放")
+           self.notification("没有找到【" + self._media_name + "】的播放链接，自动为您跳到下一首", "load_song_url")
            self.error_count = self.error_count + 1
            if self.error_count < 3:
              self.media_next_track()
@@ -540,8 +555,46 @@ class VlcDevice(MediaPlayerDevice):
         """Send stop command."""
         self.clear_playlist()
     
-    ## 自定义方法
+    def notification(self, message, type):
+        self._hass.services.call('persistent_notification', 'create', {"message": message, "title": "云音乐", "notification_id": "ha-cloud-music-" + type})
     
+    ## 自定义方法
+    # 加载播放列表
+    def load_songlist(self, call):
+        
+        if self.loading == True:
+            self.notification("正在加载歌单，请勿重复调用服务", "load_songlist")
+            return
+            
+        self.loading = True
+        
+        _id = call.data['id']
+        _log_info("加载歌单列表，歌单列表ID：%s", _id)        
+        # 获取播放列表
+        res = requests.get('https://api.jiluxinqing.com/api/music/playlist/detail?id=' + str(_id))
+        obj = res.json()
+        if obj['code'] == 200:
+            _list = obj['playlist']['tracks']
+            _newlist = map(lambda item: {
+                "id": int(item['id']),
+                "name": item['name'],
+                "album": item['al']['name'],
+                "image": item['al']['picUrl'],
+                "duration": int(item['dt']) / 1000,
+                "url": "https://music.163.com/song/media/outer/url?id=" + str(item['id']),
+                "song": item['name'],
+                "singer": len(item['ar']) > 0 and item['ar'][0]['name'] or '未知'
+                }, _list)            
+            #_log_info(_result)
+            self.play_media('music_playlist', list(_newlist))
+            self.notification("正在播放歌单【"+obj['playlist']['name']+"】", "load_songlist")
+        else:
+            # 这里弹出提示
+            self.notification("没有找到id为【"+_id+"】的歌单信息", "load_songlist")
+            
+        # 这里重置    
+        self.loading = False
+        
     # 更新播放器列表
     def update_sound_mode_list(self):
         entity_list = self._hass.states.entity_ids('media_player')
