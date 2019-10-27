@@ -1,6 +1,6 @@
 '''
 开启服务
-python3 server.py
+python3 ble.py
 
 调用URL获取扫描到的蓝牙列表
 http://localhost:8321/ble
