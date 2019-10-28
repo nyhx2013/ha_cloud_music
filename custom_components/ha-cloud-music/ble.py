@@ -10,12 +10,16 @@ from http.server import HTTPServer, BaseHTTPRequestHandler
 import bluetooth
 import select
 import json
+import os
+import sys
 import datetime
 import time
 import _thread
 
 data = "[]"
-host = ('127.0.0.1', 8321)
+scan_time = datetime.datetime.now()
+host = ('0.0.0.0', 8321)
+
 
 class MyDiscoverer(bluetooth.DeviceDiscoverer):
 
@@ -61,6 +65,10 @@ class MyDiscoverer(bluetooth.DeviceDiscoverer):
                 #print("    %s" % classname)
         #print("  RSSI: " + str(rssi))
 
+        # 设置扫描时间
+        global scan_time
+        scan_time = datetime.datetime.now()
+
         self._devices.append({
             "name": str(name, encoding='utf-8'),
             "mac": str(address),
@@ -94,7 +102,9 @@ class MyDiscoverer(bluetooth.DeviceDiscoverer):
             return devices[0]
         return None
 
-# 循环调用        
+# 循环调用
+
+
 def loop():
     while True:
         try:
@@ -106,11 +116,22 @@ def loop():
             print("扫描完成，当前共有 %s 个蓝牙设备 ", len(d._devices))
             global data
             data = json.dumps(d._devices, ensure_ascii=False)
+            global data_list
+            data_list = d._devices
             time.sleep(12)
         except Exception as e:
-            print('Error:',e)
-        
-_thread.start_new_thread(loop,())
+            print('Error:', e)
+
+
+_thread.start_new_thread(loop, ())
+
+# 重启程序
+
+
+def restart_program():
+    python = sys.executable
+    os.execl(python, python, * sys.argv)
+
 
 class Resquest(BaseHTTPRequestHandler):
     def do_GET(self):
@@ -120,8 +141,12 @@ class Resquest(BaseHTTPRequestHandler):
         path = str(self.path)
         if path == "/ble":
             self.wfile.write(data.encode())
+            # 如果当前时间和扫描时间相差超过10分钟，则重启程序
+            if (datetime.datetime.now() - scan_time).minute > 10:
+                restart_program()
         else:
             self.wfile.write("404".encode())
+
 
 if __name__ == '__main__':
     server = HTTPServer(host, Resquest)
