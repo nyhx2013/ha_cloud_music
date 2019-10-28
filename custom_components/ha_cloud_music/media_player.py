@@ -125,13 +125,13 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
     """Set up the vlc platform."""
     _LOGGER.info('''
 -------------------------------------------------------------------
-    ha-cloud-music云音乐插件【作者QQ：635147515】
+    ha_cloud_music云音乐插件【作者QQ：635147515】
     
     版本：''' + VERSION + '''    
     
     这是一个网易云音乐的HomeAssistant播放器插件
     
-    https://github.com/shaonianzhentan/ha-cloud-music
+    https://github.com/shaonianzhentan/ha_cloud_music
 -------------------------------------------------------------------''')    
     global _hass
     _hass = hass
