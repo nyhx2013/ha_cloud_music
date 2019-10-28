@@ -1,4 +1,4 @@
-load_songlist:
+load:
   description: 加载网易云音乐歌单音乐列表
   fields:
     id:

@@ -139,8 +139,8 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
     vlcDevice = VlcDevice(hass)
     add_entities([vlcDevice])
 
-    # 注册服务hachina.change_state
-    hass.services.register(DOMAIN, 'load_songlist', vlcDevice.load_songlist)
+    # 注册服务load
+    hass.services.register(DOMAIN, 'load', vlcDevice.load_songlist)
 
     # 添加到侧边栏
     coroutine = hass.components.frontend.async_register_built_in_panel(
