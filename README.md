@@ -1,4 +1,4 @@
-# 网易云音乐HASS插件
+# 网易云音乐HA插件
 
 基于第三方UI修改，配合自定义的media插件实现的后台播放功能；
 
@@ -48,6 +48,24 @@ media_player:
     show_mode: fullscreen
     uid: 47445304
 ```
+
+## 测试环境
+
+### 树莓派3B+
+- 使用了HAChina的镜像安装，[镜像地址](https://www.hachina.io/docs/8536.html "镜像地址")
+- 系统安装了vlc播放器
+- HA版本：0.98.2
+- 使用vlc播放器【测试通过（完美运行）】
+- 使用DLNA播放器【测试通过（偶尔出现莫名其妙的问题，无法自动切换下一曲）】
+- 使用MPD播放器【测试通过】
+
+### Windows10
+- 使用pip安装的homeassistant
+- 系统安装了vlc播放器
+- HA版本：0.100.3
+- 使用vlc播放器【测试通过（完美运行）】
+- 使用DLNA播放器【未测试】
+- 使用MPD播放器【未测试】
 
 # 请一定要在HomeAssistant里使用，不然没啥用
 
