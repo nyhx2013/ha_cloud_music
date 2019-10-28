@@ -90,30 +90,30 @@ PC端界面自我感觉还行， 就是移动端界面总觉得怪怪的，奈�
 #### 服务页面
 ![服务页面](./screenshots/微信截图_20191027172903.png)
 #### 播放组件
-![播放组件](https://raw.githubusercontent.com/shaonianzhentan/lovelace-cloud-music/master/screenshots/微信截图_20191027173028.png)
+![播放组件](./screenshots/微信截图_20191027173028.png)
 #### 播放更多信息
-![播放更多信息](https://raw.githubusercontent.com/shaonianzhentan/lovelace-cloud-music/master/screenshots/微信截图_20191027173501.png)
+![播放更多信息](./screenshots/微信截图_20191027173501.png)
 #### 选择媒体插件
-![选择媒体插件](https://raw.githubusercontent.com/shaonianzhentan/lovelace-cloud-music/master/screenshots/select_mode.png)
+![选择媒体插件](./screenshots/select_mode.png)
 
 ### PC
 #### 正在播放
-![正在播放](https://raw.githubusercontent.com/maomao1996/Vue-mmPlayer/master/screenshots/1.jpg)
+![正在播放](./screenshots/1.jpg)
 #### 排行榜
-![排行榜](https://raw.githubusercontent.com/maomao1996/Vue-mmPlayer/master/screenshots/2.jpg)
+![排行榜](./screenshots/2.jpg)
 #### 搜索
-![搜索](https://raw.githubusercontent.com/maomao1996/Vue-mmPlayer/master/screenshots/3.jpg)
+![搜索](./screenshots/3.jpg)
 #### 我的歌单
-![我的歌单](https://raw.githubusercontent.com/maomao1996/Vue-mmPlayer/master/screenshots/4.jpg)
+![我的歌单](./screenshots/4.jpg)
 #### 我听过的
-![我听过的](https://raw.githubusercontent.com/maomao1996/Vue-mmPlayer/master/screenshots/5.jpg)
+![我听过的](./screenshots/5.jpg)
 #### 歌曲评论
-![歌曲评论](https://raw.githubusercontent.com/maomao1996/Vue-mmPlayer/master/screenshots/6.jpg)
+![歌曲评论](./screenshots/6.jpg)
 
 ### 移动端
 
-![移动端一](https://raw.githubusercontent.com/maomao1996/Vue-mmPlayer/master/screenshots/7.jpg)
-![移动端二](https://raw.githubusercontent.com/maomao1996/Vue-mmPlayer/master/screenshots/8.jpg)
+![移动端一](./screenshots/7.jpg)
+![移动端二](./screenshots/8.jpg)
 
 ## 更新说明
 
