@@ -88,7 +88,7 @@ PC端界面自我感觉还行， 就是移动端界面总觉得怪怪的，奈�
 
 ### HomeAssistant界面
 #### 服务页面
-![服务页面](https://raw.githubusercontent.com/shaonianzhentan/lovelace-cloud-music/master/screenshots/微信截图_20191027172903.png)
+![服务页面](./screenshots/微信截图_20191027172903.png)
 #### 播放组件
 ![播放组件](https://raw.githubusercontent.com/shaonianzhentan/lovelace-cloud-music/master/screenshots/微信截图_20191027173028.png)
 #### 播放更多信息
