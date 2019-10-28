@@ -61,8 +61,7 @@ TIME_BETWEEN_UPDATES = datetime.timedelta(seconds=1)
 
 
 VERSION = '1.0.5.2'
-DOMAIN = 'ha-cloud-music'
-_DOMAIN = DOMAIN.replace('-','_')
+DOMAIN = 'ha_cloud_music'
 
 _hass = None
 
@@ -148,7 +147,7 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
         "iframe",
         config.get("sidebar_title"),
         config.get("sidebar_icon"),
-        _DOMAIN,
+        DOMAIN,
         {"url": "/" + DOMAIN+"/" + VERSION + "/dist/index.html?ver=" + VERSION 
         + "&show_mode=" + config.get("show_mode")
         + "&uid=" + config.get("uid")},
@@ -316,7 +315,7 @@ class VlcDevice(MediaPlayerDevice):
             # 如果状态不一样，则更新源播放器
             if self._state != self._media.state:
                 self._hass.services.call('homeassistant', 'update_entity', {"entity_id": self._sound_mode})
-                self._hass.services.call('homeassistant', 'update_entity', {"entity_id": 'media_player.'+_DOMAIN})        
+                self._hass.services.call('homeassistant', 'update_entity', {"entity_id": 'media_player.'+DOMAIN})        
         
         self._media_duration = self.media_duration
         self._state = self._media.state
@@ -718,7 +717,7 @@ class VlcDevice(MediaPlayerDevice):
                 
         # 过滤云音乐
         entity_list = self._hass.states.entity_ids('media_player')
-        filter_list = filter(lambda x: x.count('media_player.' + _DOMAIN) == 0, entity_list)
+        filter_list = filter(lambda x: x.count('media_player.' + DOMAIN) == 0, entity_list)
         _list = list(filter_list)
         if self.supported_vlc == True:
             _list.insert(0, "内置VLC播放器")
@@ -795,7 +794,7 @@ class VlcDevice(MediaPlayerDevice):
         else:
             self._hass.services.call('media_player', action, dict)
             self._hass.services.call('homeassistant', 'update_entity', {"entity_id": self._sound_mode})
-            self._hass.services.call('homeassistant', 'update_entity', {"entity_id": 'media_player.'+_DOMAIN})
+            self._hass.services.call('homeassistant', 'update_entity', {"entity_id": 'media_player.'+DOMAIN})
                     
     def music_load(self):
         if self.music_playlist == None:

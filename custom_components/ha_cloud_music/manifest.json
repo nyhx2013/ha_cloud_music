@@ -1,0 +1,9 @@
+{
+  "domain": "ha_cloud_music",
+  "name": "ha_cloud_music",
+  "documentation": "https://github.com/shaonianzhentan/ha_cloud_music",
+  "requirements": [
+  ],
+  "dependencies": [],
+  "codeowners": []
+}

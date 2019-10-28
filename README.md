@@ -30,7 +30,7 @@
 然后在configuration.yaml中配置以下内容
 ```
 media_player:
-  - platform: ha-cloud-music
+  - platform: ha_cloud_music
 
 ```
 
@@ -42,7 +42,7 @@ media_player:
 # uid: 网易云音乐的用户ID
 
 media_player:
-  - platform: ha-cloud-music
+  - platform: ha_cloud_music
     sidebar_title: 云音乐
     sidebar_icon: mdi:music
     show_mode: fullscreen
@@ -118,6 +118,7 @@ PC端界面自我感觉还行， 就是移动端界面总觉得怪怪的，奈�
 ## 更新说明
 
 ### V1.0.5.2
+- 注意：因为服务不能带有“-”符号，所以全部改为下划线
 - 新增启用随机播放模式功能
 - 修复flac音乐不能播放的问题
 - 新增通知功能，重要操作会有通知消息
