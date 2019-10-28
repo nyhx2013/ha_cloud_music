@@ -60,7 +60,7 @@ TIME_BETWEEN_UPDATES = datetime.timedelta(seconds=1)
 ###################媒体播放器##########################
 
 
-VERSION = '1.0.5.1'
+VERSION = '1.0.5.2'
 DOMAIN = 'ha-cloud-music'
 _DOMAIN = DOMAIN.replace('-','_')
 
@@ -161,6 +161,66 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
         pass    
     return True   
 
+
+###################内置VLC播放器##########################
+class VlcPlayer():
+    def __init__(self): 
+        import vlc
+        self._instance = vlc.Instance()
+        self._vlc = self._instance.media_player_new()
+        self.state = STATE_IDLE
+        self.attributes = {
+            "volume_level": 1,
+            "is_volume_muted": False,
+            "media_duration": 0,
+            "media_position_updated_at": None,
+            "media_position": 0,
+        }        
+        self.ha_cloud_music = True
+        event_manager = self._vlc.event_manager()
+        event_manager.event_attach(vlc.EventType.MediaPlayerPositionChanged, self.update)
+        _log_info("初始化内置VLC播放器")
+
+    def update(self, position):
+        try:
+            import vlc        
+            status = self._vlc.get_state()
+            if status == vlc.State.Playing:
+                self.state = STATE_PLAYING
+            elif status == vlc.State.Paused:
+                self.state = STATE_PAUSED
+            else:
+                self.state = STATE_IDLE
+            
+            media_duration = self._vlc.get_length() / 1000
+            self.attributes['media_duration'] = media_duration
+            self.attributes['media_position'] = self._vlc.get_position() * media_duration
+            self.attributes['media_position_updated_at'] = datetime.datetime.now()
+            self.attributes['volume_level'] = self._vlc.audio_get_volume() / 100
+            self.attributes['is_volume_muted'] = (self._vlc.audio_get_mute() == 1)
+            
+            #_log_info(self.attributes)
+        except Exception as e:
+            print(e)
+
+    def load(self, url):
+        self._vlc.set_media(self._instance.media_new(url))
+        self._vlc.play()
+        self.state = STATE_PLAYING
+                
+    def play(self):
+        if self._vlc.is_playing() == False:
+            self._vlc.play()
+        self.state = STATE_PLAYING
+    
+    def pause(self):
+        if self._vlc.is_playing() == True:
+            self._vlc.pause()
+        self.state = STATE_PAUSED
+    
+    def volume_set(self, volume_level):
+        self._vlc.audio_set_volume(int(volume_level) * 100)
+        
 ###################媒体播放器##########################
 class VlcDevice(MediaPlayerDevice):
     """Representation of a vlc player."""
@@ -246,15 +306,17 @@ class VlcDevice(MediaPlayerDevice):
         # 如果播放器列表有变化，则更新
         self.update_sound_mode_list() 
         
-        # 获取源播放器
-        self._media = self._hass.states.get(self._sound_mode)
-        # _log('源播放器状态 %s，云音乐状态：%s', self._media.state, self._state)
-                
-        # 如果状态不一样，则更新源播放器
-        if self._state != self._media.state:
-            self._hass.services.call('homeassistant', 'update_entity', {"entity_id": self._sound_mode})
-            self._hass.services.call('homeassistant', 'update_entity', {"entity_id": 'media_player.'+_DOMAIN})
-        
+        # 使用内置VLC
+        if self._sound_mode == "内置VLC播放器":
+            self.init_vlc_player()            
+        else:
+            self.release_vlc_player()
+            # 获取源播放器
+            self._media = self._hass.states.get(self._sound_mode)
+            # 如果状态不一样，则更新源播放器
+            if self._state != self._media.state:
+                self._hass.services.call('homeassistant', 'update_entity', {"entity_id": self._sound_mode})
+                self._hass.services.call('homeassistant', 'update_entity', {"entity_id": 'media_player.'+_DOMAIN})        
         
         self._media_duration = self.media_duration
         self._state = self._media.state
@@ -273,9 +335,16 @@ class VlcDevice(MediaPlayerDevice):
     
     @property
     def media_image_url(self):
-        """Image url of current playing media."""
-        return self._media_image_url        
+        """当前播放的音乐封面地址."""
+        if self._media_image_url != None:            
+            return self._media_image_url + "?param=500y500"
+        return self._media_image_url
         
+    @property
+    def media_image_remotely_accessible(self) -> bool:
+        """图片远程访问"""
+        return True
+    
     @property
     def source_list(self):
         """Return the name of the device."""
@@ -561,35 +630,64 @@ class VlcDevice(MediaPlayerDevice):
     ## 自定义方法
     # 加载播放列表
     def load_songlist(self, call):                
-        _id = call.data['id']
-        _log_info("加载歌单列表，歌单列表ID：%s", _id)
+        _id = call.data['id']        
+        _type = "playlist"
+        if 'type' in call.data:
+            _type = call.data['type']
         
         if self.loading == True:
             self.notification("正在加载歌单，请勿重复调用服务", "load_songlist")
             return
         self.loading = True        
+        
         try:
-            # 获取播放列表
-            res = requests.get('https://api.jiluxinqing.com/api/music/playlist/detail?id=' + str(_id))
-            obj = res.json()
-            if obj['code'] == 200:
-                _list = obj['playlist']['tracks']
-                _newlist = map(lambda item: {
-                    "id": int(item['id']),
-                    "name": item['name'],
-                    "album": item['al']['name'],
-                    "image": item['al']['picUrl'],
-                    "duration": int(item['dt']) / 1000,
-                    "url": "https://music.163.com/song/media/outer/url?id=" + str(item['id']),
-                    "song": item['name'],
-                    "singer": len(item['ar']) > 0 and item['ar'][0]['name'] or '未知'
-                    }, _list)            
-                #_log_info(_result)
-                self.play_media('music_playlist', list(_newlist))
-                self.notification("正在播放歌单【"+obj['playlist']['name']+"】", "load_songlist")
-            else:
-                # 这里弹出提示
-                self.notification("没有找到id为【"+_id+"】的歌单信息", "load_songlist")
+            if _type == "playlist":
+                _log_info("加载歌单列表，ID：%s", _id)
+                # 获取播放列表
+                res = requests.get('https://api.jiluxinqing.com/api/music/playlist/detail?id=' + str(_id))
+                obj = res.json()
+                if obj['code'] == 200:
+                    _list = obj['playlist']['tracks']
+                    _newlist = map(lambda item: {
+                        "id": int(item['id']),
+                        "name": item['name'],
+                        "album": item['al']['name'],
+                        "image": item['al']['picUrl'],
+                        "duration": int(item['dt']) / 1000,
+                        "url": "https://music.163.com/song/media/outer/url?id=" + str(item['id']),
+                        "song": item['name'],
+                        "singer": len(item['ar']) > 0 and item['ar'][0]['name'] or '未知'
+                        }, _list)            
+                    #_log_info(_result)
+                    self.play_media('music_playlist', list(_newlist))
+                    self.notification("正在播放歌单【"+obj['playlist']['name']+"】", "load_songlist")
+                else:
+                    # 这里弹出提示
+                    self.notification("没有找到id为【"+_id+"】的歌单信息", "load_songlist")
+            elif _type == "djradio":
+                _log_info("加载电台列表，ID：%s", _id)
+                # 获取播放列表
+                res = requests.get('https://api.jiluxinqing.com/api/music/dj/program?rid='+str(_id)+'&limit=50')
+                obj = res.json()
+                if obj['code'] == 200:
+                    _list = obj['programs']
+                    _newlist = map(lambda item: {
+                        "id": int(item['mainSong']['id']),
+                        "name": item['name'],
+                        "album": item['coverUrl'],
+                        "image": item['mainSong']['album']['picUrl'],
+                        "duration": int(item['mainSong']['duration']) / 1000,
+                        "song": item['name'],
+                        "type": "djradio",
+                        "singer": item['dj']['nickname']
+                        }, _list)            
+                    #_log_info(_result)
+                    self.play_media('music_playlist', list(_newlist))
+                    self.notification("正在播放电台【"+_list[0]['dj']['brand']+"】", "load_songlist")
+                else:
+                    # 这里弹出提示
+                    self.notification("没有找到id为【"+_id+"】的歌单信息", "load_songlist")
+            
         except Exception as e:
             self.notification("加载歌单的时候出现了异常", "load_songlist")
         finally:
@@ -621,13 +719,30 @@ class VlcDevice(MediaPlayerDevice):
         # 过滤云音乐
         entity_list = self._hass.states.entity_ids('media_player')
         filter_list = filter(lambda x: x.count('media_player.' + _DOMAIN) == 0, entity_list)
-        self._sound_mode_list = list(filter_list)
+        _list = list(filter_list)
+        if self.supported_vlc == True:
+            _list.insert(0, "内置VLC播放器")
+        
+        self._sound_mode_list = _list
+        
+        # 如果保存的是【内置VLC播放器】，则直接加载
+        if sound_mode == "内置VLC播放器":
+           self._sound_mode = "内置VLC播放器"
+           self.init_vlc_player()
+           return        
+        
         if len(self._sound_mode_list) > 0:
             # 判断存储的值是否为空
             if sound_mode != None and self._sound_mode_list.count(sound_mode) == 1:
                 self._sound_mode = sound_mode
+            elif self.supported_vlc == True:
+                self._sound_mode = "内置VLC播放器"
+                self.init_vlc_player()
             else:
                 self._sound_mode = self._sound_mode_list[0]
+        elif self.supported_vlc == True:
+            self._sound_mode = "内置VLC播放器"
+            self.init_vlc_player()
         #_log(self._sound_mode_list)
        
     def get_url(self, music_info):
@@ -646,10 +761,12 @@ class VlcDevice(MediaPlayerDevice):
         
         if 'clv_url' in music_info:
            return music_info['clv_url']
-        else:
-           #res = requests.get("https://api.jiluxinqing.com/api/music/song/url?id=" + str(music_info['id']))
-           #obj = res.json()
-           #url = obj['data'][0]['url']           
+        elif 'type' in music_info and music_info['type'] == 'djradio':
+           res = requests.get("https://api.jiluxinqing.com/api/music/song/url?id=" + str(music_info['id']))
+           obj = res.json()
+           url = obj['data'][0]['url']
+           return url
+        else:           
            return get_redirect_url(music_info['url'])
     
     def call(self, action, info = None):
@@ -665,9 +782,20 @@ class VlcDevice(MediaPlayerDevice):
         #调用服务
         _log('调用服务：%s', action)
         _log(dict)
-        self._hass.services.call('media_player', action, dict)
-        self._hass.services.call('homeassistant', 'update_entity', {"entity_id": self._sound_mode})
-        self._hass.services.call('homeassistant', 'update_entity', {"entity_id": 'media_player.'+_DOMAIN})
+                
+        if self._sound_mode == "内置VLC播放器":
+            if action == "play_media":
+                self._media.load(info['url'])
+            elif action == "media_pause":
+                self._media.pause()
+            elif action == "media_play":
+                self._media.play()
+            elif action == "volume_set":
+                self._media.volume_set(info['volume'])
+        else:
+            self._hass.services.call('media_player', action, dict)
+            self._hass.services.call('homeassistant', 'update_entity', {"entity_id": self._sound_mode})
+            self._hass.services.call('homeassistant', 'update_entity', {"entity_id": 'media_player.'+_DOMAIN})
                     
     def music_load(self):
         if self.music_playlist == None:
@@ -686,5 +814,29 @@ class VlcDevice(MediaPlayerDevice):
            _log_info("当前总共有 %s 首音乐，随机播放第 %s 首", playlist_count, self.music_index)
 
         self.play_media('music_load', self.music_index)
-        
+    
+    
+    ######################内置VLC播放器相关方法################################
+    @property
+    def supported_vlc(self):
+        """判断是否支持vlc模块."""
+        try:
+            import vlc
+            return True
+        except Exception as e:
+            return False
+    
+    # 初始化内置VLC播放器
+    def init_vlc_player(self):
+        try:
+            if self._media == None or hasattr(self._media, 'ha_cloud_music') == False:
+                self._media = VlcPlayer()
+        except Exception as e:
+            print("【初始化内置VLC播放器】出现错误", e)            
+
+    # 释放vlc对象
+    def release_vlc_player(self):        
+        if self._media != None and hasattr(self._media, 'ha_cloud_music') == True:
+            self._media._vlc.release()
+            self._media._instance.release()
 ###################媒体播放器##########################

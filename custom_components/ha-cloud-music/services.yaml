@@ -2,5 +2,10 @@ load_songlist:
   description: 加载网易云音乐歌单音乐列表
   fields:
     id:
-      description: '歌单列表里的id【https://music.163.com/#/playlist?id=25724904】'
+      description: >
+          歌单的id【https://music.163.com/#/playlist?id=25724904】
+          电台的id【https://music.163.com/#/djradio?id=1008】
       example: '25724904'
+    type:
+      description: '歌单列表类型【歌单列表】playlist、【电台列表】djradio'
+      example: 'playlist'
