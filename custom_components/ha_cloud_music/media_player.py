@@ -218,7 +218,7 @@ class VlcPlayer():
         self.state = STATE_PAUSED
     
     def volume_set(self, volume_level):
-        self._vlc.audio_set_volume(int(volume_level) * 100)
+        self._vlc.audio_set_volume(int(volume_level * 100))
         
 ###################媒体播放器##########################
 class VlcDevice(MediaPlayerDevice):
