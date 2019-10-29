@@ -66,7 +66,7 @@ def is_bluetooth_device(device) -> bool:
 def discover_devices(device_id: int, filter_mac):
     r = requests.get("http://localhost:8321/ble")
     ble = r.json()
-    _LOGGER.info(ble)
+    # _LOGGER.info(ble)
     filter_list = filter(lambda x: filter_mac.count(x["mac"]) == 1, ble)
     return list(filter_list)
 
