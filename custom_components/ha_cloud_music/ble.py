@@ -142,7 +142,9 @@ class Resquest(BaseHTTPRequestHandler):
         if path == "/ble":
             self.wfile.write(data.encode())
             # 如果当前时间和扫描时间相差超过10分钟，则重启程序
-            if (datetime.datetime.now() - scan_time).minute > 10:
+            print(datetime.datetime.now())
+            print(scan_time)
+            if (datetime.datetime.now() - scan_time).seconds > 600:
                 restart_program()
         else:
             self.wfile.write("404".encode())
