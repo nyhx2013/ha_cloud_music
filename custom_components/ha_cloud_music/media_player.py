@@ -635,7 +635,8 @@ class VlcDevice(MediaPlayerDevice):
         elif 'rid' in call.data:
             _id = call.data['rid']
             _type = "djradio"
-        elif 'list_index' in call.data:
+        
+        if 'list_index' in call.data:
             list_index = int(call.data['list_index']) - 1
                         
         if self.loading == True:
@@ -680,8 +681,8 @@ class VlcDevice(MediaPlayerDevice):
                     _newlist = map(lambda item: {
                         "id": int(item['mainSong']['id']),
                         "name": item['name'],
-                        "album": item['coverUrl'],
-                        "image": item['mainSong']['album']['picUrl'],
+                        "album": item['dj']['brand'],
+                        "image": item['coverUrl'],
                         "duration": int(item['mainSong']['duration']) / 1000,
                         "song": item['name'],
                         "type": "djradio",
