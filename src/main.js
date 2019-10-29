@@ -122,6 +122,7 @@ window.clv = {
     })
   },
   exec(args) {
+    Vue.loading()
     this.hass.then(({ call, id }) => {
       let media_args = {
         entity_id: id
@@ -192,6 +193,21 @@ window.clv = {
 }
 
 window.clv.ready()
+
+
+import Loading from '@/base/mm-loading/mm-loading.vue'
+//动态注册组件
+Vue.loading = Vue.prototype.loading = function (timeout = 3) {
+  let v = new Vue({
+    store,
+    router,
+    render: h => h(Loading)
+  }).$mount(document.createElement('div'))
+  document.body.appendChild(v.$el)
+  setTimeout(() => {
+    document.body.removeChild(v.$el)
+  }, timeout * 1000)
+}
 
 
 /* eslint-disable no-new */

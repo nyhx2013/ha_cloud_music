@@ -279,8 +279,9 @@ class VlcDevice(MediaPlayerDevice):
                     and len(self._source_list) > 0
                     and self.media_duration > 3 
                     and self.media_duration - 3 <= self.media_position
-                    and self.next_count > 0):
+                    and self.next_count > 0):                    
                     # 如果不是内置播放器，则先停止再播放
+                    self.next_count = -15
                     if self._sound_mode != "内置VLC播放器":
                         self._hass.services.call('media_player', 'media_stop', {"entity_id": self._sound_mode})
                     _log_info('播放器更新 下一曲')
@@ -294,15 +295,11 @@ class VlcDevice(MediaPlayerDevice):
             
             # 如果存在进度，则取源进度
             if 'media_position' in self._media.attributes:
-                # 这里通过源播放器的标题，判断是否为kodi播放器
-                if 'media_title' in self._media.attributes and len(self._media.attributes['media_title']) == 36 and ".mp3" in self._media.attributes['media_title']:
-                    if self.next_count > 0:
-                        self._hass.services.call('homeassistant', 'update_entity', {"entity_id": self._sound_mode})
-                        if 'media_position' in self._media.attributes:
-                            self._media_position = int(self._media.attributes['media_position']) + 5
-                    elif self.next_count == -13:
-                        self._media_position = 0
-                    #_log_info('当前时间：%s，当前进度：%s，源进度：%s，总进度：%s', self._media_position_updated_at, self._media_position, self._media.attributes['media_position'], self.media_duration)
+                # 判断是否为kodi播放器
+                if self.player_type == "kodi":
+                    self._hass.services.call('homeassistant', 'update_entity', {"entity_id": self._sound_mode})
+                    if 'media_position' in self._media.attributes:
+                        self._media_position = int(self._media.attributes['media_position']) + 5
                 else:
                     self._media_position = int(self._media.attributes['media_position'])
             # 如果当前是播放状态，则进行进度累加。。。
@@ -351,6 +348,8 @@ class VlcDevice(MediaPlayerDevice):
                 return "vlc"
             elif supported_features == 21007:
                 return "dlna"
+            elif supported_features == 65471:
+                return "mpd"
 
     @property
     def name(self):
