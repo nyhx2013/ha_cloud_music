@@ -60,7 +60,7 @@ TIME_BETWEEN_UPDATES = datetime.timedelta(seconds=1)
 ###################媒体播放器##########################
 
 
-VERSION = '1.0.5.2'
+VERSION = '2.0.0'
 DOMAIN = 'ha_cloud_music'
 
 _hass = None
@@ -533,8 +533,7 @@ class VlcDevice(MediaPlayerDevice):
             # 如果是list类型，则进行操作
             if isinstance(media_id, list):            
                 self._media_playlist = json.dumps(media_id)
-                self.music_playlist = media_id
-                self.music_index = 0
+                self.music_playlist = media_id                
             else:
                 dict = json.loads(media_id)    
                 self._media_playlist = dict['list']
@@ -628,17 +627,22 @@ class VlcDevice(MediaPlayerDevice):
     
     ## 自定义方法
     # 加载播放列表
-    def load_songlist(self, call):                
-        _id = call.data['id']        
-        _type = "playlist"
-        if 'type' in call.data:
-            _type = call.data['type']
-        
+    def load_songlist(self, call): 
+        list_index = 0    
+        if 'id' in call.data:
+            _id = call.data['id']
+            _type = "playlist"
+        elif 'rid' in call.data:
+            _id = call.data['rid']
+            _type = "djradio"
+        elif 'list_index' in call.data:
+            list_index = int(call.data['list_index']) - 1
+                        
         if self.loading == True:
             self.notification("正在加载歌单，请勿重复调用服务", "load_songlist")
             return
-        self.loading = True        
-        
+        self.loading = True                
+
         try:
             if _type == "playlist":
                 _log_info("加载歌单列表，ID：%s", _id)
@@ -658,6 +662,9 @@ class VlcDevice(MediaPlayerDevice):
                         "singer": len(item['ar']) > 0 and item['ar'][0]['name'] or '未知'
                         }, _list)            
                     #_log_info(_result)
+                    if list_index < 0 or list_index >= len(_list):
+                        list_index = 0                      
+                    self.music_index = list_index
                     self.play_media('music_playlist', list(_newlist))
                     self.notification("正在播放歌单【"+obj['playlist']['name']+"】", "load_songlist")
                 else:
@@ -681,6 +688,9 @@ class VlcDevice(MediaPlayerDevice):
                         "singer": item['dj']['nickname']
                         }, _list)            
                     #_log_info(_result)
+                    if list_index < 0 or list_index >= len(_list):
+                        list_index = 0                      
+                    self.music_index = list_index
                     self.play_media('music_playlist', list(_newlist))
                     self.notification("正在播放电台【"+_list[0]['dj']['brand']+"】", "load_songlist")
                 else:
@@ -688,6 +698,7 @@ class VlcDevice(MediaPlayerDevice):
                     self.notification("没有找到id为【"+_id+"】的歌单信息", "load_songlist")
             
         except Exception as e:
+            print(e)
             self.notification("加载歌单的时候出现了异常", "load_songlist")
         finally:
             # 这里重置    

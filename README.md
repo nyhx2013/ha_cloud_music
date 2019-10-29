@@ -19,7 +19,7 @@
 
 1.（建议）使用[HACS安装](https://github.com/custom-components/hacs)
 
-在HACS里输入：https://github.com/shaonianzhentan/ha-cloud-music 即可安装成功（类型选择Integration）
+在HACS里输入：https://github.com/shaonianzhentan/ha_cloud_music 即可安装成功（类型选择Integration）
 
 2.自定义安装
 
@@ -117,7 +117,7 @@ PC端界面自我感觉还行， 就是移动端界面总觉得怪怪的，奈�
 
 ## 更新说明
 
-### V1.0.5.2
+### V2.0.0
 - 注意：因为服务不能带有“-”符号，所以名称改为下划线
 - 注意：因为服务不能带有“-”符号，所以名称改为下划线
 - 注意：因为服务不能带有“-”符号，所以名称改为下划线

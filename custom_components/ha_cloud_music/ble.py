@@ -113,7 +113,7 @@ def loop():
             d.find_devices(lookup_names=True)
             # 获取所有设备
             d.read_devices()
-            print("扫描完成，当前共有 %s 个蓝牙设备 ", len(d._devices))
+            print("扫描完成，当前蓝牙设备数量： ", len(d._devices))
             global data
             data = json.dumps(d._devices, ensure_ascii=False)
             global data_list
@@ -144,7 +144,9 @@ class Resquest(BaseHTTPRequestHandler):
             # 如果当前时间和扫描时间相差超过10分钟，则重启程序
             print(datetime.datetime.now())
             print(scan_time)
-            if (datetime.datetime.now() - scan_time).seconds > 600:
+            seconds = (datetime.datetime.now() - scan_time).seconds
+            print("距上次扫描相差时间：", seconds)
+            if seconds > 600:
                 restart_program()
         else:
             self.wfile.write("404".encode())

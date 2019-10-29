@@ -3,9 +3,12 @@ load:
   fields:
     id:
       description: >
-          歌单的id【https://music.163.com/#/playlist?id=25724904】
-          电台的id【https://music.163.com/#/djradio?id=1008】
+          （id与rid二选一）歌单的id【https://music.163.com/#/playlist?id=25724904】
       example: '25724904'
-    type:
-      description: '歌单列表类型【歌单列表】playlist、【电台列表】djradio'
-      example: 'playlist'
+    rid:
+      description: >
+          （id与rid二选一）电台的id【https://music.163.com/#/djradio?id=1008】
+      example: '1008'
+    list_index:
+      description: 要从第几首开始播放（如果超过列表总数量则从第1首开始播放）
+      example: '1'
