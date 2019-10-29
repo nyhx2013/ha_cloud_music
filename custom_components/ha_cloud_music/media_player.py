@@ -60,7 +60,7 @@ TIME_BETWEEN_UPDATES = datetime.timedelta(seconds=1)
 ###################媒体播放器##########################
 
 
-VERSION = '2.0.1'
+VERSION = '2.0.2'
 DOMAIN = 'ha_cloud_music'
 
 _hass = None
@@ -586,16 +586,19 @@ class VlcDevice(MediaPlayerDevice):
         
         # 默认为music类型，如果指定视频，则替换
         play_type = "music"
-        if 'media_type' in music_info and music_info['media_type'] == 'video':
-            play_type = "video"
-        # 如果没有url则下一曲（如果超过3个错误，则停止）
-        # 如果是云音乐播放列表 并且格式不是mp3，则下一曲
-        elif url == None or (media_type == 'music_load' and url.find(".mp3") < 0):
-           self.notification("没有找到【" + self._media_name + "】的播放链接，自动为您跳到下一首", "load_song_url")
-           self.error_count = self.error_count + 1
-           if self.error_count < 3:
-             self.media_next_track()
-           return
+        try:
+            if 'media_type' in music_info and music_info['media_type'] == 'video':
+                play_type = "video"
+            # 如果没有url则下一曲（如果超过3个错误，则停止）
+            # 如果是云音乐播放列表 并且格式不是mp3，则下一曲
+            elif url == None or (media_type == 'music_load' and url.find(".mp3") < 0):
+               self.notification("没有找到【" + self._media_name + "】的播放链接，自动为您跳到下一首", "load_song_url")
+               self.error_count = self.error_count + 1
+               if self.error_count < 3:
+                 self.media_next_track()
+               return
+        except Exception as e:
+            print('这是一个正常的错误：', e)
         # 重置错误计数
         self.error_count = 0
         # 重置播放进度
