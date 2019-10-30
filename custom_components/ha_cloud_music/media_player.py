@@ -38,6 +38,20 @@ def get_redirect_url(url):
         return None
     return result_url
 
+# 进行咪咕搜索，可以播放周杰伦的歌歌
+def migu_search(keywords):
+    try:
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.87 Safari/537.36'}
+        _log_info("开始在咪咕搜索：%s", keywords)
+        response = requests.get("http://m.music.migu.cn/migu/remoting/scr_search_tag?rows=20&type=2&keyword=" + keywords + "&pgc=1", headers=headers)
+        res = response.json()
+        if 'musics' in res:
+            return res['musics'][0]['mp3']
+    except Exception as e:
+        print("在咪咕搜索时出现错误：", e)
+    return None
+
 ###################媒体播放器##########################
 from homeassistant.components.media_player import (
     MediaPlayerDevice, PLATFORM_SCHEMA)
@@ -60,7 +74,7 @@ TIME_BETWEEN_UPDATES = datetime.timedelta(seconds=1)
 ###################媒体播放器##########################
 
 
-VERSION = '2.0.2'
+VERSION = '2.0.3'
 DOMAIN = 'ha_cloud_music'
 
 _hass = None
@@ -96,14 +110,15 @@ for file in files:
 class HassGateView(HomeAssistantView):
     """View to handle Configuration requests."""
 
-    url = '/' + DOMAIN
+    url = '/' + DOMAIN + '-api'
     name = DOMAIN
     extra_urls = extra_urls
     requires_auth = False
 
     async def get(self, request):    
-        # _LOGGER.info(request.rel_url.raw_path)
-        return FileResponse(os.path.dirname(__file__) + request.rel_url.raw_path.replace(self.url + '/' + VERSION,''))
+        _path = os.path.dirname(__file__) + request.rel_url.raw_path.replace('/'+ DOMAIN + '/' + VERSION,'')
+        #_log_info(_path)
+        return FileResponse(_path)
 
     async def post(self, request):
         """Update state of entity."""
@@ -262,8 +277,6 @@ class VlcDevice(MediaPlayerDevice):
         self._timer_enable = True
         # 定时器
         track_time_interval(hass, self.interval, TIME_BETWEEN_UPDATES)
-
-    
     
     def interval(self, now):
         # 如果当前状态是播放，则进度累加（虽然我定时的是1秒，但不知道为啥2秒执行一次）
@@ -809,7 +822,11 @@ class VlcDevice(MediaPlayerDevice):
            url = obj['data'][0]['url']
            return url
         else:           
-           return get_redirect_url(music_info['url'])
+           url = get_redirect_url(music_info['url'])
+            # 如果没有url，则去咪咕搜索
+           if url == None:
+               return migu_search(music_info['song'] + ' - '  + music_info['singer'])
+           return url
     
     def call(self, action, info = None):
         dict = {"entity_id": self._sound_mode}
