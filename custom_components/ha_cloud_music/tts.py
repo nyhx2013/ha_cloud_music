@@ -1,4 +1,7 @@
-"""百度语音外挂服务."""
+"""
+百度语音外挂服务.
+专门解决vlc播放器输出被截断的问题
+"""
 import asyncio
 import logging
 
@@ -44,7 +47,7 @@ class GoogleProvider(Provider):
         try:
             with async_timeout.timeout(10):
                 request = await websession.get(
-                    GOOGLE_SPEECH_URL + message, params=None, headers=None
+                    GOOGLE_SPEECH_URL + message + "。哦", params=None, headers=None
                 )
 
                 if request.status != 200:
