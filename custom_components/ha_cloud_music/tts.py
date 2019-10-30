@@ -17,17 +17,24 @@ _LOGGER = logging.getLogger(__name__)
 
 GOOGLE_SPEECH_URL = "https://api.jiluxinqing.com/api/service/tts?text="
 
+CONF_PLAYER = "player"
+
+PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
+    {vol.Optional(CONF_PLAYER, default=""): vol.string
+)
+
 async def async_get_engine(hass, config):
     """Set up Google speech component."""
-    return GoogleProvider(hass)
+    return GoogleProvider(hass,  config[CONF_PLAYER])
 
 
 class GoogleProvider(Provider):
     """The Google speech API provider."""
 
-    def __init__(self, hass):
+    def __init__(self, hass, player):
         """Init Google TTS service."""
         self.hass = hass
+        self._player = player
         self.name = "百度语音"
 
     @property
@@ -46,8 +53,12 @@ class GoogleProvider(Provider):
         data = b""
         try:
             with async_timeout.timeout(10):
+                # 如果播放器是vlc，则在后面加上多余的字符
+                if self._player == 'vlc':
+                    message = message + "。哦"
+
                 request = await websession.get(
-                    GOOGLE_SPEECH_URL + message + "。哦", params=None, headers=None
+                    GOOGLE_SPEECH_URL + message, params=None, headers=None
                 )
 
                 if request.status != 200:

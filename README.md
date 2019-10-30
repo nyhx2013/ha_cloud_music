@@ -51,10 +51,11 @@ media_player:
 
 > 可选插件配置
 ```
-# 文字转语音插件（专门解决VLC播放器的问题）
+# 文字转语音插件
+# player: vlc （专门解决vlc不能播放完整语音的问题）
 tts:
   - platform: ha_cloud_music
-
+    player: vlc
 ```
 
 ## 测试环境
