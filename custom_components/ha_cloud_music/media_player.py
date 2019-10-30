@@ -39,14 +39,15 @@ def get_redirect_url(url):
     return result_url
 
 # 进行咪咕搜索，可以播放周杰伦的歌歌
-def migu_search(keywords):
+def migu_search(songName, singerName):
     try:
+        keywords = songName + ' - '+ singerName
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.87 Safari/537.36'}
         _log_info("开始在咪咕搜索：%s", keywords)
         response = requests.get("http://m.music.migu.cn/migu/remoting/scr_search_tag?rows=20&type=2&keyword=" + keywords + "&pgc=1", headers=headers)
         res = response.json()
-        if 'musics' in res:
+        if 'musics' in res and len(res['musics']) > 0 and songName in res['musics'][0]['songName']:
             return res['musics'][0]['mp3']
     except Exception as e:
         print("在咪咕搜索时出现错误：", e)
@@ -825,7 +826,7 @@ class VlcDevice(MediaPlayerDevice):
            url = get_redirect_url(music_info['url'])
             # 如果没有url，则去咪咕搜索
            if url == None:
-               return migu_search(music_info['song'] + ' - '  + music_info['singer'])
+               return migu_search(music_info['song'], music_info['singer'])
            return url
     
     def call(self, action, info = None):
