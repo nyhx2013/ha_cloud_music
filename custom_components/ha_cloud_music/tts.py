@@ -9,9 +9,11 @@ import aiohttp
 from aiohttp.hdrs import REFERER, USER_AGENT
 import async_timeout
 import voluptuous as vol
+import homeassistant.helpers.config_validation as cv
 
 from homeassistant.components.tts import CONF_LANG, PLATFORM_SCHEMA, Provider
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
+
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -20,7 +22,9 @@ GOOGLE_SPEECH_URL = "https://api.jiluxinqing.com/api/service/tts?text="
 CONF_PLAYER = "player"
 
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
-    {vol.Optional(CONF_PLAYER, default=""): vol.string
+    {
+        vol.Optional(CONF_PLAYER, default=""): cv.string
+    }
 )
 
 async def async_get_engine(hass, config):
@@ -57,6 +61,7 @@ class GoogleProvider(Provider):
                 if self._player == 'vlc':
                     message = message + "。哦"
 
+                _LOGGER.info("输入文字：%s", message)
                 request = await websession.get(
                     GOOGLE_SPEECH_URL + message, params=None, headers=None
                 )

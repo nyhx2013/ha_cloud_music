@@ -52,6 +52,7 @@ media_player:
 > 可选插件配置
 ```
 # 文字转语音插件
+# 注意：如果你的vlc文字转语音会被截断，请配置player: vlc
 # player: vlc （专门解决vlc不能播放完整语音的问题）
 tts:
   - platform: ha_cloud_music
