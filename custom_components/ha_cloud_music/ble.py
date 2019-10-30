@@ -146,7 +146,7 @@ class Resquest(BaseHTTPRequestHandler):
             print(scan_time)
             seconds = (datetime.datetime.now() - scan_time).seconds
             print("距上次扫描相差时间：", seconds)
-            if seconds > 600:
+            if seconds > 60:
                 restart_program()
         else:
             self.wfile.write("404".encode())
