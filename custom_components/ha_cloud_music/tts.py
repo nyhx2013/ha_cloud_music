@@ -19,26 +19,29 @@ _LOGGER = logging.getLogger(__name__)
 
 GOOGLE_SPEECH_URL = "https://api.jiluxinqing.com/api/service/tts?text="
 
-CONF_PLAYER = "player"
+CONF_BEFORE_MESSAGE = "before_message"
+CONF_AFTER_MESSAGE = "after_message"
 
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
     {
-        vol.Optional(CONF_PLAYER, default=""): cv.string
+        vol.Optional(CONF_BEFORE_MESSAGE, default=""): cv.string,
+        vol.Optional(CONF_AFTER_MESSAGE, default=""): cv.string
     }
 )
 
 async def async_get_engine(hass, config):
     """Set up Google speech component."""
-    return GoogleProvider(hass,  config[CONF_PLAYER])
+    return GoogleProvider(hass,  config)
 
 
 class GoogleProvider(Provider):
     """The Google speech API provider."""
 
-    def __init__(self, hass, player):
+    def __init__(self, hass, config):
         """Init Google TTS service."""
         self.hass = hass
-        self._player = player
+        self._before_message = config[CONF_BEFORE_MESSAGE]
+        self._after_message = config[CONF_AFTER_MESSAGE]
         self.name = "百度语音"
 
     @property
@@ -57,10 +60,7 @@ class GoogleProvider(Provider):
         data = b""
         try:
             with async_timeout.timeout(10):
-                # 如果播放器是vlc，则在后面加上多余的字符
-                if self._player == 'vlc':
-                    message = message + "。哦"
-
+                message = self._before_message + message + self._after_message
                 _LOGGER.info("输入文字：%s", message)
                 request = await websession.get(
                     GOOGLE_SPEECH_URL + message, params=None, headers=None
