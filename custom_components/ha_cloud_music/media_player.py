@@ -620,6 +620,8 @@ class VlcDevice(MediaPlayerDevice):
                if self.error_count < 3:
                  self.media_next_track()
                return
+            else:
+                self.notification("正在播放【" + self._media_name + "】", "load_song_url")
         except Exception as e:
             print('这是一个正常的错误：', e)
         # 重置错误计数
