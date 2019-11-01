@@ -59,7 +59,7 @@ window.clv = {
         try {
           let res = JSON.parse(data)
           if (res.success == false && res.error.code == 'id_reuse') {
-            top.location.reload()
+            // top.location.reload()
           }
         } catch (ex) {
           console.log(data)
