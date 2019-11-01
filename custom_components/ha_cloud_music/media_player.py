@@ -44,7 +44,6 @@ def migu_search(songName, singerName):
     try:
         # 如果含有特殊字符，则直接使用名称搜索
         searchObj = re.search(r'\(|（|：|:《', songName, re.M|re.I)
-        print(searchObj)
         if searchObj:
             keywords = songName
         else:    
