@@ -6,6 +6,7 @@ import requests
 import time 
 import datetime
 import random
+import re
 
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.event import track_time_interval
@@ -41,13 +42,21 @@ def get_redirect_url(url):
 # 进行咪咕搜索，可以播放周杰伦的歌歌
 def migu_search(songName, singerName):
     try:
-        keywords = songName + ' - '+ singerName
+        # 如果含有特殊字符，则直接使用名称搜索
+        searchObj = re.search(r'\(|《', songName, re.M|re.I)
+        print(searchObj)
+        if searchObj:
+            keywords = songName
+        else:    
+            keywords = songName + ' - '+ singerName
+
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.87 Safari/537.36'}
         _log_info("开始在咪咕搜索：%s", keywords)
-        response = requests.get("http://m.music.migu.cn/migu/remoting/scr_search_tag?rows=20&type=2&keyword=" + keywords + "&pgc=1", headers=headers)
+        response = requests.get("http://m.music.migu.cn/migu/remoting/scr_search_tag?rows=10&type=2&keyword=" + keywords + "&pgc=1", headers=headers)
         res = response.json()
-        if 'musics' in res and len(res['musics']) > 0 and songName in res['musics'][0]['songName']:
+        
+        if 'musics' in res and len(res['musics']) > 0 and (songName in res['musics'][0]['songName'] or searchObj):
             return res['musics'][0]['mp3']
     except Exception as e:
         print("在咪咕搜索时出现错误：", e)
@@ -75,7 +84,7 @@ TIME_BETWEEN_UPDATES = datetime.timedelta(seconds=1)
 ###################媒体播放器##########################
 
 
-VERSION = '2.0.3'
+VERSION = '2.0.4'
 DOMAIN = 'ha_cloud_music'
 
 _hass = None
