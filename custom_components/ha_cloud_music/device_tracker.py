@@ -5,9 +5,9 @@ sudo apt-get install bluetooth libbluetooth-dev pkg-config libboost-python-dev l
 pip install pybluez
 
 蓝牙设备的跟踪.
-
+    mac: 要配置的mac地址，必须大写，多个以逗号分隔 
 device_tracker:
-  - platform: ha-cloud-music
+  - platform: ha_cloud_music
     mac: 'B4:C4:FC:66:A6:F0'
 
 """
