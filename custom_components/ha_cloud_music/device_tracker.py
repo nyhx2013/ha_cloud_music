@@ -8,7 +8,7 @@ pip install pybluez
 
 device_tracker:
   - platform: ha-cloud-music
-    filter_mac: 'B4:C4:FC:66:A6:F0'
+    mac: 'B4:C4:FC:66:A6:F0'
 
 """
 import asyncio
@@ -49,7 +49,7 @@ BT_PREFIX = "BT_"
 
 
 CONF_DEVICE_ID = "device_id"
-CONF_FILTER_MAC = "filter_mac"
+CONF_FILTER_MAC = "mac"
 
 DEFAULT_DEVICE_ID = -1
 
