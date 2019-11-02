@@ -203,7 +203,7 @@ export function searchVideoList({ keywords }) {
       let { code, data, msg } = res.data
       if (code === 0) {
         let arr = []
-        if (data.type == 'movie') {
+        if (data.type == 'movie' || data.type == 'tv') {
           data.data.forEach(ele => {
             arr.push({
               type: 'movie',
