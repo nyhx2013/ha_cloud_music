@@ -31,6 +31,7 @@
 ```
 media_player:
   - platform: ha_cloud_music
+    api_url: 接口请求地址（必填项）
 
 ```
 
