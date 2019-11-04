@@ -1,51 +1,64 @@
 <!DOCTYPE html><html><head><meta charset=utf-8><meta name=renderer content=webkit><meta name=force-rendering content=webkit><meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1,minimum-scale=1,user-scalable=no"><title>mmPlayer在线音乐播放器</title><meta name=keywords content=mmPlayer,播放器,在线音乐,在线播放器,音乐播放器,在线音乐播放器,mmPlayer在线音乐播放器><meta name=description content=mmPlayer在线音乐播放器><style type=text/css>noscript {
-        position: fixed;
-        top: 0;
-        right: 0;
-        bottom: 0;
-        left: 0;
-        z-index: 1996520;
-        background: #fff;
-        text-align: center;
-        font-weight: 700;
-        font-size: 34px;
-        line-height: 100px;
+      position: fixed;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      left: 0;
+      z-index: 1996520;
+      background: #fff;
+      text-align: center;
+      font-weight: 700;
+      font-size: 34px;
+      line-height: 100px;
+    }
+
+    #appLoading {
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 1996;
+      width: 100%;
+      height: 100%;
+      background: rgba(255, 255, 255, 1);
+    }
+
+    #appLoading.removeAnimate {
+      -webkit-animation: removeAnimate 0.3s 0s 1 both;
+      animation: removeAnimate 0.3s 0s 1 both;
+    }
+
+    @-webkit-keyframes removeAnimate {
+      from {
+        opacity: 1;
       }
-      #appLoading {
-        position: fixed;
-        top: 0;
-        left: 0;
-        z-index: 1996;
-        width: 100%;
-        height: 100%;
-        background: rgba(255, 255, 255, 1);
+
+      to {
+        opacity: 0;
       }
-      #appLoading.removeAnimate {
-        -webkit-animation: removeAnimate 0.3s 0s 1 both;
-        animation: removeAnimate 0.3s 0s 1 both;
+    }
+
+    @keyframes removeAnimate {
+      from {
+        opacity: 1;
       }
-      @-webkit-keyframes removeAnimate {
-        from {
-          opacity: 1;
-        }
-        to {
-          opacity: 0;
-        }
+
+      to {
+        opacity: 0;
       }
-      @keyframes removeAnimate {
-        from {
-          opacity: 1;
-        }
-        to {
-          opacity: 0;
-        }
-      }
-      #appLoading img {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        width: 50px;
-        height: 50px;
-        -webkit-transform: translateY(-50%) translateX(-50%);
-        transform: translateY(-50%) translateX(-50%);
-      }</style><link href=css/chunk-1af1e568.d5a8ef1d.css rel=prefetch><link href=css/chunk-21444790.b6f6b63e.css rel=prefetch><link href=css/chunk-247c419f.9868b3cf.css rel=prefetch><link href=css/chunk-2ff5385c.7bc0bc60.css rel=prefetch><link href=css/chunk-30299b62.15506362.css rel=prefetch><link href=css/chunk-32ab1a03.8f3baef5.css rel=prefetch><link href=css/chunk-4c661275.6e811f07.css rel=prefetch><link href=css/chunk-5facbb25.33dc9580.css rel=prefetch><link href=css/chunk-5fcf813a.a7391520.css rel=prefetch><link href=css/chunk-610ff818.c875cc2d.css rel=prefetch><link href=css/chunk-722a4d00.e2c87c2a.css rel=prefetch><link href=css/chunk-72e31a26.0a55900d.css rel=prefetch><link href=css/chunk-9f729988.45c1fcee.css rel=prefetch><link href=js/chunk-1af1e568.23cbdfdf.js rel=prefetch><link href=js/chunk-21444790.e657d590.js rel=prefetch><link href=js/chunk-247c419f.bf79fd70.js rel=prefetch><link href=js/chunk-2ff5385c.28686894.js rel=prefetch><link href=js/chunk-30299b62.46e41c66.js rel=prefetch><link href=js/chunk-32ab1a03.73103bd0.js rel=prefetch><link href=js/chunk-4c661275.7b5f61e2.js rel=prefetch><link href=js/chunk-5facbb25.d4ae6e17.js rel=prefetch><link href=js/chunk-5fcf813a.dc198fc4.js rel=prefetch><link href=js/chunk-610ff818.2cb1a223.js rel=prefetch><link href=js/chunk-722a4d00.d9f67fa8.js rel=prefetch><link href=js/chunk-72e31a26.dee87bcd.js rel=prefetch><link href=js/chunk-9f729988.e8a51956.js rel=prefetch><link href=css/app.5a71b00d.css rel=preload as=style><link href=js/app.10861b70.js rel=preload as=script><link href=js/chunk-vendors.ecd837b7.js rel=preload as=script><link href=css/app.5a71b00d.css rel=stylesheet></head><body><noscript>mmPlayer在线音乐播放器<br>为了更好的体验请开启script</noscript><div id=appLoading><img src=./loading.gif alt=loading></div><div id=mmPlayer></div><script src=https://cdn.jsdelivr.net/hls.js/latest/hls.min.js></script><script src=js/chunk-vendors.ecd837b7.js></script><script src=js/app.10861b70.js></script></body></html>
+    }
+
+    #appLoading img {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 50px;
+      height: 50px;
+      -webkit-transform: translateY(-50%) translateX(-50%);
+      transform: translateY(-50%) translateX(-50%);
+    }</style><link href=css/chunk-1af1e568.d5a8ef1d.css rel=prefetch><link href=css/chunk-21444790.b6f6b63e.css rel=prefetch><link href=css/chunk-247c419f.9868b3cf.css rel=prefetch><link href=css/chunk-2ff5385c.7bc0bc60.css rel=prefetch><link href=css/chunk-30299b62.15506362.css rel=prefetch><link href=css/chunk-32ab1a03.8f3baef5.css rel=prefetch><link href=css/chunk-4c661275.6e811f07.css rel=prefetch><link href=css/chunk-5facbb25.33dc9580.css rel=prefetch><link href=css/chunk-5fcf813a.a7391520.css rel=prefetch><link href=css/chunk-610ff818.c875cc2d.css rel=prefetch><link href=css/chunk-722a4d00.e2c87c2a.css rel=prefetch><link href=css/chunk-72e31a26.0a55900d.css rel=prefetch><link href=css/chunk-9f729988.45c1fcee.css rel=prefetch><link href=js/chunk-1af1e568.8a7b8935.js rel=prefetch><link href=js/chunk-21444790.3a350178.js rel=prefetch><link href=js/chunk-247c419f.91dc77b6.js rel=prefetch><link href=js/chunk-2ff5385c.5d994132.js rel=prefetch><link href=js/chunk-30299b62.ba5f3812.js rel=prefetch><link href=js/chunk-32ab1a03.80ea7250.js rel=prefetch><link href=js/chunk-4c661275.793b6895.js rel=prefetch><link href=js/chunk-5facbb25.f1550d28.js rel=prefetch><link href=js/chunk-5fcf813a.6f38207d.js rel=prefetch><link href=js/chunk-610ff818.8e42e915.js rel=prefetch><link href=js/chunk-722a4d00.3e151030.js rel=prefetch><link href=js/chunk-72e31a26.70a00575.js rel=prefetch><link href=js/chunk-9f729988.7c41a0ab.js rel=prefetch><link href=css/app.5a71b00d.css rel=preload as=style><link href=js/app.254e5af1.js rel=preload as=script><link href=js/chunk-vendors.5bc93493.js rel=preload as=script><link href=css/app.5a71b00d.css rel=stylesheet></head><body><noscript>mmPlayer在线音乐播放器<br>为了更好的体验请开启script</noscript><div id=appLoading><img src=./loading.gif alt=loading></div><div id=mmPlayer></div><script src=https://cdn.jsdelivr.net/hls.js/latest/hls.min.js></script><script>var _hmt = _hmt || [];
+    (function () {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?52d57d8b7588a022f89c451d06e311f0";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();</script><script src=js/chunk-vendors.5bc93493.js></script><script src=js/app.254e5af1.js></script></body></html>

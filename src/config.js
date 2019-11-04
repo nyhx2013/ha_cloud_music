@@ -1,5 +1,5 @@
 // 网络请求地址
-export const URL = 'https://api.jiluxinqing.com/api/music'
+export const URL = '/ha_cloud_music-api'
 
 // 版本号
 export const VERSION = '1.5.6'
