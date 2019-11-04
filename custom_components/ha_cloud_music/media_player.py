@@ -7,10 +7,13 @@ import time
 import datetime
 import random
 import re
+import urllib.parse
+import uuid
 
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.event import track_time_interval
 from homeassistant.components.http import HomeAssistantView
+import aiohttp
 from aiohttp import web
 from aiohttp.web import FileResponse
 from typing import Optional
@@ -26,14 +29,18 @@ def _log(*arg):
 
 def _log_info(*arg):
     _LOGGER.info(*arg)
+    
+# 全局请求头
+HEADERS = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.87 Safari/537.36'}
+# 接口请求地址
+API_URL = ""
+API_KEY = str(uuid.uuid4())
+
 
 # 获取重写向后的地址
 def get_redirect_url(url):
-    # 请求头，这里我设置了浏览器代理
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.87 Safari/537.36'}
     # 请求网页
-    response = requests.get(url, headers=headers)
+    response = requests.get(url, headers=HEADERS)
     result_url = response.url
     if result_url == 'https://music.163.com/404':
         return None
@@ -48,11 +55,8 @@ def migu_search(songName, singerName):
             keywords = songName
         else:    
             keywords = songName + ' - '+ singerName
-
-        headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.87 Safari/537.36'}
         _log_info("开始在咪咕搜索：%s", keywords)
-        response = requests.get("http://m.music.migu.cn/migu/remoting/scr_search_tag?rows=10&type=2&keyword=" + keywords + "&pgc=1", headers=headers)
+        response = requests.get("http://m.music.migu.cn/migu/remoting/scr_search_tag?rows=10&type=2&keyword=" + keywords + "&pgc=1", headers=HEADERS)
         res = response.json()
         
         if 'musics' in res and len(res['musics']) > 0 and (songName in res['musics'][0]['songName'] or searchObj):
@@ -83,7 +87,7 @@ TIME_BETWEEN_UPDATES = datetime.timedelta(seconds=1)
 ###################媒体播放器##########################
 
 
-VERSION = '2.0.4'
+VERSION = '2.0.5'
 DOMAIN = 'ha_cloud_music'
 
 _hass = None
@@ -125,13 +129,29 @@ class HassGateView(HomeAssistantView):
     requires_auth = False
 
     async def get(self, request):    
-        _path = os.path.dirname(__file__) + request.rel_url.raw_path.replace('/'+ DOMAIN + '/' + VERSION,'')
-        #_log_info(_path)
+        _raw_path = request.rel_url.raw_path
+        #_log_info(_raw_path)
+        #if _raw_path == self.url:     
+        #    _api = request.query['api']
+        #    a = urllib.parse.unquote(_api)
+        _path = os.path.dirname(__file__) + _raw_path.replace('/'+ DOMAIN + '/' + VERSION,'')        
         return FileResponse(_path)
 
     async def post(self, request):
         """Update state of entity."""
         response = await request.json()
+        
+        if 'key' in response:
+            # 如果密钥不一致，则提示刷新页面
+            if response['key'] == API_KEY:
+                if 'type' in response and response['type'] == 'web':
+                    _api = response['url']
+                    async with aiohttp.request('GET',API_URL + _api) as r:
+                        _result = await r.json(encoding="utf-8")
+                        return self.json(_result)
+            else:
+                return self.json({"code": 401})
+        
         return self.json(response)
 
         
@@ -142,7 +162,9 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
     # 网易云音乐用户ID
     vol.Optional("uid", default=""): cv.string,
     # 显示模式 全屏：fullscreen
-    vol.Optional("show_mode", default="default"): cv.string
+    vol.Optional("show_mode", default="default"): cv.string,
+    # 网易云音乐接口地址
+    vol.Required("api_url"): cv.string
 })
 
 def setup_platform(hass, config, add_entities, discovery_info=None):
@@ -156,16 +178,22 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
     这是一个网易云音乐的HomeAssistant播放器插件
     
     https://github.com/shaonianzhentan/ha_cloud_music
--------------------------------------------------------------------''')    
+-------------------------------------------------------------------''')        
     global _hass
     _hass = hass
     _hass.http.register_view(HassGateView)
     vlcDevice = VlcDevice(hass)
     add_entities([vlcDevice])
-
+    
+    # 设置API地址
+    global API_URL
+    API_URL = config.get("api_url")
+    _log_info("云音乐的API_URL： %s", API_URL)
+    _log_info("云音乐的API_KEY： %s", API_KEY)
+    
     # 注册服务load
     hass.services.register(DOMAIN, 'load', vlcDevice.load_songlist)
-
+    
     # 添加到侧边栏
     coroutine = hass.components.frontend.async_register_built_in_panel(
         "iframe",
@@ -174,6 +202,7 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
         DOMAIN,
         {"url": "/" + DOMAIN+"/" + VERSION + "/dist/index.html?ver=" + VERSION 
         + "&show_mode=" + config.get("show_mode")
+        + "&api_key=" + API_KEY
         + "&uid=" + config.get("uid")},
         require_admin=True,
     )
@@ -703,7 +732,7 @@ class VlcDevice(MediaPlayerDevice):
             if _type == "playlist":
                 _log_info("加载歌单列表，ID：%s", _id)
                 # 获取播放列表
-                res = requests.get('https://api.jiluxinqing.com/api/music/playlist/detail?id=' + str(_id))
+                res = requests.get(API_URL + '/playlist/detail?id=' + str(_id))
                 obj = res.json()
                 if obj['code'] == 200:
                     _list = obj['playlist']['tracks']
@@ -729,7 +758,7 @@ class VlcDevice(MediaPlayerDevice):
             elif _type == "djradio":
                 _log_info("加载电台列表，ID：%s", _id)
                 # 获取播放列表
-                res = requests.get('https://api.jiluxinqing.com/api/music/dj/program?rid='+str(_id)+'&limit=50')
+                res = requests.get(API_URL + '/dj/program?rid='+str(_id)+'&limit=50')
                 obj = res.json()
                 if obj['code'] == 200:
                     _list = obj['programs']
@@ -828,7 +857,7 @@ class VlcDevice(MediaPlayerDevice):
         if 'clv_url' in music_info:
            return music_info['clv_url']
         elif 'type' in music_info and music_info['type'] == 'djradio':
-           res = requests.get("https://api.jiluxinqing.com/api/music/song/url?id=" + str(music_info['id']))
+           res = requests.get(API_URL + "/song/url?id=" + str(music_info['id']))
            obj = res.json()
            url = obj['data'][0]['url']
            return url

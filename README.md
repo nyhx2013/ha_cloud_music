@@ -36,6 +36,7 @@ media_player:
 
 ```
 # 可选配置
+# api_url: 接口请求地址（必填项）
 # sidebar_title: 侧边栏名称
 # sidebar_icon: 侧边栏图标
 # show_mode: 显示模式（全屏显示: fullscreen）
@@ -43,6 +44,7 @@ media_player:
 
 media_player:
   - platform: ha_cloud_music
+    api_url: 'http://localhost:3000',
     sidebar_title: 云音乐
     sidebar_icon: mdi:music
     show_mode: fullscreen
@@ -132,7 +134,10 @@ PC端界面自我感觉还行， 就是移动端界面总觉得怪怪的，奈�
 
 ## 更新说明
 
-### V2.0.4
+### V2.0.5
+- 服务器被有些人恶意攻击，所以改为本地服务，需要自己本地部署安装
+- 服务器被有些人恶意攻击，所以改为本地服务，需要自己本地部署安装
+- 服务器被有些人恶意攻击，所以改为本地服务，需要自己本地部署安装
 - 修复周杰伦的《等你下课》不能播放的问题
 - 解决在搜索结果中点击播放，会出现异常的问题
 - 正在播放的音乐，会有消息提示
