@@ -225,7 +225,7 @@ window.clv.ready()
 
 import Loading from '@/base/mm-loading/mm-loading.vue'
 //动态注册组件
-Vue.loading = Vue.prototype.loading = function (timeout = 3) {
+Vue.loading = Vue.prototype.loading = function (timeout = 4) {
   let v = new Vue({
     store,
     router,

@@ -232,6 +232,7 @@ class VlcPlayer():
         self.ha_cloud_music = True
         self._event_manager = self._vlc.event_manager()
         self._event_manager.event_attach(vlc.EventType.MediaPlayerEndReached, self.end)
+        self._event_manager.event_attach(vlc.EventType.MediaPlayerPositionChanged, self.update)
         _log_info("初始化内置VLC播放器")
     
     def end(self, event):
@@ -261,7 +262,6 @@ class VlcPlayer():
     def load(self, url):
         self._vlc.set_media(self._instance.media_new(url))
         self._vlc.play()
-        self._event_manager.event_attach(self.vlc.EventType.MediaPlayerPositionChanged, self.update)
         self.state = STATE_PLAYING
                 
     def play(self):
@@ -332,6 +332,7 @@ class VlcDevice(MediaPlayerDevice):
         if self._media != None:
             # 走内置播放器的逻辑
             if self._sound_mode == "内置VLC播放器":
+                
                 if self._timer_enable == True:
                     # 如果内置播放器状态为off，说明播放结束了
                     if (self._source_list != None and len(self._source_list) > 0 
@@ -342,6 +343,9 @@ class VlcDevice(MediaPlayerDevice):
                     self.next_count += 1
                     if self.next_count > 100:
                         self.next_count = 100
+
+                # 获取当前进度
+                self._media_position = int(self._media.attributes['media_position'])
             else:
                 _log('当前时间：%s，当前进度：%s,总进度：%s', self._media_position_updated_at, self._media_position, self.media_duration)
                 _log('源播放器状态 %s，云音乐状态：%s', self._media.state, self._state)
