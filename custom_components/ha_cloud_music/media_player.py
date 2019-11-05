@@ -87,7 +87,7 @@ TIME_BETWEEN_UPDATES = datetime.timedelta(seconds=1)
 ###################媒体播放器##########################
 
 
-VERSION = '2.0.5'
+VERSION = '2.0.6'
 DOMAIN = 'ha_cloud_music'
 
 _hass = None
@@ -218,6 +218,7 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
 class VlcPlayer():
     def __init__(self): 
         import vlc
+        self.vlc = vlc
         self._instance = vlc.Instance()
         self._vlc = self._instance.media_player_new()
         self.state = STATE_IDLE
@@ -229,17 +230,19 @@ class VlcPlayer():
             "media_position": 0,
         }        
         self.ha_cloud_music = True
-        event_manager = self._vlc.event_manager()
-        event_manager.event_attach(vlc.EventType.MediaPlayerPositionChanged, self.update)
+        self._event_manager = self._vlc.event_manager()
+        self._event_manager.event_attach(vlc.EventType.MediaPlayerEndReached, self.end)
         _log_info("初始化内置VLC播放器")
-
-    def update(self, position):
+    
+    def end(self, event):
+        self.state = STATE_OFF
+        
+    def update(self, event):
         try:
-            import vlc        
             status = self._vlc.get_state()
-            if status == vlc.State.Playing:
+            if status == self.vlc.State.Playing:
                 self.state = STATE_PLAYING
-            elif status == vlc.State.Paused:
+            elif status == self.vlc.State.Paused:
                 self.state = STATE_PAUSED
             else:
                 self.state = STATE_IDLE
@@ -258,6 +261,7 @@ class VlcPlayer():
     def load(self, url):
         self._vlc.set_media(self._instance.media_new(url))
         self._vlc.play()
+        self._event_manager.event_attach(self.vlc.EventType.MediaPlayerPositionChanged, self.update)
         self.state = STATE_PLAYING
                 
     def play(self):
@@ -271,8 +275,20 @@ class VlcPlayer():
         self.state = STATE_PAUSED
     
     def volume_set(self, volume_level):
+        self.attributes['volume_level'] = volume_level
         self._vlc.audio_set_volume(int(volume_level * 100))
-        
+    
+    # 设置位置
+    def seek(self, position):
+        self.attributes['media_position'] = position
+        track_length = self._vlc.get_length()/1000
+        self._vlc.set_position(position/track_length)
+    
+    # 静音
+    def mute_volume(self, mute):
+        self.attributes['is_volume_muted'] = mute
+        self._vlc.audio_set_mute(mute)
+    
 ###################媒体播放器##########################
 class VlcDevice(MediaPlayerDevice):
     """Representation of a vlc player."""
@@ -289,7 +305,6 @@ class VlcDevice(MediaPlayerDevice):
         self._media_artist = None
         self._media_album_name = None
         self._volume = None
-        self._muted = None
         self._state = STATE_IDLE
         self._shuffle = False
         self._source_list = None
@@ -305,11 +320,7 @@ class VlcDevice(MediaPlayerDevice):
         self.loading = False
         # 定时器操作计数
         self.next_count = 0
-        
-        
-        # 结束标识
-        self._is_end = False
-        
+                
         self._media = None
         # 是否启用定时器
         self._timer_enable = True
@@ -319,48 +330,62 @@ class VlcDevice(MediaPlayerDevice):
     def interval(self, now):
         # 如果当前状态是播放，则进度累加（虽然我定时的是1秒，但不知道为啥2秒执行一次）
         if self._media != None:
-            _log('当前时间：%s，当前进度：%s,总进度：%s', self._media_position_updated_at, self._media_position, self.media_duration)
-            _log('源播放器状态 %s，云音乐状态：%s', self._media.state, self._state)
-            
-              # 没有进度的，下一曲判断逻辑
-            if self._timer_enable == True:
-                # 如果进度条结束了，则执行下一曲
-                # 执行下一曲之后，15秒内不能再次执行操作
-                if (self._source_list != None 
-                    and len(self._source_list) > 0
-                    and self.media_duration > 3 
-                    and self.media_duration - 3 <= self.media_position
-                    and self.next_count > 0):                    
-                    # 如果不是内置播放器，则先停止再播放
-                    self.next_count = -15
-                    if self._sound_mode != "内置VLC播放器":
-                        self._hass.services.call('media_player', 'media_stop', {"entity_id": self._sound_mode})
-                    _log_info('播放器更新 下一曲')
-                    self.media_next_track()
-                # 计数器累加
-                self.next_count += 1
-                if self.next_count > 100:
-                    self.next_count = 100
+            # 走内置播放器的逻辑
+            if self._sound_mode == "内置VLC播放器":
+                if self._timer_enable == True:
+                    # 如果内置播放器状态为off，说明播放结束了
+                    if (self._source_list != None and len(self._source_list) > 0 
+                        and self._media.state == STATE_OFF
+                        and self.next_count > 0):
+                        self.media_next_track()
+                    # 计数器累加
+                    self.next_count += 1
+                    if self.next_count > 100:
+                        self.next_count = 100
+            else:
+                _log('当前时间：%s，当前进度：%s,总进度：%s', self._media_position_updated_at, self._media_position, self.media_duration)
+                _log('源播放器状态 %s，云音乐状态：%s', self._media.state, self._state)
                 
-                self.update()
+                  # 没有进度的，下一曲判断逻辑
+                if self._timer_enable == True:
+                    # 如果进度条结束了，则执行下一曲
+                    # 执行下一曲之后，15秒内不能再次执行操作
+                    if (self._source_list != None 
+                        and len(self._source_list) > 0
+                        and self.media_duration > 3 
+                        and self.media_duration - 3 <= self.media_position
+                        and self.next_count > 0):                    
+                        # 如果不是内置播放器，则先停止再播放
+                        self.next_count = -15
+                        if self._sound_mode != "内置VLC播放器":
+                            self._hass.services.call('media_player', 'media_stop', {"entity_id": self._sound_mode})
+                        _log_info('播放器更新 下一曲')
+                        self.media_next_track()
+                    # 计数器累加
+                    self.next_count += 1
+                    if self.next_count > 100:
+                        self.next_count = 100
+                    
+                    self.update()
+                
+                # 如果存在进度，则取源进度
+                if 'media_position' in self._media.attributes:
+                    # 判断是否为kodi播放器
+                    if self.player_type == "kodi":
+                        self._hass.services.call('homeassistant', 'update_entity', {"entity_id": self._sound_mode})
+                        if 'media_position' in self._media.attributes:
+                            self._media_position = int(self._media.attributes['media_position']) + 5
+                    else:
+                        self._media_position = int(self._media.attributes['media_position'])
+                # 如果当前是播放状态，则进行进度累加。。。
+                elif self._state == STATE_PLAYING and self._media_position_updated_at != None:
+                    _media_position = self._media_position
+                    _today = (now - self._media_position_updated_at)
+                    _seconds = _today.seconds + _today.microseconds / 1000000.0
+                    _log('当前相差的秒：%s', _seconds)
+                    self._media_position += _seconds
             
-            # 如果存在进度，则取源进度
-            if 'media_position' in self._media.attributes:
-                # 判断是否为kodi播放器
-                if self.player_type == "kodi":
-                    self._hass.services.call('homeassistant', 'update_entity', {"entity_id": self._sound_mode})
-                    if 'media_position' in self._media.attributes:
-                        self._media_position = int(self._media.attributes['media_position']) + 5
-                else:
-                    self._media_position = int(self._media.attributes['media_position'])
-            # 如果当前是播放状态，则进行进度累加。。。
-            elif self._state == STATE_PLAYING and self._media_position_updated_at != None:
-                _media_position = self._media_position
-                _today = (now - self._media_position_updated_at)
-                _seconds = _today.seconds + _today.microseconds / 1000000.0
-                _log('当前相差的秒：%s', _seconds)
-                self._media_position += _seconds
-            
+            # 更新当前播放进度时间
             self._media_position_updated_at = now
             
     def update(self):        
@@ -545,15 +570,13 @@ class VlcDevice(MediaPlayerDevice):
         self._shuffle = shuffle
 
     def media_seek(self, position):
-        """Seek the media to a specific location."""
-        #track_length = self._vlc.get_length()/1000
-        #self._vlc.set_position(position/track_length)
-        return None
+        """将媒体设置到特定位置."""
+        _log_info('设置播放位置：%s', position)
+        self.call('media_seek', {"position": position})        
 
     def mute_volume(self, mute):
-        """Mute the volume."""
-        #self._vlc.audio_set_mute(mute)
-        self._muted = mute
+        """静音."""
+        self.call('volume_mute', {"is_volume_muted": mute})
 
     def set_volume_level(self, volume):
         """Set volume level, range 0..1."""        
@@ -891,6 +914,14 @@ class VlcDevice(MediaPlayerDevice):
                 self._media.play()
             elif action == "volume_set":
                 self._media.volume_set(info['volume'])
+            elif action == "media_seek":
+                self._media.seek(info['position'])
+            elif action == "volume_mute":
+                self._media.mute_volume(info['is_volume_muted'])
+                
+            # 执行完操作之后，强制更新当前播放器
+            if action != "play_media":
+                self._hass.services.call('homeassistant', 'update_entity', {"entity_id": 'media_player.'+DOMAIN})
         else:
             self._hass.services.call('media_player', action, dict)
             self._hass.services.call('homeassistant', 'update_entity', {"entity_id": self._sound_mode})

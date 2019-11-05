@@ -59,7 +59,7 @@ window.clv = {
         try {
           let res = JSON.parse(data)
           if (res.success == false && res.error.code == 'id_reuse') {
-            // top.location.reload()
+            //top.location.reload()
           }
         } catch (ex) {
           console.log(data)
@@ -148,6 +148,9 @@ window.clv = {
       } else if (args.cmd == 'volume') {
         media_action = 'volume_set'
         media_args['volume_level'] = parseFloat(args.index)
+      } else if (args.cmd == 'position') {
+        media_action = 'media_seek'
+        media_args['seek_position'] = parseFloat(args.index)
       } else if (args.cmd == 'shuffle') {
         media_action = 'shuffle_set'
         media_args['shuffle'] = parseFloat(args.shuffle)
@@ -155,20 +158,45 @@ window.clv = {
       call(media_args, media_action, "media_player");
     })
   },
+  /**
+  * 防抖
+  * @param {Function} fn
+  * @param {Number} wait
+  */
+  debounce(fn, wait) {
+    let _this = window.clv
+    let cache = _this.debounce.prototype.cache || {}
+    let fnKey = fn.toString()
+    let timeout = cache[fnKey]
+    if (timeout != null) clearTimeout(timeout)
+    cache[fnKey] = setTimeout(() => {
+      fn()
+      // 清除内存占用
+      if (Object.keys(cache).length === 0) {
+        _this.debounce.prototype.cache = null
+      } else {
+        delete _this.debounce.prototype.cache[fnKey]
+      }
+    }, wait)
+    _this.debounce.prototype.cache = cache
+  },
+  //设置进度
+  setPosition(position) {
+    this.debounce(() => {
+      this.exec({
+        cmd: 'position',
+        index: position
+      })
+    }, 1000)
+  },
   //设置音量
-  timer: null,
   setVolume(volume) {
-
-    if (this.timer != null) {
-      clearTimeout(this.timer)
-    }
-    this.timer = setTimeout(() => {
+    this.debounce(() => {
       this.exec({
         cmd: 'volume',
         index: volume.toFixed(1)
       })
     }, 1000)
-
   },
   loadlist(playList, currentIndex) {
 

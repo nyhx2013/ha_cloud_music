@@ -301,8 +301,9 @@ export default {
       }
     },
     // 修改音乐进度
-    progressMusic(percent) {
+    progressMusic(percent) {      
       this.audioEle.currentTime = this.currentMusic.duration * percent;
+      window.clv.setPosition(this.audioEle.currentTime)
     },
     // 切换播放顺序
     modeChange() {
