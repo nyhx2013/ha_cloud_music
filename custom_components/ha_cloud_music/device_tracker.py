@@ -6,13 +6,13 @@ pip install pybluez
 启用扫描服务
 python3 ble.py
 
-
-
 配置蓝牙设备的跟踪.
-    mac: 要配置的mac地址，必须大写，多个以逗号分隔 
+    mac: 要配置的mac地址，必须大写，多个以逗号分隔
+    scan_interval: 扫描的时间（默认为12秒）
 device_tracker:
-  - platform: ha_cloud_music
+  - platform: ha_cloud_music  
     mac: 'B4:C4:FC:66:A6:F0'
+    scan_interval: 8
 
 """
 import asyncio
@@ -73,12 +73,16 @@ def is_bluetooth_device(device) -> bool:
 
 
 def discover_devices(device_id: int, filter_mac):
-    r = requests.get("http://localhost:8321/ble")
-    ble = r.json()
-    # _LOGGER.info(ble)
-    filter_list = filter(lambda x: filter_mac.count(x["mac"]) == 1, ble)
-    return list(filter_list)
-
+    try:
+        r = requests.get("http://localhost:8321/ble", timeout=5)
+        ble = r.json()
+        # _LOGGER.info(ble)
+        filter_list = filter(lambda x: filter_mac.count(x["mac"]) == 1, ble)
+        return list(filter_list)
+    except Exception as e:
+        print(e)
+        _LOGGER.error("蓝牙监听服务未开启。。。http://localhost:8321")
+        return []
 
 async def see_device(
     hass: HomeAssistantType, async_see, result
