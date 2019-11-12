@@ -188,8 +188,15 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
     # 设置API地址
     global API_URL
     API_URL = config.get("api_url")
-    _log_info("云音乐的API_URL： %s", API_URL)
-    _log_info("云音乐的API_KEY： %s", API_KEY)
+    
+    _LOGGER.info('''
+-------------------------------------------------------------------
+    云音乐配置
+    
+    API_URL：''' + API_URL + '''    
+    API_KEY：''' + API_KEY + '''    
+    
+-------------------------------------------------------------------''')        
     
     # 注册服务【加载歌单】
     hass.services.register(DOMAIN, 'load', vlcDevice.load_songlist)
@@ -235,7 +242,6 @@ class VlcPlayer():
         self._event_manager = self._vlc.event_manager()
         self._event_manager.event_attach(vlc.EventType.MediaPlayerEndReached, self.end)
         self._event_manager.event_attach(vlc.EventType.MediaPlayerPositionChanged, self.update)
-        _log_info("初始化内置VLC播放器")
     
     def end(self, event):
         self.state = STATE_OFF
@@ -323,7 +329,8 @@ class VlcDevice(MediaPlayerDevice):
         self.loading = False
         # 定时器操作计数
         self.next_count = 0
-                
+        # 判断是否支持VLC
+        self._supported_vlc = None
         self._media = None
         # 是否启用定时器
         self._timer_enable = True
@@ -1011,10 +1018,21 @@ class VlcDevice(MediaPlayerDevice):
     @property
     def supported_vlc(self):
         """判断是否支持vlc模块."""
+        if self._supported_vlc != None:
+            return self._supported_vlc
+
         try:
+            # 执行引入vlc操作，如果报错，则不支持vlc
             import vlc
+            instance = vlc.Instance()
+            instance.media_player_new()
+            instance.release()
+            self._supported_vlc = True
+            _log_info("本系统支持内置VLC播放器")
             return True
         except Exception as e:
+            _log_info("本系统不支持内置VLC播放器")
+            self._supported_vlc = False
             return False
     
     # 初始化内置VLC播放器
