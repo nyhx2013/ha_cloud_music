@@ -87,7 +87,7 @@ TIME_BETWEEN_UPDATES = datetime.timedelta(seconds=1)
 ###################媒体播放器##########################
 
 
-VERSION = '2.0.6'
+VERSION = '2.0.7'
 DOMAIN = 'ha_cloud_music'
 
 _hass = None
@@ -191,8 +191,10 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
     _log_info("云音乐的API_URL： %s", API_URL)
     _log_info("云音乐的API_KEY： %s", API_KEY)
     
-    # 注册服务load
+    # 注册服务【加载歌单】
     hass.services.register(DOMAIN, 'load', vlcDevice.load_songlist)
+    # 注册服务【设置播放模式】
+    hass.services.register(DOMAIN, 'play_mode', vlcDevice.play_mode)
     
     # 添加到侧边栏
     coroutine = hass.components.frontend.async_register_built_in_panel(
@@ -306,11 +308,12 @@ class VlcDevice(MediaPlayerDevice):
         self._media_album_name = None
         self._volume = None
         self._state = STATE_IDLE
-        self._shuffle = False
         self._source_list = None
         self._source = None
         self._sound_mode_list = None
         self._sound_mode = None
+        # 播放模式（0：列表循环，1：顺序，2：单曲循环，3：随机）
+        self._play_mode = 0
         self._media_playlist = None
         self._media_position_updated_at = None
         self._media_position = 0
@@ -338,7 +341,7 @@ class VlcDevice(MediaPlayerDevice):
                     if (self._source_list != None and len(self._source_list) > 0 
                         and self._media.state == STATE_OFF
                         and self.next_count > 0):
-                        self.media_next_track()
+                        self.media_end_next()
                     # 计数器累加
                     self.next_count += 1
                     if self.next_count > 100:
@@ -357,14 +360,20 @@ class VlcDevice(MediaPlayerDevice):
                     if (self._source_list != None 
                         and len(self._source_list) > 0
                         and self.media_duration > 3 
-                        and self.media_duration - 3 <= self.media_position
-                        and self.next_count > 0):                    
-                        # 如果不是内置播放器，则先停止再播放
-                        self.next_count = -15
-                        if self._sound_mode != "内置VLC播放器":
-                            self._hass.services.call('media_player', 'media_stop', {"entity_id": self._sound_mode})
-                        _log_info('播放器更新 下一曲')
-                        self.media_next_track()
+                        and self.next_count > 0):
+                        _isEnd = self.media_duration - 3 <= self.media_position
+                        # 如果是DLNA，则减少6秒
+                        if self.player_type == "dlna":
+                            _isEnd = self.media_duration - 6 <= self.media_position
+                        
+                        # 如果进度结束，则下一曲
+                        if _isEnd == True:
+                            # 如果不是内置播放器，则先停止再播放                        
+                            self.next_count = -15
+                            if self._sound_mode != "内置VLC播放器":
+                                self._hass.services.call('media_player', 'media_stop', {"entity_id": self._sound_mode})
+                            _log_info('播放器更新 下一曲')
+                            self.media_end_next()
                     # 计数器累加
                     self.next_count += 1
                     if self.next_count > 100:
@@ -430,7 +439,12 @@ class VlcDevice(MediaPlayerDevice):
                 return "dlna"
             elif supported_features == 65471:
                 return "mpd"
-
+                
+    # 判断是否内置播放器
+    @property
+    def is_vlc(self):
+        return self._sound_mode == "内置VLC播放器"
+                
     @property
     def name(self):
         """Return the name of the device."""
@@ -492,7 +506,7 @@ class VlcDevice(MediaPlayerDevice):
     def media_artist(self):
         """歌手"""
         return self._media_artist
-
+        
     @property
     def state(self):
         """Return the state of the device."""
@@ -527,8 +541,20 @@ class VlcDevice(MediaPlayerDevice):
     @property
     def shuffle(self):
         """随机播放开关."""
-        return self._shuffle
+        return self._play_mode == 3
 
+    @property
+    def media_season(self):
+        """播放模式（没有找到属性，所以使用这个）"""
+        if self._play_mode == 1:
+            return '顺序播放'
+        elif self._play_mode == 2:
+            return '单曲循环'
+        elif self._play_mode == 3:
+            return '随机播放'
+        else:
+            return '列表循环'
+        
     @property
     def supported_features(self):
         """Flag media player features that are supported."""
@@ -568,10 +594,13 @@ class VlcDevice(MediaPlayerDevice):
             return self._media.attributes['media_position_updated_at']
             
         return self._media_position_updated_at
-
+        
     def set_shuffle(self, shuffle):
         """禁用/启用 随机模式."""
-        self._shuffle = shuffle
+        if shuffle:
+            self._play_mode = 3
+        else:
+            self._play_mode = 0
 
     def media_seek(self, position):
         """将媒体设置到特定位置."""
@@ -687,6 +716,23 @@ class VlcDevice(MediaPlayerDevice):
         #播放音乐
         self.call('play_media', {"url": url,"type": play_type})
 
+
+    # 音乐结束自动下一曲
+    def media_end_next(self):        
+        playlist_count = len(self.music_playlist) - 1
+        # 如果是顺序播放，最后一曲，则暂停
+        if self._play_mode == 1 and self.music_index >= playlist_count:
+            return
+        # 如果是单曲循环，则索引往前移一位
+        if self._play_mode == 2:
+            self.music_index = self.music_index - 1
+        # 如果启用了随机模式，则每次都生成随机值
+        elif self._play_mode == 3:
+           # 这里的索引会在下一曲后加一
+           self.music_index = random.randint(0, playlist_count)           
+
+        self.media_next_track()
+
     def media_next_track(self):
         self.music_index = self.music_index + 1
         _log('下一曲：%s', self.music_index)
@@ -728,15 +774,25 @@ class VlcDevice(MediaPlayerDevice):
         self._media_position = 0
         self._media_duration = None                
         self.media_stop()
-                
+
+    # 关闭播放器
     def turn_off(self):
-        """Send stop command."""
         self.clear_playlist()
     
     def notification(self, message, type):
         self._hass.services.call('persistent_notification', 'create', {"message": message, "title": "云音乐", "notification_id": "ha-cloud-music-" + type})
     
     ## 自定义方法
+
+    # 设置播放模式
+    def play_mode(self, call):
+        _mode = call.data['mode']
+        mode_list = [0, 1, 2, 3]
+        if mode_list.count(_mode) == 0:
+            _mode = 0
+        self._play_mode = _mode
+        _log_info('（0：列表循环，1：顺序，2：单曲循环，3：随机）设置播放模式：%s', self._play_mode)
+
     # 加载播放列表
     def load_songlist(self, call): 
         list_index = 0    
@@ -941,12 +997,6 @@ class VlcDevice(MediaPlayerDevice):
            self.music_index = 0
         elif self.music_index < 0:
            self.music_index = playlist_count - 1
-
-        # 如果启用了随机模式，则每次都生成随机值
-        if self._shuffle == True:
-           self.music_index = random.randint(0, playlist_count - 1)
-           _log_info("当前总共有 %s 首音乐，随机播放第 %s 首", playlist_count, self.music_index)
-
         self.play_media('music_load', self.music_index)
     
     

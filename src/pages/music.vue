@@ -194,7 +194,13 @@ export default {
           });
         }
         // 初始化播放模式
-        this.setPlayMode(attr.shuffle ? 2 : 0)
+        let playMode = {
+          '列表循环': 0,
+          '顺序播放': 1,
+          '单曲循环': 2,
+          '随机播放': 3
+        }
+        this.setPlayMode(playMode[attr.media_season] || 0)
       })
       .finally(() => {
         this.$nextTick(() => {
@@ -301,24 +307,18 @@ export default {
       }
     },
     // 修改音乐进度
-    progressMusic(percent) {      
+    progressMusic(percent) {
       this.audioEle.currentTime = this.currentMusic.duration * percent;
       window.clv.setPosition(this.audioEle.currentTime)
     },
     // 切换播放顺序
     modeChange() {
       // 这里调用随机值的方法
-      let msg, mode;
-      if (this.mode != 2) {
-        mode = 2
-        msg = "启用随机播放模式"
-      } else {
-        mode = 0
-        msg = "启用列表循环模式"
-      }
+      const mode = (this.mode + 1) % 4;
+      let msg = ['列表循环', '顺序播放', '单曲循环', '随机播放'][mode];
       window.clv.exec({
-        cmd: 'shuffle',
-        shuffle: mode
+        cmd: 'play_mode',
+        mode: mode
       });
       this.setPlayMode(mode);
       this.$mmToast(msg)

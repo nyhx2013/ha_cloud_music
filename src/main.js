@@ -151,9 +151,12 @@ window.clv = {
       } else if (args.cmd == 'position') {
         media_action = 'media_seek'
         media_args['seek_position'] = parseFloat(args.index)
-      } else if (args.cmd == 'shuffle') {
-        media_action = 'shuffle_set'
-        media_args['shuffle'] = parseFloat(args.shuffle)
+      } else if (args.cmd == 'play_mode') {
+        // 设置播放模式
+        call({
+          mode: args.mode
+        }, 'play_mode', "ha_cloud_music");
+        return
       }
       call(media_args, media_action, "media_player");
     })

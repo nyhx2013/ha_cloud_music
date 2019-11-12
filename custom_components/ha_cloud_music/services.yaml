@@ -12,3 +12,9 @@ load:
     list_index:
       description: 要从第几首开始播放（如果超过列表总数量则从第1首开始播放）
       example: '1'
+play_mode:
+  description: 设置播放模式
+  fields:
+    mode:
+      description: 播放模式（0：列表循环，1：顺序播放，2：单曲循环，3：随机播放）
+      example: '1'
