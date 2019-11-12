@@ -28,7 +28,7 @@ class MyDiscoverer(bluetooth.DeviceDiscoverer):
         self.done = False
 
     def device_discovered(self, address, device_class, rssi, name):
-        #print("%s - %s" % (address, name))
+        print("%s - %s" % (address, name))
 
         # get some information out of the device class and display it.
         # voodoo magic specified at:
