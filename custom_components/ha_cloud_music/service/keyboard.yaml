@@ -1,0 +1,51 @@
+token: 这里配置HA的token
+key:  
+  71:
+    # 7
+    service: light.toggle
+    data:
+      entity_id: light.xiaomi_philips_light
+  72:
+    # 8
+    service: light.toggle
+    data:
+      entity_id: light.cai_deng
+  73:
+    # 9
+  74:
+    # -
+    service: media_player.volume_down
+    data:
+      entity_id: media_player.ha_cloud_music
+  75:
+    # 4
+    service: switch.toggle
+    data:
+      entity_id: media_player.dian_shi
+  76:
+    # 5
+    service: switch.toggle
+    data:
+      entity_id: media_player.tian_mao_he_zi
+  77:
+    # 6
+  78:
+    # +
+    service: media_player.volume_up
+    data:
+      entity_id: media_player.ha_cloud_music
+  79:
+    # 1
+    service: media_player.media_previous_track
+    data:
+      entity_id: media_player.ha_cloud_music
+  80:
+    # 2
+    service: media_player.media_play_pause
+    data:
+      entity_id: media_player.ha_cloud_music
+  81:
+    # 3
+    service: media_player.media_next_track
+    data:
+      entity_id: media_player.ha_cloud_music
