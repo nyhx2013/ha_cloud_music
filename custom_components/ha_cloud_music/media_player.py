@@ -312,7 +312,7 @@ class VlcDevice(MediaPlayerDevice):
         self._source = None
         self._sound_mode_list = None
         self._sound_mode = None
-        # 播放模式（0：列表循环，1：顺序，2：单曲循环，3：随机）
+        # 播放模式（0：列表循环，1：顺序播放，2：随机播放，3：单曲循环）
         self._play_mode = 0
         self._media_playlist = None
         self._media_position_updated_at = None
@@ -541,7 +541,7 @@ class VlcDevice(MediaPlayerDevice):
     @property
     def shuffle(self):
         """随机播放开关."""
-        return self._play_mode == 3
+        return self._play_mode == 2
 
     @property
     def media_season(self):
@@ -549,9 +549,9 @@ class VlcDevice(MediaPlayerDevice):
         if self._play_mode == 1:
             return '顺序播放'
         elif self._play_mode == 2:
-            return '单曲循环'
-        elif self._play_mode == 3:
             return '随机播放'
+        elif self._play_mode == 3:
+            return '单曲循环'
         else:
             return '列表循环'
         
@@ -598,7 +598,7 @@ class VlcDevice(MediaPlayerDevice):
     def set_shuffle(self, shuffle):
         """禁用/启用 随机模式."""
         if shuffle:
-            self._play_mode = 3
+            self._play_mode = 2
         else:
             self._play_mode = 0
 
@@ -724,10 +724,10 @@ class VlcDevice(MediaPlayerDevice):
         if self._play_mode == 1 and self.music_index >= playlist_count:
             return
         # 如果是单曲循环，则索引往前移一位
-        if self._play_mode == 2:
+        if self._play_mode == 3:
             self.music_index = self.music_index - 1
         # 如果启用了随机模式，则每次都生成随机值
-        elif self._play_mode == 3:
+        elif self._play_mode == 2:
            # 这里的索引会在下一曲后加一
            self.music_index = random.randint(0, playlist_count)           
 
@@ -791,7 +791,14 @@ class VlcDevice(MediaPlayerDevice):
         if mode_list.count(_mode) == 0:
             _mode = 0
         self._play_mode = _mode
-        _log_info('（0：列表循环，1：顺序，2：单曲循环，3：随机）设置播放模式：%s', self._play_mode)
+        _mode_name = "列表循环"
+        if self._play_mode == 1:
+            _mode_name = "顺序播放"
+        elif self._play_mode == 2:
+            _mode_name = "随机播放"
+        elif self._play_mode == 3:
+            _mode_name = "单曲循环"
+        _log_info('设置播放模式：%s', _mode_name)
 
     # 加载播放列表
     def load_songlist(self, call): 

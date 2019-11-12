@@ -16,5 +16,5 @@ play_mode:
   description: 设置播放模式
   fields:
     mode:
-      description: 播放模式（0：列表循环，1：顺序播放，2：单曲循环，3：随机播放）
+      description: 播放模式（0：列表循环，1：顺序播放，2：随机播放，3：单曲循环）
       example: '1'

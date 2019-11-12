@@ -197,8 +197,8 @@ export default {
         let playMode = {
           '列表循环': 0,
           '顺序播放': 1,
-          '单曲循环': 2,
-          '随机播放': 3
+          '随机播放': 2,
+          '单曲循环': 3
         }
         this.setPlayMode(playMode[attr.media_season] || 0)
       })
@@ -315,7 +315,7 @@ export default {
     modeChange() {
       // 这里调用随机值的方法
       const mode = (this.mode + 1) % 4;
-      let msg = ['列表循环', '顺序播放', '单曲循环', '随机播放'][mode];
+      let msg = ['列表循环', '顺序播放', '随机播放', '单曲循环'][mode];
       window.clv.exec({
         cmd: 'play_mode',
         mode: mode
