@@ -191,6 +191,7 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
     
     _LOGGER.info('''
 -------------------------------------------------------------------
+
     云音乐配置
     
     API_URL：''' + API_URL + '''    
@@ -368,10 +369,8 @@ class VlcDevice(MediaPlayerDevice):
                         and len(self._source_list) > 0
                         and self.media_duration > 3 
                         and self.next_count > 0):
-                        _isEnd = self.media_duration - 3 <= self.media_position
-                        # 如果是DLNA，则减少6秒
-                        if self.player_type == "dlna":
-                            _isEnd = self.media_duration - 6 <= self.media_position
+                          # 如果当前总进度 - 当前进度 小于 11，则下一曲 （十一是下一次更新的时间）
+                        _isEnd = self.media_duration - self.media_position <= 11
                         
                         # 如果进度结束，则下一曲
                         if _isEnd == True:

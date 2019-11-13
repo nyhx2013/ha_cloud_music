@@ -47,7 +47,7 @@ async def async_setup_platform(hass, config, async_add_entities,
     name = config.get(CONF_NAME)
 
     devices = []
-    secondary_device = XiaomiPhilipsAbstractLight(name, hass, config)
+    secondary_device = HALight(name, hass, config)
     devices.append(secondary_device)
 
     async_add_entities(devices, update_before_add=True)
@@ -55,7 +55,7 @@ async def async_setup_platform(hass, config, async_add_entities,
 # 所有灯的基类
 
 
-class XiaomiPhilipsAbstractLight(Light):
+class HALight(Light):
     """Representation of a Abstract Xiaomi Philips Light."""
 
     def __init__(self, name, hass, config):
