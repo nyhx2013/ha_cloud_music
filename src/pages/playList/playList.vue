@@ -1,12 +1,22 @@
 <template>
   <!--正在播放-->
   <div class="playList">
-    <music-list :list="playlist" :listType="1" @select="selectItem" @del="deleteItem">
+    <music-list
+      :list="playlist"
+      :list-type="1"
+      @select="selectItem"
+      @del="deleteItem"
+    >
       <div slot="listBtn" class="list-btn">
         <span @click="$refs.dialog.show()">清空列表</span>
       </div>
     </music-list>
-    <mm-dialog ref="dialog" @confirm="clearList" bodyText="是否清空正在播放列表" confirmBtnText="清空"/>
+    <mm-dialog
+      ref="dialog"
+      body-text="是否清空正在播放列表"
+      confirm-btn-text="清空"
+      @confirm="clearList"
+    />
   </div>
 </template>
 
@@ -16,15 +26,15 @@ import MusicList from 'components/music-list/music-list'
 import MmDialog from 'base/mm-dialog/mm-dialog'
 
 export default {
-  name: 'play-list',
+  name: 'PlayList',
+  components: {
+    MusicList,
+    MmDialog
+  },
   data() {
     return {
       show: false
     }
-  },
-  components: {
-    MusicList,
-    MmDialog
   },
   computed: {
     ...mapGetters(['playing', 'playlist', 'currentMusic'])
@@ -32,17 +42,12 @@ export default {
   methods: {
     // 清空列表事件
     clearList() {
-      this.clearPlayList()
-      this.$mmToast('列表清空成功')
+      top.alert('懒得写这个功能，所以这里不让清除')
+      // this.clearPlayList()
+      // this.$mmToast('列表清空成功')
     },
     // 播放暂停事件
     selectItem(item, index) {
-
-      window.clv.exec({
-        cmd: 'index',
-        index: index
-      })
-
       if (item.id !== this.currentMusic.id) {
         this.setCurrentIndex(index)
         this.setPlaying(true)
@@ -50,8 +55,11 @@ export default {
     },
     // 删除事件
     deleteItem(index) {
-      top.alert("如果加上这个功能，我还要改很多代码，所以不能用")
-
+      top.alert('懒得写这个功能，所以这里不让删除')
+      // let list = [...this.playlist]
+      // list.splice(index, 1)
+      // this.removerPlayListItem({ list, index })
+      // this.$mmToast('删除成功')
     },
     ...mapMutations({
       setPlaying: 'SET_PLAYING',

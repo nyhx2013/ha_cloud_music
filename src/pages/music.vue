@@ -6,47 +6,85 @@
         <keep-alive>
           <router-view v-if="$route.meta.keepAlive" class="music-list" />
         </keep-alive>
-        <router-view :key="$route.path" v-if="!$route.meta.keepAlive" class="music-list" />
+        <router-view
+          v-if="!$route.meta.keepAlive"
+          :key="$route.path"
+          class="music-list"
+        />
       </div>
-      <lyric class="music-right" :lyric="lyric" :nolyric="nolyric" :lyricIndex="lyricIndex" />
+      <lyric
+        class="music-right"
+        :lyric="lyric"
+        :nolyric="nolyric"
+        :lyric-index="lyricIndex"
+      />
     </div>
 
     <!--播放器-->
     <div class="music-bar" :class="{disable:!musicReady||!currentMusic.id}">
       <div class="music-bar-btns">
-        <i class="bar-icon btn-prev" title="上一曲 Ctrl + Left" @click="prev"></i>
-        <i
-          class="bar-icon btn-play"
-          :class="{'btn-play-pause':playing}"
+        <mm-icon
+          class="pointer"
+          type="prev"
+          :size="36"
+          title="上一曲 Ctrl + Left"
+          @click="prev"
+        />
+        <div
+          class="control-play pointer"
           title="播放暂停 Ctrl + Space"
           @click="play"
-        ></i>
-        <i class="bar-icon btn-next" title="下一曲 Ctrl + Right" @click="next"></i>
+        >
+          <mm-icon :type="playing ? 'pause' : 'play'" :size="24" />
+        </div>
+        <mm-icon
+          class="pointer"
+          type="next"
+          :size="36"
+          title="下一曲 Ctrl + Right"
+          @click="next"
+        />
       </div>
       <div class="music-music">
         <div class="music-bar-info">
           <template v-if="currentMusic&&currentMusic.id">
-            {{currentMusic.name}}
-            <span>- {{currentMusic.singer}}</span>
+            {{ currentMusic.name }}
+            <span>- {{ currentMusic.singer }}</span>
           </template>
           <template v-else>欢迎使用mmPlayer在线音乐播放器</template>
         </div>
         <div
-          class="music-bar-time"
           v-if="currentMusic.id"
-        >{{currentTime | format}}/{{(currentMusic.duration % 3600) | format}}</div>
+          class="music-bar-time"
+        >{{ currentTime | format }}/{{ (currentMusic.duration % 3600) | format }}</div>
         <mm-progress
           class="music-progress"
           :percent="percentMusic"
-          :percentProgress="currentProgress"
+          :percent-progress="currentProgress"
           @percentChange="progressMusic"
         />
       </div>
-      <i class="bar-icon btn-mode" :class="modeClass" :title="modeTitle" @click="modeChange"></i>
-      <i class="bar-icon btn-comment" @click="openComment"></i>
-      <div class="music-bar-volume" title="音量加减 [Ctrl+Up/Down]">
-        <i class="bar-icon btn-volume" :class="{'btn-volume-no':isMute}" @click="switchMute"></i>
-        <mm-progress @percentChange="volumeChange" :percent="volume" />
+
+      <!-- 播放模式 -->
+      <mm-icon
+        class="icon-color pointer mode"
+        :type="getModeIconType()"
+        :title="getModeIconTitle()"
+        :size="30"
+        @click="modeChange"
+      />
+
+      <!-- 评论 -->
+      <mm-icon
+        class="icon-color pointer comment"
+        type="comment"
+        :size="30"
+        @click="openComment"
+      />
+
+      <!-- 音量控制 -->
+      <div class="music-bar-volume" title="音量加减 [Ctrl + Up / Down]">
+        <volume :volume="volume" @volumeChange="volumeChange" />
       </div>
     </div>
 
@@ -57,23 +95,32 @@
 </template>
 
 <script>
-import { getLyric } from "api";
-import mmPlayerMusic from "./mmPlayer";
-import { randomSortArray, parseLyric, format } from "assets/js/util";
-import { playMode, defaultBG } from "@/config";
-import { mapGetters, mapMutations, mapActions } from "vuex";
-import MusicBtn from "components/music-btn/music-btn";
-import Lyric from "components/lyric/lyric";
-import MmProgress from "base/mm-progress/mm-progress";
+import { getLyric } from 'api'
+import mmPlayerMusic from './mmPlayer'
+import { randomSortArray, parseLyric, format } from '@/utils/util'
+import { playMode, defaultBG } from '@/config'
+import { getVolume, setVolume } from '@/utils/storage'
+import { mapGetters, mapMutations, mapActions } from 'vuex'
+
+import MmProgress from 'base/mm-progress/mm-progress'
+import MusicBtn from 'components/music-btn/music-btn'
+import Lyric from 'components/lyric/lyric'
+import Volume from 'components/volume/volume'
 
 export default {
-  name: "music",
+  name: 'Music',
   components: {
-    Lyric,
+    MmProgress,
     MusicBtn,
-    MmProgress
+    Lyric,
+    Volume
+  },
+  filters: {
+    // 时间格式化
+    format
   },
   data() {
+    const volume = getVolume()
     return {
       musicReady: false, // 是否可以使用播放器
       currentTime: 0, // 当前播放时间
@@ -82,132 +129,74 @@ export default {
       nolyric: false, // 是否有歌词
       lyricIndex: 0, // 当前播放歌词下标
       isMute: false, // 是否静音
-      volume: 1 // 默认音量大小
-    };
+      volume // 音量大小
+    }
   },
   computed: {
     picUrl() {
       return this.currentMusic.id && this.currentMusic.image
         ? `url(${this.currentMusic.image}?param=300y300)`
-        : `url(${defaultBG})`;
-    },
-    modeClass() {
-      return {
-        [playMode.listLoop]: "mode-listLoop",
-        [playMode.order]: "mode-order",
-        [playMode.random]: "mode-random",
-        [playMode.loop]: "mode-loop"
-      }[this.mode];
-    },
-    modeTitle() {
-      const key = "Ctrl + O";
-      return {
-        [playMode.listLoop]: `列表循环 ${key}`,
-        [playMode.order]: `顺序播放 ${key}`,
-        [playMode.random]: `随机播放 ${key}`,
-        [playMode.loop]: `单曲循环 ${key}`
-      }[this.mode];
+        : `url(${defaultBG})`
     },
     percentMusic() {
-      const duration = this.currentMusic.duration;
-      return this.currentTime && duration ? this.currentTime / duration : 0;
+      const duration = this.currentMusic.duration
+      return this.currentTime && duration ? this.currentTime / duration : 0
     },
     ...mapGetters([
-      "audioEle",
-      "mode",
-      "playing",
-      "playlist",
-      "orderList",
-      "currentIndex",
-      "currentMusic",
-      "historyList"
+      'audioEle',
+      'mode',
+      'playing',
+      'playlist',
+      'orderList',
+      'currentIndex',
+      'currentMusic',
+      'historyList'
     ])
   },
   watch: {
     currentMusic(newMusic, oldMusic) {
       if (!newMusic.id) {
-        this.lyric = [];
-        return;
+        this.lyric = []
+        return
       }
       if (newMusic.id === oldMusic.id) {
-        return;
+        return
       }
-      //this.audioEle.src = newMusic.url
+      this.audioEle.src = newMusic.url
       // 重置相关参数
-      this.lyricIndex = this.currentTime = this.currentProgress = 0;
-      this.audioEle.play();
+      this.lyricIndex = this.currentTime = this.currentProgress = 0
+      this.audioEle.play()
       this.$nextTick(() => {
-        this._getLyric(newMusic.id);
-      });
+        this._getLyric(newMusic.id)
+      })
     },
     playing(newPlaying) {
-      const audio = this.audioEle;
+      const audio = this.audioEle
       this.$nextTick(() => {
-        newPlaying ? audio.play() : audio.pause();
-        this.musicReady = true;
-      });
+        newPlaying ? audio.play() : audio.pause()
+        this.musicReady = true
+      })
     },
     currentTime(newTime) {
       if (this.nolyric) {
-        return;
+        return
       }
-      let lyricIndex = 0;
+      let lyricIndex = 0
       for (let i = 0; i < this.lyric.length; i++) {
         if (newTime > this.lyric[i].time) {
-          lyricIndex = i;
+          lyricIndex = i
         }
       }
-      this.lyricIndex = lyricIndex;
+      this.lyricIndex = lyricIndex
     }
   },
   mounted() {
-    window.clv.hass
-      .then(({ attr, isPlaying, isReady }) => {
-        this.musicReady = isReady;
-        this.volume = attr.volume_level || 1;
-        if (attr.playlist.length > 0) {
-          this.$nextTick(() => {
-            this._getLyric(attr.playlist[attr.index].id);
-            //歌词进度条
-            let media_position = Math.ceil(attr.media_position);
-            // 初始化加上11秒
-            let position = media_position + 11;
-            setInterval(() => {
-              window.clv.hass.then(({ attr, isPlaying }) => {
-                if (isPlaying) {
-                  let _media_position = Math.ceil(attr.media_position);
-                  //时间还未更新时+1
-                  if (media_position != _media_position) {
-                    position = media_position = _media_position;
-                    // 初始化加上11秒
-                    position += 11
-                  } else {
-                    position += 1;
-                  }
-                  this.currentTime = position;
-                }
-                //当标题不一样时，更新设置
-                this.setCurrentIndex(attr.index);
-                this.setPlaying(isPlaying);
-              });
-            }, 1000);
-          });
-        }
-        // 初始化播放模式
-        let playMode = {
-          '列表循环': 0,
-          '顺序播放': 1,
-          '随机播放': 2,
-          '单曲循环': 3
-        }
-        this.setPlayMode(playMode[attr.media_season] || 0)
-      })
-      .finally(() => {
-        this.$nextTick(() => {
-          mmPlayerMusic.initAudio(this);
-          this.initKeyDown();
-        });
-      });
+    this.$nextTick(() => {
+      mmPlayerMusic.initAudio(this)
+      this.initKeyDown()
+      this.volumeChange(this.volume)
+      this.musicReady = this.audioEle.isReady      
+    })
   },
   methods: {
     // 按键事件
@@ -215,190 +204,184 @@ export default {
       document.onkeydown = e => {
         switch (e.ctrlKey && e.keyCode) {
           case 32: // 播放暂停Ctrl + Space
-            this.play();
-            break;
+            this.play()
+            break
           case 37: // 上一曲Ctrl + Left
-            this.prev();
-            break;
+            this.prev()
+            break
           case 38: // 音量加Ctrl + Up
-            let plus = Number((this.volume += 0.1).toFixed(1));
+            let plus = Number((this.volume += 0.1).toFixed(1))
             if (plus > 1) {
-              plus = 1;
+              plus = 1
             }
-            this.volumeChange(plus);
-            break;
+            this.volumeChange(plus)
+            break
           case 39: // 下一曲Ctrl + Right
-            this.next();
-            break;
+            this.next()
+            break
           case 40: // 音量减Ctrl + Down
-            let reduce = Number((this.volume -= 0.1).toFixed(1));
+            let reduce = Number((this.volume -= 0.1).toFixed(1))
             if (reduce < 0) {
-              reduce = 0;
+              reduce = 0
             }
-            this.volumeChange(reduce);
-            break;
+            this.volumeChange(reduce)
+            break
           case 79: // 切换播放模式Ctrl + O
-            this.modeChange();
-            break;
+            this.modeChange()
+            break
         }
-      };
+      }
     },
     // 上一曲
     prev() {
-      window.clv.exec({ cmd: "prev" });
       if (!this.musicReady) {
-        return;
+        return
       }
       if (this.playlist.length === 1) {
-        this.loop();
+        this.loop()
       } else {
-        let index = this.currentIndex - 1;
+        let index = this.currentIndex - 1
         if (index < 0) {
-          index = this.playlist.length - 1;
+          index = this.playlist.length - 1
         }
-        this.setCurrentIndex(index);
+        this.setCurrentIndex(index)
         if (!this.playing && this.musicReady) {
-          this.setPlaying(true);
+          this.setPlaying(true)
         }
+        this.musicReady = false
       }
     },
     // 播放暂停
     play() {
-      window.clv.exec({ cmd: this.playing ? "pause" : "play" });
       if (!this.musicReady) {
-        return;
+        return
       }
-      this.setPlaying(!this.playing);
+      this.setPlaying(!this.playing)
     },
     // 下一曲
     next() {
-      window.clv.exec({ cmd: "next" });
       if (!this.musicReady) {
-        return;
+        return
       }
       if (
         this.playlist.length - 1 === this.currentIndex &&
         this.mode === playMode.order
       ) {
-        this.setCurrentIndex(-1);
-        this.setPlaying(false);
-        return;
+        this.setCurrentIndex(-1)
+        this.setPlaying(false)
+        return
       }
       if (this.playlist.length === 1) {
-        this.loop();
+        this.loop()
       } else {
-        let index = this.currentIndex + 1;
+        let index = this.currentIndex + 1
         if (index === this.playlist.length) {
-          index = 0;
+          index = 0
         }
         if (!this.playing && this.musicReady) {
-          this.setPlaying(true);
+          this.setPlaying(true)
         }
-        this.setCurrentIndex(index);
+        this.setCurrentIndex(index)
+        this.musicReady = false
       }
     },
     // 循环
     loop() {
-      this.audioEle.currentTime = 0;
-      this.audioEle.play();
-      this.setPlaying(true);
+      this.audioEle.currentTime = 0
+      this.audioEle.play()
+      this.setPlaying(true)
       if (this.lyric.length > 0) {
-        this.lyricIndex = 0;
+        this.lyricIndex = 0
       }
     },
     // 修改音乐进度
     progressMusic(percent) {
-      this.audioEle.currentTime = this.currentMusic.duration * percent;
-      window.clv.setPosition(this.audioEle.currentTime)
+      this.audioEle.currentTime = this.currentMusic.duration * percent
     },
     // 切换播放顺序
     modeChange() {
-      // 这里调用随机值的方法
-      const mode = (this.mode + 1) % 4;
-      let msg = ['列表循环', '顺序播放', '随机播放', '单曲循环'][mode];
-      window.clv.exec({
-        cmd: 'play_mode',
-        mode: mode
-      });
-      this.setPlayMode(mode);
-      this.$mmToast(msg)
-      //const mode = (this.mode + 1) % 4;
-      //this.setPlayMode(mode);
-      //if (mode === playMode.loop) {
-      //  return;
-      //}
-      // let list = [];
-      // switch (mode) {
-      //   case playMode.listLoop:
-      //   case playMode.order:
-      //     list = this.orderList;
-      //     break;
-      //   case playMode.random:
-      //     list = randomSortArray(this.orderList);
-      //     break;
-      // }
-      // this.resetCurrentIndex(list);
-      // this.setPlaylist(list);
+      const mode = (this.mode + 1) % 4
+      this.audioEle.playMode = mode
+      this.setPlayMode(mode)
+      if (mode === playMode.loop) {
+        return
+      }
+      let list = []
+      switch (mode) {
+        case playMode.listLoop:
+        case playMode.order:
+          list = this.orderList
+          break
+        case playMode.random:
+          list = randomSortArray(this.orderList)
+          break
+      }
+      this.resetCurrentIndex(list)
+      this.setPlaylist(list)
     },
     // 修改当前歌曲索引
     resetCurrentIndex(list) {
       const index = list.findIndex(item => {
-        return item.id === this.currentMusic.id;
-      });
-      this.setCurrentIndex(index);
+        return item.id === this.currentMusic.id
+      })
+      this.setCurrentIndex(index)
     },
     // 打开音乐评论
     openComment() {
       if (!this.currentMusic.id) {
-        this.$mmToast("还没有播放歌曲哦！");
-        return false;
+        this.$mmToast('还没有播放歌曲哦！')
+        return false
       }
-      this.$router.push(`/music/comment/${this.currentMusic.id}`);
+      this.$router.push(`/music/comment/${this.currentMusic.id}`)
     },
     // 修改音量大小
     volumeChange(percent) {
-      percent === 0 ? (this.isMute = true) : (this.isMute = false);
-      window.clv.setVolume(percent);
-      this.volume = percent;
-      this.audioEle.volume = percent;
+      percent === 0 ? (this.isMute = true) : (this.isMute = false)
+      this.volume = percent
+      this.audioEle.volume = percent
+      setVolume(percent)
     },
-    // 是否静音
-    switchMute() {
-      const audio = this.audioEle;
-      this.isMute = !this.isMute;
-      this.isMute ? (audio.volume = 0) : (audio.volume = this.volume);
+    // 获取播放模式 icon
+    getModeIconType() {
+      return {
+        [playMode.listLoop]: 'loop',
+        [playMode.order]: 'sequence',
+        [playMode.random]: 'random',
+        [playMode.loop]: 'loop-one'
+      }[this.mode]
+    },
+    // 获取播放模式 title
+    getModeIconTitle() {
+      const key = 'Ctrl + O'
+      return {
+        [playMode.listLoop]: `列表循环 ${key}`,
+        [playMode.order]: `顺序播放 ${key}`,
+        [playMode.random]: `随机播放 ${key}`,
+        [playMode.loop]: `单曲循环 ${key}`
+      }[this.mode]
     },
     // 获取歌词
     _getLyric(id) {
       getLyric(id).then(res => {
         if (res.status === 200) {
           if (res.data.nolyric) {
-            this.nolyric = true;
+            this.nolyric = true
           } else {
-            if (res.data.lrc) {
-              this.nolyric = false;
-              this.lyric = parseLyric(res.data.lrc.lyric);
-            } else {
-              this.nolyric = true;
-              this.lyric = [];
-            }
+            this.nolyric = false
+            this.lyric = parseLyric(res.data.lrc.lyric)
           }
-          //this.audioEle.play();
+          this.audioEle.play()
         }
-      });
+      })
     },
     ...mapMutations({
-      setPlaying: "SET_PLAYING",
-      setPlaylist: "SET_PLAYLIST",
-      setCurrentIndex: "SET_CURRENTINDEX"
+      setPlaying: 'SET_PLAYING',
+      setPlaylist: 'SET_PLAYLIST',
+      setCurrentIndex: 'SET_CURRENTINDEX'
     }),
-    ...mapActions(["setHistory", "setPlayMode"])
-  },
-  filters: {
-    // 时间格式化
-    format
+    ...mapActions(['setHistory', 'setPlayMode'])
   }
-};
+}
 </script>
 
 <style lang="less">
@@ -413,13 +396,13 @@ export default {
   .music-content {
     display: flex;
     width: 100%;
-    height: calc(~"100% - 80px");
+    height: calc(~'100% - 80px');
     .music-left {
       flex: 1;
       height: 100%;
       overflow: hidden;
       .music-list {
-        height: calc(~"100% - 60px");
+        height: calc(~'100% - 60px');
       }
     }
     .music-right {
@@ -437,20 +420,33 @@ export default {
     height: 80px;
     box-sizing: border-box;
     padding-bottom: 15px;
+    color: #fff;
     &.disable {
       pointer-events: none;
       opacity: 0.6;
     }
-    .bar-icon {
-      display: block;
-      background-image: url("~assets/img/player.png");
-      cursor: pointer;
+    .icon-color {
+      color: #fff;
     }
     .music-bar-btns {
       display: flex;
-      justify-content: space-around;
+      justify-content: space-between;
       align-items: center;
+      width: 180px;
+      .control-play {
+        .flex-center;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        color: #fff;
+        background-color: rgba(255, 255, 255, 0.3);
+        .icon-bofang101 {
+          transform: translateX(2px);
+        }
+      }
     }
+
+    .flex-center;
     .btn-prev {
       width: 19px;
       min-width: 19px;
@@ -478,7 +474,7 @@ export default {
       width: 100%;
       flex: 1;
       box-sizing: border-box;
-      padding-left: 50px;
+      padding-left: 40px;
       font-size: @font_size_small;
       color: @text_color_active;
       .music-bar-info {
@@ -497,63 +493,16 @@ export default {
         right: 5px;
       }
     }
-    .mode-listLoop {
-      width: 26px;
-      height: 25px;
-      margin-left: 20px;
-      background-position: 0 -205px;
-    }
-    .mode-order {
-      width: 23px;
-      height: 20px;
-      margin-left: 23px;
-      background-position: 0 -260px;
-    }
-    .mode-random {
-      width: 25px;
-      height: 19px;
-      margin-left: 21px;
-      background-position: 0 -74px;
-    }
-    .mode-loop {
-      width: 26px;
-      height: 25px;
-      margin-left: 20px;
-      background-position: 0 -232px;
-    }
-    .btn-comment {
-      width: 24px;
-      height: 24px;
-      margin-left: 20px;
-      background-position: 0 -400px;
-    }
+    .mode,
+    .comment,
     .music-bar-volume {
-      position: relative;
       margin-left: 20px;
-      .btn-volume {
-        width: 26px;
-        height: 21px;
-        background-position: 0 -144px;
-        &.btn-volume-no {
-          background-position: 0 -182px;
-        }
-      }
-      @media (min-width: 768px) {
-        width: 150px;
-        .btn-volume {
-          position: absolute;
-          top: -4px;
-        }
+    }
 
-        .mmProgress {
-          margin-left: 30px;
-        }
-      }
-      @media (max-width: 768px) {
-        top: 2px;
-        width: 26px;
-        height: 21px;
-      }
+    // 音量控制
+    .volume-wrapper {
+      margin-left: 20px;
+      width: 150px;
     }
   }
 
@@ -622,18 +571,16 @@ export default {
         padding-left: 0;
         order: 1;
       }
-      & > i.btn-mode {
+      & > i.mode {
         position: absolute;
-        top: 44px;
+        top: 40px;
         left: 5px;
         margin: 0;
       }
-      .btn-comment {
+      .comment {
         position: absolute;
-        top: 45px;
+        top: 40px;
         right: 5px;
-        width: 26px;
-        height: 21px;
       }
       .music-bar-volume {
         display: none;

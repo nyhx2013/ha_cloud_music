@@ -1,25 +1,25 @@
 <template>
   <!--搜索-->
   <div class="search">
-    <mm-loading v-model="mmLoadShow"/>
+    <mm-loading v-model="mmLoadShow" />
     <div class="search-head">
       <span
         v-for="(item,index) in Artists.slice(0,5)"
         :key="index"
         @click="clickHot(item.first)"
-      >{{item.first}}</span>
+      >{{ item.first }}</span>
       <input
+        v-model.trim="searchValue"
         class="search-input"
         type="text"
         placeholder="音乐/歌手"
-        v-model.trim="searchValue"
         @keyup.enter="onEnter"
-      >
+      />
     </div>
     <music-list
       ref="musicList"
       :list="list"
-      :listType="2"
+      :list-type="2"
       @select="selectItem"
       @pullUp="pullUpLoad"
     />
@@ -29,24 +29,24 @@
 <script>
 import { mapGetters, mapActions, mapMutations } from 'vuex'
 import { search, searchHot, getMusicDetail } from 'api'
-import formatSongs from 'assets/js/song'
+import formatSongs from '@/utils/song'
 import MmLoading from 'base/mm-loading/mm-loading'
 import MusicList from 'components/music-list/music-list'
-import { loadMixin } from 'assets/js/mixin'
+import { loadMixin } from '@/utils/mixin'
 
 export default {
-  name: 'search',
-  mixins: [loadMixin],
+  name: 'Search',
   components: {
     MmLoading,
     MusicList
   },
+  mixins: [loadMixin],
   data() {
     return {
+      searchValue: '', // 搜索关键词
       Artists: [], // 热搜数组
       list: [], // 搜索数组
       page: 0, // 分页
-      searchValue: "",
       lockUp: true // 是否锁定上拉加载事件,默认锁定
     }
   },
@@ -99,17 +99,14 @@ export default {
     },
     // 滚动加载事件
     pullUpLoad() {
-      this.mmLoadShow = true
       this.page += 1
       search(this.searchValue, this.page).then(res => {
         if (res.data.code === 200) {
           if (!res.data.result.songs) {
             this.$mmToast('没有更多歌曲啦！')
-            this.mmLoadShow = false
             return
           }
           this.list = [...this.list, ...formatSongs(res.data.result.songs)]
-          this._hideLoad()
         }
       })
     },

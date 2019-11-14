@@ -2,58 +2,44 @@
   <!--头部-->
   <header class="mm-header">
     <h1 class="header">
-      <a>mmPlayer在线音乐播放器&nbsp;<span style="font-size:12px;">{{ver}}</span></a>
+      <a>mmPlayer在线音乐播放器&nbsp;<span style="font-size:12px;">{{ audioEle ? audioEle.ver : '' }}</span></a>
     </h1>
     <dl class="user">
       <template v-if="user.userId">
-        <router-link
-          class="user-info"
-          to="/music/userlist"
-          tag="dt"
-        >
-          <img :src="`${user.avatarUrl}?param=50y50`" />
-          <span>{{user.nickname}}</span>
+        <router-link class="user-info" to="/music/userlist" tag="dt">
+          <img class="avatar" :src="`${user.avatarUrl}?param=50y50`" />
+          <span>{{ user.nickname }}</span>
         </router-link>
-        <dd
-          class="user-btn"
-          @click="openDialog(2)"
-        >退出</dd>
+        <dd class="user-btn" @click="openDialog(2)">退出</dd>
       </template>
-      <dd
-        v-else
-        class="user-btn"
-        @click="openDialog(0)"
-      >登录</dd>
+      <dd v-else class="user-btn" @click="openDialog(0)">登录</dd>
     </dl>
     <!--登录-->
     <mm-dialog
       ref="loginDialog"
-      headText="登录"
-      confirmBtnText="登录"
-      cancelBtnText="关闭"
+      head-text="登录"
+      confirm-btn-text="登录"
+      cancel-btn-text="关闭"
       @confirm="login"
     >
       <div class="mm-dialog-text">
         <input
+          v-model.trim="uidValue"
           class="mm-dialog-input"
           type="number"
           autofocus
-          placeholder="请输入您的网易云UID"
-          v-model.trim="uidValue"
+          placeholder="请输入您的网易云 UID"
           @keyup.enter="login"
         />
       </div>
-      <div
-        slot="btn"
-        @click="openDialog(1)"
-      >帮助</div>
+      <div slot="btn" @click="openDialog(1)">帮助</div>
     </mm-dialog>
     <!--帮助-->
     <mm-dialog
       ref="helpDialog"
-      headText="登录帮助"
-      confirmBtnText="去登录"
-      cancelBtnText="关闭"
+      head-text="登录帮助"
+      confirm-btn-text="去登录"
+      cancel-btn-text="关闭"
       @confirm="openDialog(0)"
     >
       <div class="mm-dialog-text">
@@ -70,99 +56,88 @@
       </div>
     </mm-dialog>
     <!--退出-->
-    <mm-dialog
-      ref="outDialog"
-      @confirm="out"
-      bodyText="确定退出当前用户吗？"
-    />
+    <mm-dialog ref="outDialog" body-text="确定退出当前用户吗？" @confirm="out" />
   </header>
 </template>
 
 <script>
-import { getUserPlaylist } from "api";
-import { mapGetters, mapActions } from "vuex";
-import MmDialog from "base/mm-dialog/mm-dialog";
+import { getUserPlaylist } from 'api'
+import { mapGetters, mapActions } from 'vuex'
+import MmDialog from 'base/mm-dialog/mm-dialog'
 
 export default {
-  name: "mm-header",
+  name: 'MmHeader',
   components: {
     MmDialog
   },
   data() {
     return {
-      ver: "",
       user: {}, // 用户数据
-      uidValue: "" // 记录用户 UID
-    };
+      uidValue: '' // 记录用户 UID
+    }
   },
   computed: {
-    ...mapGetters(["uid"])
+    ...mapGetters(['audioEle']),
+    ...mapGetters(['uid'])
   },
   created() {
-    let url = new URLSearchParams(location.search);
-    this.ver = url.get("ver");
-    let uid = url.get("uid");
-    if (uid && !this.uid) {
-      this._getUserPlaylist(uid);
-    } else {
-      this.uid && this._getUserPlaylist(this.uid);
-    }
+    this.uid && this._getUserPlaylist(this.uid)
   },
   methods: {
     // 打开对话框
     openDialog(key) {
       switch (key) {
         case 0:
-          this.$refs.loginDialog.show();
-          break;
+          this.$refs.loginDialog.show()
+          break
         case 1:
-          this.$refs.loginDialog.hide();
-          this.$refs.helpDialog.show();
-          break;
+          this.$refs.loginDialog.hide()
+          this.$refs.helpDialog.show()
+          break
         case 2:
-          this.$refs.outDialog.show();
-          break;
+          this.$refs.outDialog.show()
+          break
         case 3:
-          this.$refs.loginDialog.hide();
-          break;
+          this.$refs.loginDialog.hide()
+          break
       }
     },
     // 退出登录
     out() {
-      this.user = {};
-      this.setUid(null);
-      this.$mmToast("退出成功！");
+      this.user = {}
+      this.setUid(null)
+      this.$mmToast('退出成功！')
     },
     // 登录
     login() {
-      if (this.uidValue === "") {
-        this.$mmToast("UID不能为空");
-        this.openDialog(0);
-        return;
+      if (this.uidValue === '') {
+        this.$mmToast('UID 不能为空')
+        this.openDialog(0)
+        return
       }
-      this.openDialog(3);
-      this._getUserPlaylist(this.uidValue);
+      this.openDialog(3)
+      this._getUserPlaylist(this.uidValue)
     },
     // 获取用户数据
     _getUserPlaylist(uid) {
       getUserPlaylist(uid).then(res => {
         if (res.data.code === 200) {
-          this.uidValue = "";
+          this.uidValue = ''
           if (res.data.playlist.length === 0 || !res.data.playlist[0].creator) {
-            this.$mmToast(`未查询找UID为 ${uid} 的用户信息`);
-            return;
+            this.$mmToast(`未查询找 UID 为 ${uid} 的用户信息`)
+            return
           }
-          this.setUid(uid);
-          this.user = res.data.playlist[0].creator;
+          this.setUid(uid)
+          this.user = res.data.playlist[0].creator
           setTimeout(() => {
-            this.$mmToast(`${this.user.nickname} 欢迎使用`);
-          }, 200);
+            this.$mmToast(`${this.user.nickname} 欢迎使用 mmPlayer`)
+          }, 200)
         }
-      });
+      })
     },
-    ...mapActions(["setUid"])
+    ...mapActions(['setUid'])
   }
-};
+}
 </script>
 
 <style lang="less">
@@ -181,14 +156,14 @@ export default {
     color: @text_color_active;
     font-size: @font_size_large;
     @media (max-width: 768px) {
-      padding-left: 20px;
+      padding-left: 15px;
       text-align: left;
     }
   }
   .user {
     position: absolute;
     top: 50%;
-    right: 20px;
+    right: 15px;
     line-height: 30px;
     text-align: right;
     transform: translateY(-50%);
@@ -196,13 +171,14 @@ export default {
       float: left;
       margin-right: 15px;
       cursor: pointer;
-      img {
+      .avatar {
         width: 30px;
         height: 30px;
         border-radius: 90px;
         vertical-align: middle;
       }
       span {
+        margin-left: 10px;
         color: @text_color_active;
       }
     }

@@ -28,35 +28,6 @@ const routes = [
         }
       },
       {
-        path: '/music/fm', // 我的歌单
-        component: () => import('pages/fm/fm'),
-        meta: {
-          title: '电台',
-          keepAlive: true
-        }
-      },
-      {
-        path: '/music/fmlist/:id', // 音乐详情列表
-        component: () => import('pages/fm/fmlist')
-      },
-      {
-        path: '/music/video', // 看视频
-        component: () => import('pages/video/video'),
-        meta: {
-          title: '看视频',
-          keepAlive: true
-        }
-      },
-      {
-        name: 'music-videolist',
-        path: '/music/videolist', // 看视频
-        component: () => import('pages/video/videolist'),
-        meta: {
-          title: '看视频',
-          keepAlive: false
-        }
-      },
-      {
         path: '/music/toplist', // 排行榜列表
         component: () => import('pages/topList/topList'),
         meta: {
@@ -94,11 +65,8 @@ const routes = [
   }
 ]
 
-
-let router = new Router({
+export default new Router({
   linkActiveClass: 'active',
   linkExactActiveClass: 'active',
   routes
 })
-
-export default router

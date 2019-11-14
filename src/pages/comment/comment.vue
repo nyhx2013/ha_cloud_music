@@ -1,7 +1,7 @@
 <template>
   <!--评论-->
   <div class="comment">
-    <mm-loading v-model="mmLoadShow"/>
+    <mm-loading v-model="mmLoadShow" />
     <dl
       v-if="hotComments.length > 0"
       class="comment-list"
@@ -10,64 +10,67 @@
       <!--精彩评论-->
       <dt class="comment-title">精彩评论</dt>
       <dd
-        class="comment-item"
         v-for="item in hotComments"
         :key="item.commentId"
+        class="comment-item"
       >
         <a
           target="_blank"
           :href="`http://music.163.com/#/user/home?id=${item.user.userId}`"
         >
           <img
-            class="comment-item-pic"
             v-lazy="`${item.user.avatarUrl}?param=50y50`"
-          >
-          <h2 class="comment-item-title">{{item.user.nickname}}</h2>
+            class="comment-item-pic"
+          />
+          <h2 class="comment-item-title">{{ item.user.nickname }}</h2>
         </a>
-        <p class="comment-item-disc">{{item.content}}</p>
+        <p class="comment-item-disc">{{ item.content }}</p>
         <div class="comment-item-opt">
-          <span class="comment-opt-date">{{item.time | format}}</span>
-          <span class="comment-opt-liked">{{item.likedCount}}</span>
+          <span class="comment-opt-date">{{ item.time | format }}</span>
+          <span class="comment-opt-liked">
+            <mm-icon type="good" />
+            {{ item.likedCount }}
+          </span>
         </div>
       </dd>
       <!--最新评论-->
-      <dt class="comment-title">最新评论（{{total}}）</dt>
+      <dt class="comment-title">最新评论（{{ total }}）</dt>
       <dd
-        class="comment-item"
         v-for="item in commentList"
         :key="item.commentId"
+        class="comment-item"
       >
         <a
           class="comment-item-pic"
           target="_blank"
           :href="`http://music.163.com/#/user/home?id=${item.user.userId}`"
         >
-          <img class="cover-img" v-lazy="`${item.user.avatarUrl}?param=50y50`">
+          <img v-lazy="`${item.user.avatarUrl}?param=50y50`" class="cover-img" />
         </a>
         <h2 class="comment-item-title">
           <a
             target="_blank"
             :href="`http://music.163.com/#/user/home?id=${item.user.userId}`"
-          >{{item.user.nickname}}</a>
+          >{{ item.user.nickname }}</a>
         </h2>
-        <p class="comment-item-disc">{{item.content}}</p>
+        <p class="comment-item-disc">{{ item.content }}</p>
         <div
-          class="comment-item-replied"
           v-for="beReplied in item.beReplied"
           :key="beReplied.user.userId"
+          class="comment-item-replied"
         >
           <a
             target="_blank"
             :href="`http://music.163.com/#/user/home?id=${beReplied.user.userId}`"
-          >{{beReplied.user.nickname}}</a>
-          ：{{beReplied.content}}
+          >{{ beReplied.user.nickname }}</a>
+          ：{{ beReplied.content }}
         </div>
         <div class="comment-item-opt">
-          <span class="comment-opt-date">{{item.time | format}}</span>
-          <span
-            class="comment-opt-liked"
-            v-if="item.likedCount>0"
-          >{{item.likedCount}}</span>
+          <span class="comment-opt-date">{{ item.time | format }}</span>
+          <span v-if="item.likedCount>0" class="comment-opt-liked">
+            <mm-icon type="good" />
+            {{ item.likedCount }}
+          </span>
         </div>
       </dd>
     </dl>
@@ -76,72 +79,18 @@
 
 <script>
 import { getComment } from 'api'
-import { addZero } from 'assets/js/util'
+import { addZero } from '@/utils/util'
 import MmLoading from 'base/mm-loading/mm-loading'
-import { loadMixin } from 'assets/js/mixin'
+import { loadMixin } from '@/utils/mixin'
 
 export default {
-  name: 'comment',
-  mixins: [loadMixin],
+  name: 'Comment',
   components: {
     MmLoading
   },
-  data () {
-    return {
-      lockUp: true, // 是否锁定滚动加载事件,默认锁定
-      page: 0, // 分页
-      hotComments: [], // 精彩评论
-      commentList: [], // 最新评论
-      total: null // 评论总数
-    }
-  },
-  watch: {
-    commentList (newList, oldList) {
-      if (newList.length !== oldList.length) {
-        this.lockUp = false
-      }
-    }
-  },
-  created () {
-    this.initData()
-  },
-  methods: {
-    // 初始化数据
-    initData () {
-      getComment(this.$route.params.id, this.page).then(res => {
-        if (res.data.code === 200) {
-          this.hotComments = res.data.hotComments
-          this.commentList = res.data.comments
-          this.total = res.data.total
-          this.lockUp = true
-          this._hideLoad()
-        }
-      })
-    },
-    // 列表滚动事件
-    listScroll (e) {
-      if (this.lockUp) {
-        return
-      }
-      const { scrollTop, scrollHeight, offsetHeight } = e.target
-      if (scrollTop + offsetHeight >= scrollHeight - 100) {
-        this.lockUp = true // 锁定滚动加载
-        this.page += 1
-        this.pullUp() // 触发滚动加载事件
-      }
-    },
-    // 滚动加载事件
-    pullUp () {
-      getComment(this.$route.params.id, this.page).then(res => {
-        if (res.data.code === 200) {
-          this.commentList = [...this.commentList, ...res.data.comments]
-        }
-      })
-    }
-  },
   filters: {
     // 格式化时间
-    format (time) {
+    format(time) {
       let formatTime
       const date = new Date(time)
       const dateObj = {
@@ -176,13 +125,65 @@ export default {
       }
       return formatTime
     }
+  },
+  mixins: [loadMixin],
+  data() {
+    return {
+      lockUp: true, // 是否锁定滚动加载事件,默认锁定
+      page: 0, // 分页
+      hotComments: [], // 精彩评论
+      commentList: [], // 最新评论
+      total: null // 评论总数
+    }
+  },
+  watch: {
+    commentList(newList, oldList) {
+      if (newList.length !== oldList.length) {
+        this.lockUp = false
+      }
+    }
+  },
+  created() {
+    this.initData()
+  },
+  methods: {
+    // 初始化数据
+    initData() {
+      getComment(this.$route.params.id, this.page).then(res => {
+        if (res.data.code === 200) {
+          this.hotComments = res.data.hotComments
+          this.commentList = res.data.comments
+          this.total = res.data.total
+          this.lockUp = true
+          this._hideLoad()
+        }
+      })
+    },
+    // 列表滚动事件
+    listScroll(e) {
+      if (this.lockUp) {
+        return
+      }
+      const { scrollTop, scrollHeight, offsetHeight } = e.target
+      if (scrollTop + offsetHeight >= scrollHeight - 100) {
+        this.lockUp = true // 锁定滚动加载
+        this.page += 1
+        this.pullUp() // 触发滚动加载事件
+      }
+    },
+    // 滚动加载事件
+    pullUp() {
+      getComment(this.$route.params.id, this.page).then(res => {
+        if (res.data.code === 200) {
+          this.commentList = [...this.commentList, ...res.data.comments]
+        }
+      })
+    }
   }
 }
 </script>
 
 <style lang="less" scoped>
-@import '~assets/css/mixin';
-
 .comment {
   position: relative;
   transform: translate3d(0, 0, 0);
@@ -256,12 +257,8 @@ export default {
         }
         .comment-opt-liked {
           display: inline-block;
-          padding-left: 23px;
           height: 20px;
           line-height: 20px;
-          background-image: url('~assets/img/comment.png');
-          background-repeat: no-repeat;
-          background-size: contain;
         }
       }
     }

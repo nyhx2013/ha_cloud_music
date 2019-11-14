@@ -7,9 +7,8 @@
     <mm-dialog
       ref="versionDialog"
       type="alert"
-      headText="更新提示"
-      :bodyText="versionBody"
-      @confirm="confirmUpdate"
+      head-text="更新提示"
+      :body-text="versionBody"
     />
     <!--播放器-->
     <audio ref="mmPlayer"></audio>
@@ -17,29 +16,33 @@
 </template>
 
 <script>
-import { mapMutations, mapActions } from "vuex";
-import { topList } from "api";
-import { defaultSheetId, VERSION } from "@/config";
-import { createTopList } from "assets/js/song";
-import MmHeader from "components/mm-header/mm-header";
-import MmDialog from "base/mm-dialog/mm-dialog";
+import { mapMutations, mapActions } from 'vuex'
+import { VERSION } from '@/config'
+import { createTopList } from '@/utils/song'
+import MmHeader from 'components/mm-header/mm-header'
+import MmDialog from 'base/mm-dialog/mm-dialog'
+import Audio from './utils/audio'
 
-import { getVersion, setVersion } from "assets/js/storage";
-import { setTimeout, clearTimeout } from "timers";
+const VERSIONBODY = `<div class="mm-dialog-text text-left">
+版本号：${VERSION}（2019.09.28）<br/>
+1、 采用新版图标<br>
+2、 优化歌词滚动处理<br>
+3、 修复推荐页面样式问题<br>
+4、 调整封面图分辨率<br>
+5、 优化进度条拖动<br>
+6、 启动 2.0 版本（不再适配移动端）
+</div>`
 
 export default {
-  name: "app",
+  name: 'App',
   components: {
     MmHeader,
     MmDialog
   },
-  data() {
-    return {
-      updateLink:'',
-      versionBody: ""
-    };
-  },
   created() {
+    // 设置版本更新信息
+    this.versionBody = VERSIONBODY
+
     // 获取正在播放列表
     // topList(defaultSheetId).then(res => {
     //   if (res.status === 200) {
@@ -49,50 +52,34 @@ export default {
     // })
 
     // 设置title
-    let OriginTitile = document.title;
-    let titleTime;
-    document.addEventListener("visibilitychange", function() {
+    let OriginTitile = document.title
+    let titleTime
+    document.addEventListener('visibilitychange', function() {
       if (document.hidden) {
-        document.title = "死鬼去哪里了！";
-        clearTimeout(titleTime);
+        document.title = '死鬼去哪里了！'
+        clearTimeout(titleTime)
       } else {
-        document.title = "(つェ⊂)咦!又好了!";
+        document.title = '(つェ⊂)咦!又好了!'
         titleTime = setTimeout(function() {
-          document.title = OriginTitile;
-        }, 2000);
+          document.title = OriginTitile
+        }, 2000)
       }
-    });
+    })
 
     // 设置audio元素
     this.$nextTick(() => {
-      this.setAudioele(this.$refs.mmPlayer);
-    });
+      this.setAudioele(new Audio())
+      // this.setAudioele(this.$refs.mmPlayer)
+    })
 
     // 首次加载完成后移除动画
-    const loadDOM = document.querySelector("#appLoading");
+    let loadDOM = document.querySelector('#appLoading')
     if (loadDOM) {
       const animationendFunc = function() {
-        loadDOM.removeEventListener("animationend", animationendFunc);
-        loadDOM.removeEventListener("webkitAnimationEnd", animationendFunc);
-        document.body.removeChild(loadDOM);
-
-//         fetch(`config.json?r=${Date.now()}`)
-//           .then(res => res.json())
-//           .then(res => {
-//             const link = `${location.pathname}?ver=${res.ver}${location.hash}`;
-//             //如果链接中不含这个，则提示使用这个
-//             if (location.href.indexOf(res.ver) < 0) {
-//               this.versionBody = `<div class="mm-dialog-text text-left">
-// 版本更新 （${res.ver}）<br/>
-// 更新后的链接（请复制下面的链接使用）：<br/>
-// <a href='${link}' target='_blank'>${link}</a> <br/><br/>
-// 更新功能： <br/>
-// 1、 全面更新播放插件，支持所有媒体播放组件
-// </div>`;
-//               this.updateLink = link;
-//               this.$refs.versionDialog.show();
-//             }
-//           });
+        loadDOM.removeEventListener('animationend', animationendFunc)
+        loadDOM.removeEventListener('webkitAnimationEnd', animationendFunc)
+        document.body.removeChild(loadDOM)
+        loadDOM = null
         // const version = getVersion()
         // if (version !== null) {
         //   setVersion(VERSION)
@@ -103,37 +90,30 @@ export default {
         //   setVersion(VERSION)
         //   this.$refs.versionDialog.show()
         // }
-      }.bind(this);
-      loadDOM.addEventListener("animationend", animationendFunc);
-      loadDOM.addEventListener("webkitAnimationEnd", animationendFunc);
-      loadDOM.classList.add("removeAnimate");
+      }
+      loadDOM.addEventListener('animationend', animationendFunc)
+      loadDOM.addEventListener('webkitAnimationEnd', animationendFunc)
+      loadDOM.classList.add('removeAnimate')
     }
   },
   methods: {
-    confirmUpdate(){
-      if(this.updateLink){
-        location.href = this.updateLink
-      }
-    },
     // 歌曲数据处理
     _formatSongs(list) {
-      let ret = [];
+      let ret = []
       list.forEach(item => {
-        const musicData = item;
+        const musicData = item
         if (musicData.id) {
-          ret.push(createTopList(musicData));
+          ret.push(createTopList(musicData))
         }
-      });
-      return ret;
+      })
+      return ret
     },
     ...mapMutations({
-      setAudioele: "SET_AUDIOELE",
-      setCurrentIndex: "SET_CURRENTINDEX",
-      setPlaying: "SET_PLAYING"
+      setAudioele: 'SET_AUDIOELE'
     }),
-    ...mapActions(["setPlaylist"])
+    ...mapActions(['setPlaylist'])
   }
-};
+}
 </script>
 
 <style lang="less">

@@ -1,8 +1,8 @@
 // 网络请求地址
-export const URL = '/ha_cloud_music-api'
+export const URL = 'https://api.jiluxinqing.com/api/163'
 
 // 版本号
-export const VERSION = '1.5.6'
+export const VERSION = '1.6.1'
 
 /**
  * 默认歌单ID （正在播放列表）
@@ -37,8 +37,15 @@ export const defaultSheetId = 1
 // 默认分页数量
 export const defaultLimit = 30
 
-// 默认背景图
-export const defaultBG = 'http://cdn.mtnhao.com/music/bg.jpg'
+// 默认背景图（需自行引入网络图或本地静态图）
+const BG_ARR = [
+  'http://cdn.mtnhao.com/music/bg.jpg',
+  'http://cdn.mtnhao.com/music/bg-02.jpg'
+]
+export const defaultBG = BG_ARR[Math.floor(Math.random() * BG_ARR.length)]
+
+// 默认音量
+export const defaultVolume = 0.2
 
 /**
  * 播放模式

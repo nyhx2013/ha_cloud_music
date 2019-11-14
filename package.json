@@ -1,12 +1,13 @@
 {
-  "name": "cloud-music",
-  "version": "2.0.0",
+  "name": "vue-mmplayer",
+  "version": "1.6.0",
   "private": true,
   "description": "Online music player",
-  "author": "小猪猪 qq：635147515",
+  "author": "maomao1996 <1714487678@qq.com>",
   "scripts": {
     "serve": "vue-cli-service serve",
-    "build": "vue-cli-service build"
+    "build": "vue-cli-service build",
+    "lint": "vue-cli-service lint"
   },
   "dependencies": {
     "axios": "^0.18.0",

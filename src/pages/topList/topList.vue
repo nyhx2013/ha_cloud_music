@@ -1,14 +1,14 @@
 <template>
   <!--排行榜-->
   <div class="topList">
-    <mm-loading v-model="mmLoadShow"/>
+    <mm-loading v-model="mmLoadShow" />
     <template v-if="!mmLoadShow">
       <div class="topList-head">云音乐特色榜</div>
       <div class="topList-content">
         <div
-          class="list-item"
           v-for="(item,index) in list"
           :key="index"
+          class="list-item"
           :title="item.name+item.updateFrequency"
         >
           <router-link
@@ -16,17 +16,22 @@
             tag="div"
             class="topList-item"
           >
-            <img class="cover-img" v-lazy="`${item.coverImgUrl}?param=200y200`">
-            <h3 class="name">{{item.name}}</h3>
+            <div class="topList-img">
+              <img
+                v-lazy="`${item.coverImgUrl}?param=300y300`"
+                class="cover-img"
+              />
+            </div>
+            <h3 class="name">{{ item.name }}</h3>
           </router-link>
         </div>
       </div>
       <div class="topList-head">热门歌单</div>
       <div class="topList-content">
         <div
-          class="list-item"
           v-for="(item,index) in hotList"
           :key="index"
+          class="list-item"
           :title="item.name+item.updateFrequency"
         >
           <router-link
@@ -34,8 +39,10 @@
             tag="div"
             class="topList-item"
           >
-            <img class="cover-img" v-lazy="`${item.picUrl}?param=200y200`">
-            <h3 class="name">{{item.name}}</h3>
+            <div class="topList-img">
+              <img v-lazy="`${item.picUrl}?param=300y300`" class="cover-img" />
+            </div>
+            <h3 class="name">{{ item.name }}</h3>
           </router-link>
         </div>
       </div>
@@ -46,21 +53,21 @@
 <script>
 import { getToplistDetail, getPersonalized } from 'api'
 import MmLoading from 'base/mm-loading/mm-loading'
-import { loadMixin } from 'assets/js/mixin'
+import { loadMixin } from '@/utils/mixin'
 
 export default {
-  name: 'play-list',
-  mixins: [loadMixin],
+  name: 'PlayList',
   components: {
     MmLoading
   },
-  data () {
+  mixins: [loadMixin],
+  data() {
     return {
       list: [], // 云音乐特色榜
       hotList: [] // 热门歌单
     }
   },
-  created () {
+  created() {
     // 获取排行榜列表
     const _getToplistDetail = getToplistDetail().then(res => {
       if (res.data.code === 200) {
@@ -90,8 +97,6 @@ export default {
 </script>
 
 <style lang="less" scoped>
-@import '~assets/css/mixin';
-
 .topList {
   position: relative;
   width: 100%;
@@ -142,6 +147,17 @@ export default {
     }
     @media (max-width: 540px) {
       width: calc(~'100% / 3');
+    }
+    .topList-img {
+      position: relative;
+      padding-top: 100%;
+      width: 100%;
+      height: 0;
+      .cover-img {
+        position: absolute;
+        top: 0;
+        left: 0;
+      }
     }
   }
 }
