@@ -398,8 +398,8 @@ class MediaPlayer(MediaPlayerDevice):
                         if _isEnd == True:
                             # 如果不是内置播放器，则先停止再播放                        
                             self.next_count = -15
-                            if self._sound_mode != "内置VLC播放器":
-                                self._hass.services.call('media_player', 'media_stop', {"entity_id": self._sound_mode}, True)
+                            # if self._sound_mode != "内置VLC播放器":
+                            #     self._hass.services.call('media_player', 'media_stop', {"entity_id": self._sound_mode})
                             _log_info('播放器更新 下一曲')
                             self.media_end_next()
                     # 计数器累加
@@ -413,7 +413,7 @@ class MediaPlayer(MediaPlayerDevice):
                 if 'media_position' in self._media.attributes:
                     # 判断是否为kodi播放器
                     if self.player_type == "kodi":
-                        self._hass.services.call('homeassistant', 'update_entity', {"entity_id": self._sound_mode}, True)
+                        self._hass.services.call('homeassistant', 'update_entity', {"entity_id": self._sound_mode})
                         if 'media_position' in self._media.attributes:
                             self._media_position = int(self._media.attributes['media_position']) + 5
                     else:
@@ -446,8 +446,8 @@ class MediaPlayer(MediaPlayerDevice):
             self._media = self._hass.states.get(self._sound_mode)
             # 如果状态不一样，则更新源播放器
             if self._state != self._media.state:
-                self._hass.services.call('homeassistant', 'update_entity', {"entity_id": self._sound_mode}, True)
-                self._hass.services.call('homeassistant', 'update_entity', {"entity_id": 'media_player.'+DOMAIN}, True)
+                self._hass.services.call('homeassistant', 'update_entity', {"entity_id": self._sound_mode})
+                self._hass.services.call('homeassistant', 'update_entity', {"entity_id": 'media_player.'+DOMAIN})
         
         self._media_duration = self.media_duration
         self._state = self._media.state
@@ -808,7 +808,7 @@ class MediaPlayer(MediaPlayerDevice):
         self.clear_playlist()
     
     def notification(self, message, type):
-        self._hass.services.call('persistent_notification', 'create', {"message": message, "title": "云音乐", "notification_id": "ha-cloud-music-" + type}, True)
+        self._hass.services.call('persistent_notification', 'create', {"message": message, "title": "云音乐", "notification_id": "ha-cloud-music-" + type})
     
     ## 自定义方法
 
@@ -1016,11 +1016,11 @@ class MediaPlayer(MediaPlayerDevice):
                 
             # 执行完操作之后，强制更新当前播放器
             if action != "play_media":
-                self._hass.services.call('homeassistant', 'update_entity', {"entity_id": 'media_player.'+DOMAIN}, True)
+                self._hass.services.call('homeassistant', 'update_entity', {"entity_id": 'media_player.'+DOMAIN})
         else:
-            self._hass.services.call('media_player', action, dict, True)
-            self._hass.services.call('homeassistant', 'update_entity', {"entity_id": self._sound_mode}, True)
-            self._hass.services.call('homeassistant', 'update_entity', {"entity_id": 'media_player.'+DOMAIN}, True)
+            self._hass.services.call('media_player', action, dict)
+            self._hass.services.call('homeassistant', 'update_entity', {"entity_id": self._sound_mode})
+            self._hass.services.call('homeassistant', 'update_entity', {"entity_id": 'media_player.'+DOMAIN})
                     
     def music_load(self):
         if self.music_playlist == None:
