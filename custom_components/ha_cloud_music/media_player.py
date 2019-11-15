@@ -1013,6 +1013,9 @@ class MediaPlayer(MediaPlayerDevice):
                 dict['volume_level'] = info['volume']
             if 'position' in info:
                 dict['seek_position'] = info['position']
+                # 如果是MPD，则直接赋值
+                if self.player_type == "mpd":
+                    self._media_position = info['position']
             if 'is_volume_muted' in info:
                 dict['is_volume_muted'] = info['is_volume_muted']
                 
