@@ -87,7 +87,7 @@ TIME_BETWEEN_UPDATES = datetime.timedelta(seconds=1)
 ###################媒体播放器##########################
 
 
-VERSION = '2.1.0'
+VERSION = '2.1.1'
 DOMAIN = 'ha_cloud_music'
 
 _hass = None
@@ -972,19 +972,23 @@ class MediaPlayer(MediaPlayerDevice):
         if 'album' in music_info:
             self._media_album_name = music_info['album']
         
-        if 'clv_url' in music_info:
-           return music_info['clv_url']
-        elif 'type' in music_info and music_info['type'] == 'djradio':
-           res = requests.get(API_URL + "/song/url?id=" + str(music_info['id']))
-           obj = res.json()
-           url = obj['data'][0]['url']
-           return url
-        else:           
-           url = get_redirect_url(music_info['url'])
-            # 如果没有url，则去咪咕搜索
-           if url == None:
-               return migu_search(music_info['song'], music_info['singer'])
-           return url
+        # 如果有传入类型，则根据类型处理
+        if 'type' in music_info:
+            if music_info['type'] == 'url':
+                # 如果传入的是能直接播放的音频
+                return music_info['url']
+            elif music_info['type'] == 'djradio':
+                # 如果传入的是网易电台
+                res = requests.get(API_URL + "/song/url?id=" + str(music_info['id']))
+                obj = res.json()
+                url = obj['data'][0]['url']
+                return url
+        
+        url = get_redirect_url(music_info['url'])
+        # 如果没有url，则去咪咕搜索
+        if url == None:
+            return migu_search(music_info['song'], music_info['singer'])
+        return url
     
     def call(self, action, info = None):
         dict = {"entity_id": self._sound_mode}

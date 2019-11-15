@@ -134,7 +134,7 @@ export function getCategories() {
           arr.push({
             id: ele.id,
             name: ele.title,
-            picUrl: 'https://p2.music.126.net/WEIm9ckMQ9AmN7kKDn30VQ==/109951163686912767.jpg?param=180y180'
+            picUrl: 'https://p2.music.126.net/WEIm9ckMQ9AmN7kKDn30VQ==/109951163686912767.jpg'
           })
         })
         resolve(arr)
@@ -161,7 +161,8 @@ export function getFmList({ id, page, size }) {
             image: ele.cover,
             name: (ele.nowplaying && ele.nowplaying.title) || ele.title,
             singer: ele.title,
-            clv_url: `http://lhttp.qingting.fm/live/${ele.content_id}/64k.mp3`
+            type: 'url',
+            url: `http://lhttp.qingting.fm/live/${ele.content_id}/64k.mp3`
           })
         })
 

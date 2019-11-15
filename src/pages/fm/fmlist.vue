@@ -1,0 +1,88 @@
+<template>
+  <!--歌单详情-->
+  <div class="details">
+    <mm-loading v-model="mmLoadShow" />
+    <music-list :list="list" @select="selectItem">
+      <div slot="listBtn" class="list-btn"><span @click="loadMore">加载更多</span></div>
+    </music-list>
+  </div>
+</template>
+
+<script>
+import { mapActions } from 'vuex'
+import { getFmList } from 'api'
+import MmLoading from 'base/mm-loading/mm-loading'
+import MusicList from 'components/music-list/music-list'
+import { loadMixin } from '@/utils/mixin'
+
+export default {
+  name: 'Detail',
+  components: {
+    MmLoading,
+    MusicList
+  },
+  mixins: [loadMixin],
+  data() {
+    return {
+      list: [], // 列表
+      id: '',
+      page: 1,
+      size: 12,
+      isEnd: false
+    }
+  },
+  created() {
+    this.id = this.$route.params.id
+    this.loadMore()
+  },
+  methods: {
+    loadMore() {
+      let { id, page, isEnd } = this
+      if (isEnd) return
+      this.mmLoadShow = true
+      // 获取歌单详情
+      getFmList({ id, page }).then(res => {
+        Array.prototype.push.apply(this.list, res.list)
+        this.list.splice(0, 0)
+        this._hideLoad()
+        this.page += 1
+        if (this.list.length >= res.total) this.isEnd = true
+      })
+    },
+    // 播放暂停事件
+    selectItem(item, index) {
+      this.selectPlay({
+        list: this.list,
+        index
+      })
+    },
+    ...mapActions(['selectPlay'])
+  }
+}
+</script>
+
+<style lang="less" scoped>
+.details {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  .musicList {
+    width: 100%;
+    height: 100%;
+    .list-btn {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 50px;
+      span {
+        padding: 5px 20px;
+        cursor: pointer;
+        user-select: none;
+        &:hover {
+          color: @text_color_active;
+        }
+      }
+    }
+  }
+}
+</style>

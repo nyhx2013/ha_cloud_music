@@ -6,6 +6,7 @@
     <router-link to="/music/search" tag="span">搜索</router-link>
     <router-link class="none-414" to="/music/userlist" tag="span">我的歌单</router-link>
     <router-link to="/music/historylist" tag="span">我听过的</router-link>
+    <router-link to="/music/fm" tag="span">FM电台</router-link>
   </div>
 </template>
 

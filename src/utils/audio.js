@@ -20,7 +20,6 @@ export default class {
     this.ver = ""
     // 初始化播放模式
     this.ready()
-    this.update()
   }
 
   get hass() {
@@ -123,6 +122,8 @@ export default class {
       if (uid) {
         store.dispatch('setUid', uid)
       }
+      // 开始执行定时更新
+      this.update()
     })
   }
 

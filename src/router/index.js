@@ -60,6 +60,21 @@ const routes = [
         meta: {
           title: '评论详情'
         }
+      },
+      {
+        path: '/music/fm',
+        component: () => import('pages/fm/fm'),
+        meta: {
+          title: '电台',
+          keepAlive: true
+        }
+      },
+      {
+        path: '/music/fmlist/:id',
+        component: () => import('pages/fm/fmlist'),
+        meta: {
+          title: '电台列表'
+        }
       }
     ]
   }
