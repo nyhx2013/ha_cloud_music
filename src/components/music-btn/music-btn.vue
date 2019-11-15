@@ -40,6 +40,8 @@ export default {}
   }
   @media (max-width: 768px) {
     height: 50px;
+    overflow: auto;
+    white-space: nowrap;
     span {
       height: 35px;
       padding: 0 10px;

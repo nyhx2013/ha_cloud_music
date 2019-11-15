@@ -73,7 +73,7 @@ export default {
       if (res.data.code === 200) {
         let list
         list = res.data.list.filter(item => {
-          if (item.ToplistType) {
+          if (item.ToplistType || ['抖音排行榜', '云音乐说唱榜', '新声榜', '云音乐电音榜'].includes(item.name)) {
             return item
           }
         })

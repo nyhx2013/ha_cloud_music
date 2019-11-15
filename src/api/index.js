@@ -1,19 +1,23 @@
 import axios from 'axios'
 import qs from 'qs'
-import { defaultLimit } from '@/config'
-
-axios.defaults.baseURL = '/ha_cloud_music-api'
+import { URL, defaultLimit } from '@/config'
 
 let query = new URLSearchParams(location.search)
-
+const apiKey = query.get('api_key')
+// 如果没有api_key，则开启调试模式
+const isDebug = apiKey === null
+axios.defaults.baseURL = isDebug ? URL : '/ha_cloud_music-api'
 function handlerGet(url, data) {
+  if (isDebug) {
+    return axios.get(url, data)
+  }
   if (data && 'params' in data && data['params']) {
     url = url + '?' + qs.stringify(data['params'])
   }
   return new Promise((resolve, reject) => {
     axios.post('', {
       type: 'web',
-      key: query.get('api_key'),
+      key: apiKey,
       url
     }).then(res => {
       resolve(res)
