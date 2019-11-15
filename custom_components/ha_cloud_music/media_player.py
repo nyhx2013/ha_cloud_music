@@ -235,7 +235,8 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
         {"url": "/" + DOMAIN+"/" + VERSION + "/dist/index.html?ver=" + VERSION 
         + "&show_mode=" + _show_mode
         + "&api_key=" + API_KEY
-        + "&uid=" + _uid},
+        + "&uid=" + _uid
+        + "&vlc=" + supported_vlc_tips},
         require_admin=True,
     )
     try:
