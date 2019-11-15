@@ -392,20 +392,23 @@ class MediaPlayer(MediaPlayerDevice):
                         and len(self._source_list) > 0
                         and self.media_duration > 3 
                         and self.next_count > 0):
-                          # 如果当前总进度 - 当前进度 小于 11，则下一曲 （十一是下一次更新的时间）
-                        _isEnd = self.media_duration - self.media_position <= 11
-                        
-                        # 如果进度结束，则下一曲
-                        if _isEnd == True:
-                            # 如果不是内置播放器，则先停止再播放                        
-                            self.next_count = -15
-                            if self._sound_mode != "内置VLC播放器":
-                                # 如果是mpd则先停止
-                                if self.player_type == "mpd":
-                                    _log_info('检测到是MPD播放器')
-                                    self._hass.services.call('media_player', 'media_stop', {"entity_id": self._sound_mode}, True)
-                            _log_info('播放器更新 下一曲')
-                            self.media_end_next()
+                        # MPD的下一曲逻辑
+                        if self.player_type == "mpd":
+                            _isEnd = self.media_duration - self.media_position <= 3
+                            if _isEnd == True:
+                                self.next_count = -15
+                                # 先停止再播放
+                                self._hass.services.call('media_player', 'media_stop', {"entity_id": self._sound_mode}, True)
+                                _log_info('MPD播放器更新 下一曲')
+                                self.media_end_next()
+                        else:
+                              # 如果当前总进度 - 当前进度 小于 11，则下一曲 （十一是下一次更新的时间）
+                            _isEnd = self.media_duration - self.media_position <= 11
+                            # 如果进度结束，则下一曲
+                            if _isEnd == True:
+                                self.next_count = -15
+                                _log_info('播放器更新 下一曲')
+                                self.media_end_next()
                     # 计数器累加
                     self.next_count += 1
                     if self.next_count > 100:
@@ -1008,7 +1011,11 @@ class MediaPlayer(MediaPlayerDevice):
               dict['media_content_type'] = info['type']
            if 'volume' in info:
               dict['volume_level'] = info['volume']
-        
+            if 'position' in info:
+              dict['seek_position'] = info['position']
+            if 'is_volume_muted' in info:
+              dict['is_volume_muted'] = info['is_volume_muted']
+                
         #调用服务
         _log('调用服务：%s', action)
         _log(dict)
