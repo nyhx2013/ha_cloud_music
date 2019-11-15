@@ -87,7 +87,7 @@ TIME_BETWEEN_UPDATES = datetime.timedelta(seconds=1)
 ###################媒体播放器##########################
 
 
-VERSION = '2.1.1'
+VERSION = '2.1.2'
 DOMAIN = 'ha_cloud_music'
 
 _hass = None
