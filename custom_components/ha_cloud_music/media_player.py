@@ -1005,16 +1005,16 @@ class MediaPlayer(MediaPlayerDevice):
     def call(self, action, info = None):
         dict = {"entity_id": self._sound_mode}
         if info != None:
-           if 'url' in info:
-              dict['media_content_id'] = info['url']
-           if 'type' in info:
-              dict['media_content_type'] = info['type']
-           if 'volume' in info:
-              dict['volume_level'] = info['volume']
+            if 'url' in info:
+                dict['media_content_id'] = info['url']
+            if 'type' in info:
+                dict['media_content_type'] = info['type']
+            if 'volume' in info:
+                dict['volume_level'] = info['volume']
             if 'position' in info:
-              dict['seek_position'] = info['position']
+                dict['seek_position'] = info['position']
             if 'is_volume_muted' in info:
-              dict['is_volume_muted'] = info['is_volume_muted']
+                dict['is_volume_muted'] = info['is_volume_muted']
                 
         #调用服务
         _log('调用服务：%s', action)
