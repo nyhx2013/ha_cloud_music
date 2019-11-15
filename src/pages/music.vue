@@ -195,7 +195,7 @@ export default {
       mmPlayerMusic.initAudio(this)
       this.initKeyDown()
       this.volumeChange(this.volume)
-      this.musicReady = this.audioEle.isReady      
+      this.musicReady = this.audioEle.isReady
     })
   },
   methods: {
