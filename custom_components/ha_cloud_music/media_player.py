@@ -399,8 +399,11 @@ class MediaPlayer(MediaPlayerDevice):
                         if _isEnd == True:
                             # 如果不是内置播放器，则先停止再播放                        
                             self.next_count = -15
-                            # if self._sound_mode != "内置VLC播放器":
-                            #     self._hass.services.call('media_player', 'media_stop', {"entity_id": self._sound_mode})
+                            if self._sound_mode != "内置VLC播放器":
+                                # 如果是mpd则先停止
+                                if self.player_type == "mpd":
+                                    _log_info('检测到是MPD播放器')
+                                    self._hass.services.call('media_player', 'media_stop', {"entity_id": self._sound_mode}, True)
                             _log_info('播放器更新 下一曲')
                             self.media_end_next()
                     # 计数器累加
@@ -458,16 +461,15 @@ class MediaPlayer(MediaPlayerDevice):
     # 判断当前关联的播放器类型
     @property
     def player_type(self):
-        if self._media != None and 'supported_features' in self._media.attributes:
-            supported_features = self._media.attributes['supported_features']
-            if supported_features == 54847:
-                return "kodi"
-            elif supported_features == 21005:
-                return "vlc"
-            elif supported_features == 21007:
-                return "dlna"
-            elif supported_features == 65471:
-                return "mpd"
+        if self._media != None:
+            attr = self._media.attributes
+            if 'supported_features' in attr:
+                supported_features = attr['supported_features']
+                if supported_features == 54847:
+                    return "kodi"
+                elif ('media_position' not in attr or 'media_duration' not in attr):
+                    # 如果没有进度or没有总进度，则判断为mpd
+                    return "mpd"
                 
     # 判断是否内置播放器
     @property
@@ -600,9 +602,15 @@ class MediaPlayer(MediaPlayerDevice):
         if self._media == None:
             return None
         
-        if 'media_duration' in self._media.attributes:
-            return int(self._media.attributes['media_duration'])
-            
+        attr = self._media.attributes
+        if 'media_duration' in attr:
+            return int(attr['media_duration'])
+        # 如果当前歌曲没有总长度，也没有进度，则取当前列表里的
+        if ('media_duration' not in attr and 'media_position' not in attr 
+            and self.music_playlist != None and len(self.music_playlist) > 0 and self.music_index >= 0):
+            music_info = self.music_playlist[self.music_index]
+            return int(music_info['duration'])
+        
         return 0
 
     @property
