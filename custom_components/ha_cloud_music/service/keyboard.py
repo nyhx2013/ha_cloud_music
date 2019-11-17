@@ -41,9 +41,16 @@ def call_service(hass_token, domain, service, data):
     response = post(url, json.dumps(data), headers=headers)
     print(response.text)
 
-def detectInputKey():
-    # event1是usb对应的键盘
-    dev = InputDevice('/dev/input/event7')
+def detectInputKey():    
+    input_event = '/dev/input/event5'
+    print('''
+    开始监听键盘设备：''' + input_event + '''
+    注意：
+        如果按下键没有反应，请更改对应的驱动
+        把 event5 改成 对应的键盘驱动
+        不知道就从0往后试验 event0、event1、event2、event3、event4、
+    ''')
+    dev = InputDevice(input_event)
     while True:
         select([dev], [], [])
         for event in dev.read():
