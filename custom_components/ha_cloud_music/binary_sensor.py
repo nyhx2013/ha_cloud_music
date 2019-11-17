@@ -56,9 +56,19 @@ class IsHolidaySensor(BinarySensorDevice):
         self._name = name     
         self._state = False
         self._today = None
+        # 忌
         self._avoid = None
+        # 宜
         self._suit = None
         self._holiday_name = None
+        # 五行
+        self._wuxing = None
+        self._suici = None
+        self._nongli = None
+        self._gongli = None
+        self._fu = None
+        self._xi = None
+        self._cai = None
 
     @property
     def name(self):
@@ -78,14 +88,41 @@ class IsHolidaySensor(BinarySensorDevice):
     @property
     def state_attributes(self):
         """Return the attributes of the entity."""
-        # return self._attributes
         return {
-            'today': self.today,
-            'avoid': self._avoid,
-            'suit': self._suit,
-            'holiday_name': self._holiday_name
+            'today': self.today,            
+            'holiday_name': self._holiday_name,
+            '忌': self._avoid,
+            '宜': self._suit,
+            '农历': self._nongli,
+            '公历': self._gongli,
+            '五行': self._wuxing,
+            '岁次': self._suici,
+            '财神方位': self._cai,
+            '喜神方位': self._xi,
+            '福神方位': self._fu,            
         }
     
+    # 获取详细信息
+    def get_details(self, _date):
+        try:
+            localtime = time.localtime(_date)
+            _a = time.strftime("%Y/%m/%Y%m%d", localtime)
+            # http://www.nongli.cn/rili/api/app/god/2019/01/20190101.js
+            res = requests.get('http://www.nongli.cn/rili/api/app/god/'+_a+'.js')
+            r = str(res.content, encoding='utf-8')
+            _r = parse('json:'+r)
+            _obj = _r['html']
+            self._wuxing = _obj['wuxing'].strip('"')
+            self._nongli = _obj['nongli'].strip('"')
+            self._gongli = _obj['gongli'].strip('"')
+            self._suici = _obj['suici'].strip('"')
+            self._cai = _obj['cai'].strip('"')
+            self._xi = _obj['xi'].strip('"')
+            self._fu = _obj['fu'].strip('"')
+            _LOGGER.info('获取当天详细信息')
+        except Exception as e:
+            print(e)
+
     # 日期格式化
     def date_format(self, _date):
         return time.mktime(time.strptime(_date,"%Y-%m-%d"))
@@ -148,7 +185,92 @@ class IsHolidaySensor(BinarySensorDevice):
         return False
 
     async def async_update(self):
-        """Get date and look whether it is a holiday."""
+        """判断是否节假日，获取当天详细信息."""
         if self._today != self.today:
-            self._state = self.is_holiday(time.time())
+            now = time.time()
+            self.get_details(now)
+            self._state = self.is_holiday(now)
             self._today = self.today
+
+# --------------字符串转JSON-----------------------
+def skip_ws(txt, pos):
+    while pos < len(txt) and txt[pos].isspace():
+        pos += 1
+    return pos
+ 
+def parse_str(txt, pos, allow_ws=False, delimiter=[',',':','}',']']):
+    while pos < len(txt):
+        if not allow_ws and txt[pos].isspace():
+            break
+        if txt[pos] in delimiter:
+            break
+        pos += 1
+    return pos
+ 
+def parse_obj(txt, pos):
+    obj = dict()
+ 
+    while True:
+        pos = skip_ws(txt, pos+1)
+        end = parse_str(txt, pos, True, [':'])
+        if end >= len(txt):
+            raise ValueError("unexpected end when parsing object key")
+        key = txt[pos:end].strip()
+        pos = skip_ws(txt, end+1)
+        if pos >= len(txt):
+            raise ValueError("unexpected end when parsing object value")
+        if txt[pos] == '[':
+            value, pos = parse_array(txt, pos)
+        elif txt[pos] == '{':
+            value, pos = parse_obj(txt, pos)
+        else:
+            end = parse_str(txt, pos, True, [',','}'])
+            if end >= len(txt):
+                raise ValueError("unexpected end when parsing object value")
+            value = txt[pos:end].strip()
+            pos = end
+ 
+        obj[key] = value
+        pos = skip_ws(txt, pos)
+        if pos >= len(txt):
+            raise ValueError("unexpected end when object value finish")
+        if txt[pos] == '}':
+            return obj, pos+1
+ 
+def parse_array(txt, pos):
+    array = list()
+ 
+    while True:
+        pos = skip_ws(txt, pos+1)
+        if pos >= len(txt):
+            raise ValueError("unexpected end when parsing array item")
+        if txt[pos] == '[':
+            value, pos = parse_array(txt, pos)
+        elif txt[pos] == '{':
+            value, pos = parse_obj(txt, pos)
+        else:
+            end = parse_str(txt, pos, True, [',',']'])
+            if end >= len(txt):
+                raise ValueError("unexpected end when parsing array item")
+            value = txt[pos:end].strip()
+            pos = end
+        
+        array.append(value)
+        pos = skip_ws(txt, pos)
+        if pos >= len(txt):
+            raise ValueError("unexpected end when array item finish")
+        if txt[pos] == ']':
+            return array, pos+1
+ 
+def parse(txt):
+    if txt.startswith('json'):
+        pos = txt.find(':')
+        if pos != -1:
+            pos = skip_ws(txt, pos+1)
+            if txt[pos] == '{':
+                obj, pos = parse_obj(txt, pos)
+                return obj
+            elif txt[pos] == '[':
+                array, pos = parse_array(txt, pos)
+                return array
+    raise ValueError("format error when parsing root")
