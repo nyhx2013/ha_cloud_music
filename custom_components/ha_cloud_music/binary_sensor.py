@@ -1,7 +1,15 @@
-"""判断当前日期是否节假日."""
+"""
+功能：判断当前日期是否节假日.
+
+配置
+binary_sensor:
+  - platform: ha_cloud_music
+
+"""
 import logging
 import time
 import requests
+import json
 from datetime import datetime, timedelta
 
 import voluptuous as vol
@@ -24,20 +32,21 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
 def setup_platform(hass, config, add_entities, discovery_info=None):
     """Set up the Workday sensor."""
     sensor_name = config.get(CONF_NAME)
-    _LOGGER.info('节假日传感器 安装成功',)
+    
+    _sensor = IsHolidaySensor(sensor_name)
+    _LOGGER.info('''
+    --------------------------------------------
+    
+    节假日传感器 安装成功
+    
+    今天是：'''+ _sensor.today +'''
+    
+    --------------------------------------------
+    ''')
     add_entities(
-        [IsHolidaySensor(sensor_name)],
+        [_sensor],
         True,
     )
-
-# 查询列表是否有假日
-def findHoliday(today, _list):
-    if (len(list(filter(lambda x: x['date'] == today and x['status'] == '1', _list))) > 0):
-        return True
-    # 如果有状态为2的，说明这一天是双休日，但是要上班
-    if (len(list(filter(lambda x: x['date'] == today and x['status'] == '2', _list))) > 0):
-        return False
-    return None
 
 class IsHolidaySensor(BinarySensorDevice):
     """Implementation of a Workday sensor."""
@@ -47,6 +56,9 @@ class IsHolidaySensor(BinarySensorDevice):
         self._name = name     
         self._state = False
         self._today = None
+        self._avoid = None
+        self._suit = None
+        self._holiday_name = None
 
     @property
     def name(self):
@@ -67,12 +79,27 @@ class IsHolidaySensor(BinarySensorDevice):
     def state_attributes(self):
         """Return the attributes of the entity."""
         # return self._attributes
-        return {}
+        return {
+            'today': self.today,
+            'avoid': self._avoid,
+            'suit': self._suit,
+            'holiday_name': self._holiday_name
+        }
     
     # 日期格式化
     def date_format(self, _date):
         return time.mktime(time.strptime(_date,"%Y-%m-%d"))
 
+    
+    # 查询列表是否有假日
+    def findHoliday(self, today, _list):
+        if (len(list(filter(lambda x: x['date'] == today and x['status'] == '1', _list))) > 0):
+            return True
+        # 如果有状态为2的，说明这一天是双休日，但是要上班
+        if (len(list(filter(lambda x: x['date'] == today and x['status'] == '2', _list))) > 0):
+            return False
+        return None
+        
     # 判断当天是否假日
     def is_holiday(self, _date):
         # 获取当前日期
@@ -86,22 +113,36 @@ class IsHolidaySensor(BinarySensorDevice):
         + '&co=&resource_id=6018&t=1573873782858&ie=utf8&oe=gbk&cb=op_aladdin_callback&format=json&tn=baidu&cb=&_=1573873715796')
         r = res.json()
         obj = r['data'][0]
+        # 获取宜忌
+        _almanac = list(filter(lambda x: x['date'] == today, obj['almanac']))
+        if len(_almanac) > 0:
+            self._avoid = _almanac[0]['avoid']
+            self._suit = _almanac[0]['suit']
+            
         # 判断是否在我国传统假日列表里
-        if (len(list(filter(lambda x: x['startday'] == today, obj['holidaylist']))) > 0):
+        _list = list(filter(lambda x: x['startday'] == today, obj['holidaylist']))
+        if (len(_list) > 0):
+            self._holiday_name = _list[0].name
             return True
         # 判断是否在传统假日连休列表里
         _holiday = obj['holiday']
         if isinstance(_holiday,list):
             for item in _holiday:
-                _result = findHoliday(today, item['list'])
+                _result = self.findHoliday(today, item['list'])
                 if _result != None:
+                    self._holiday_name = item['name']
                     return _result
         elif isinstance(_holiday,dict):
-            _result = findHoliday(today, _holiday['list'])
+            _result = self.findHoliday(today, _holiday['list'])
             if _result != None:
+                self._holiday_name = _holiday['name']
                 return _result    
         # 判断是否双休日
-        if localtime.tm_wday == 5 or localtime.tm_wday == 6:
+        if localtime.tm_wday == 5:
+            self._holiday_name = '周六'
+            return True
+        if localtime.tm_wday == 6:
+            self._holiday_name = '周日'
             return True
         
         return False
