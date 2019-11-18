@@ -113,7 +113,7 @@ class IsHolidaySensor(BinarySensorDevice):
         try:
             localtime = time.localtime(_date)
             
-            self._week = ['日','一','二','三','四','五','六'][localtime.tm_wday]
+            self._week = ['一','二','三','四','五','六','日'][localtime.tm_wday]
             _a = time.strftime("%Y/%m/%Y%m%d", localtime)
             # http://www.nongli.cn/rili/api/app/god/2019/01/20190101.js
             res = requests.get('http://www.nongli.cn/rili/api/app/god/'+_a+'.js')
