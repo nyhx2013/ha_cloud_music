@@ -60,9 +60,9 @@ export default {
                 album: brand,
                 image: item.coverUrl,
                 duration: duration / 1000,
-                song: item.name,
                 type: 'djradio',
-                singer: nickname
+                singer: nickname,
+                url: '' + id
               })
             })
           }
