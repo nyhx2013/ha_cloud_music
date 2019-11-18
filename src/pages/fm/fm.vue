@@ -23,12 +23,32 @@
           </router-link>
         </div>
       </div>
+      <div class="topList-head">网易电台</div>
+      <div class="topList-content">
+        <div
+          v-for="(item,index) in fm163List"
+          :key="index"
+          class="list-item"
+          :title="item.name+item.updateFrequency"
+        >
+          <router-link
+            :to="{path:`/music/fmlist/${item.id}?type=163`}"
+            tag="div"
+            class="topList-item"
+          >
+            <div class="topList-img">
+              <img v-lazy="`${item.picUrl}?param=300y300`" class="cover-img" />
+            </div>
+            <h3 class="name">{{ item.name }}</h3>
+          </router-link>
+        </div>
+      </div>
     </template>
   </div>
 </template>
 
 <script>
-import { getCategories } from 'api'
+import { getCategories, getFM163 } from 'api'
 import MmLoading from 'base/mm-loading/mm-loading'
 import { loadMixin } from '@/utils/mixin'
 
@@ -40,13 +60,15 @@ export default {
   mixins: [loadMixin],
   data() {
     return {
-      hotList: [] // 热门歌单
+      hotList: [], // 热门歌单
+      fm163List: []
     }
   },
   created() {
-    Promise.all([getCategories()]).then(
-      ([hotList]) => {
+    Promise.all([getCategories(), getFM163()]).then(
+      ([hotList, fm163List]) => {
         this.hotList = hotList
+        this.fm163List = fm163List
         this._hideLoad()
       }
     )

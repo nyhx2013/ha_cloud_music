@@ -3,14 +3,16 @@
   <div class="details">
     <mm-loading v-model="mmLoadShow" />
     <music-list :list="list" @select="selectItem">
-      <div slot="listBtn" class="list-btn"><span @click="loadMore">加载更多</span></div>
+      <div slot="listBtn" class="list-btn">
+        <span @click="loadMore">加载更多</span>
+      </div>
     </music-list>
   </div>
 </template>
 
 <script>
 import { mapActions } from 'vuex'
-import { getFmList } from 'api'
+import { getFmList, getDjProgram } from 'api'
 import MmLoading from 'base/mm-loading/mm-loading'
 import MusicList from 'components/music-list/music-list'
 import { loadMixin } from '@/utils/mixin'
@@ -26,6 +28,7 @@ export default {
     return {
       list: [], // 列表
       id: '',
+      type: '',
       page: 1,
       size: 12,
       isEnd: false
@@ -33,21 +36,51 @@ export default {
   },
   created() {
     this.id = this.$route.params.id
+    this.type = this.$route.query.type
     this.loadMore()
   },
   methods: {
     loadMore() {
-      let { id, page, isEnd } = this
+      let { type, id, page, isEnd } = this
       if (isEnd) return
       this.mmLoadShow = true
-      // 获取歌单详情
-      getFmList({ id, page }).then(res => {
-        Array.prototype.push.apply(this.list, res.list)
-        this.list.splice(0, 0)
-        this._hideLoad()
-        this.page += 1
-        if (this.list.length >= res.total) this.isEnd = true
-      })
+
+      if (type === '163') {
+        let size = 30
+        getDjProgram(id, (page - 1) * size, size).then(res => {
+          let { code, programs } = res.data
+          let arr = []
+          if (code === 200) {
+            programs.forEach(item => {
+              let { id, duration } = item.mainSong
+              let { brand, nickname } = item.dj
+              arr.push({
+                id,
+                name: item.name,
+                album: brand,
+                image: item.coverUrl,
+                duration: duration / 1000,
+                song: item.name,
+                type: 'djradio',
+                singer: nickname
+              })
+            })
+          }
+          Array.prototype.push.apply(this.list, arr)
+          this.list.splice(0, 0)
+          this._hideLoad()
+          this.page += 1
+        })
+      } else {
+        // 获取歌单详情
+        getFmList({ id, page }).then(res => {
+          Array.prototype.push.apply(this.list, res.list)
+          this.list.splice(0, 0)
+          this._hideLoad()
+          this.page += 1
+          if (this.list.length >= res.total) this.isEnd = true
+        })
+      }
     },
     // 播放暂停事件
     selectItem(item, index) {
