@@ -61,6 +61,7 @@ class IsHolidaySensor(BinarySensorDevice):
         # 宜
         self._suit = None
         self._holiday_name = None
+        self._week = None
         # 五行
         self._wuxing = None
         self._suici = None
@@ -69,6 +70,8 @@ class IsHolidaySensor(BinarySensorDevice):
         self._fu = None
         self._xi = None
         self._cai = None
+        self._shengxiao = None
+        self._xingzuo = None
 
     @property
     def name(self):
@@ -89,23 +92,28 @@ class IsHolidaySensor(BinarySensorDevice):
     def state_attributes(self):
         """Return the attributes of the entity."""
         return {
-            'today': self.today,            
-            'holiday_name': self._holiday_name,
             '忌': self._avoid,
             '宜': self._suit,
+            '今日': self.today,            
+            '星期': self._week,
             '农历': self._nongli,
             '公历': self._gongli,
+            '生肖': self._shengxiao,
+            '星座': self._xingzuo,
             '五行': self._wuxing,
             '岁次': self._suici,
             '财神方位': self._cai,
             '喜神方位': self._xi,
             '福神方位': self._fu,            
+            '假日名称': self._holiday_name,
         }
     
     # 获取详细信息
     def get_details(self, _date):
         try:
             localtime = time.localtime(_date)
+            
+            self._week = ['日','一','二','三','四','五','六'][localtime.tm_wday]
             _a = time.strftime("%Y/%m/%Y%m%d", localtime)
             # http://www.nongli.cn/rili/api/app/god/2019/01/20190101.js
             res = requests.get('http://www.nongli.cn/rili/api/app/god/'+_a+'.js')
@@ -113,8 +121,14 @@ class IsHolidaySensor(BinarySensorDevice):
             _r = parse('json:'+r)
             _obj = _r['html']
             self._wuxing = _obj['wuxing'].strip('"')
-            self._nongli = _obj['nongli'].strip('"')
-            self._gongli = _obj['gongli'].strip('"')
+            # 农历
+            _nongli = _obj['nongli'].strip('"').split(' ')
+            self._nongli = _nongli[0]
+            self._shengxiao = _nongli[1]
+            # 公历
+            _gongli = _obj['gongli'].strip('"').split(' ')
+            self._gongli = _gongli[0]
+            self._xingzuo = _gongli[1]            
             self._suici = _obj['suici'].strip('"')
             self._cai = _obj['cai'].strip('"')
             self._xi = _obj['xi'].strip('"')
@@ -189,7 +203,9 @@ class IsHolidaySensor(BinarySensorDevice):
         if self._today != self.today:
             now = time.time()
             self.get_details(now)
-            self._state = self.is_holiday(now)
+            # 重置假日名称
+            self._holiday_name = None
+            self._state = self.is_holiday(now)            
             self._today = self.today
 
 # --------------字符串转JSON-----------------------
