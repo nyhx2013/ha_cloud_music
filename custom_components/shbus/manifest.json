@@ -1,0 +1,11 @@
+{
+  "domain": "shbus",
+  "name": "shbus",
+  "documentation": "https://github.com/shaonianzhentan/ha_cloud_music",
+  "requirements": [
+    "beautifulsoup4",
+    "lxml==4.4.1"
+  ],
+  "dependencies": [],
+  "codeowners": []
+}

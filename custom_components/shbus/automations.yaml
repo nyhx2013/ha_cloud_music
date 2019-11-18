@@ -1,0 +1,13 @@
+- id: '1572266861913'
+  alias: 公交提醒
+  description: 每天早上提醒公交到站时间
+  trigger:
+  - above: '5'
+    below: '20'
+    entity_id: sensor.748lu
+    platform: numeric_state
+  condition: []
+  action:
+  - data_template:
+      message: 公交距你还有{{states('sensor.748lu')}}分钟，{{states.sensor['748lu'].attributes['到达本站还有(站)']}}站
+    service: tts.ha_cloud_music_say
