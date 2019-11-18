@@ -90,7 +90,7 @@ class Bus:
             'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 10_3_2 like Mac OS X) AppleWebKit/603.2.4 '
                           '(KHTML, like Gecko) Mobile/14F89 MicroMessenger/6.5.10 NetType/WIFI Language/zh_CN'
         }
-
+        self.session_file = os.path.dirname(__file__) + '/session.log'
         self.homepage_url = 'https://shanghaicity.openservice.kankanews.com/'
         self.query_router_url = 'https://shanghaicity.openservice.kankanews.com/public/bus'
         self.query_sid_url = 'https://shanghaicity.openservice.kankanews.com/public/bus/get'
@@ -134,8 +134,8 @@ class Bus:
     def _init_request(self, router_name):
         self._check_routers(router_name)
 
-        if os.path.exists('session.log'):
-            with open('session.log', 'rb') as f:
+        if os.path.exists(self.session_file):
+            with open(self.session_file, 'rb') as f:
                 session = pickle.load(f)
 
                 if session['expired_at']+1800 < time.time():
@@ -163,7 +163,7 @@ class Bus:
         # 第二部：加载查询页面
         self._query_router_page()
 
-        with open('session.log', 'wb') as f:
+        with open(self.session_file, 'wb') as f:
             session = {
                 'session': self.s,
                 'expired_at':  time.time()
@@ -275,17 +275,16 @@ def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
         
     _install_tips = "安装成功"
     bus = Bus()
-    try:        
-        stops = bus.query_router(name, direction)
-    except Exception as e:
-        _install_tips = "安装失败（没有找到公交线路）"
-    
     # 获取站点名称
     stop_name = ''
-    if stop_id != "":
-        _list = list(filter(lambda x: x['stop_id'] == stop_id + '.',stops['stops']))        
-        if len(_list) > 0:
-            stop_name = _list[0]['stop_name']
+    try:        
+        stops = bus.query_router(name, direction)
+        if stop_id != "":
+            _list = list(filter(lambda x: x['stop_id'] == stop_id + '.',stops['stops']))        
+            if len(_list) > 0:
+                stop_name = _list[0]['stop_name']
+    except Exception as e:
+        _install_tips = "安装失败（没有找到公交线路）"
     
     # 提示
     _LOGGER.info('''
