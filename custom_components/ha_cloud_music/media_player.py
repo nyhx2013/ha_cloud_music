@@ -182,9 +182,9 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
     API_URL = config.get("api_url")
     # 判断是否支持VLC
     supported_vlc_tips = '不支持'
-    _is_vlc = 0
+    _is_vlc = '0'
     if mp.supported_vlc == True:
-        _is_vlc = 1
+        _is_vlc = '1'
         supported_vlc_tips = '支持'
  
     _sidebar_title = config.get("sidebar_title")
