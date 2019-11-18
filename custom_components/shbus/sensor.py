@@ -4,25 +4,16 @@ pip3 install Beautifulsoup4
 
 安装xml解析库
 pip3 install lxml
-
-上海公交传感器
-
-配置参数
-    name: 公交名称（必填）
-    direction: 方向（默认1）
-    stop_id: 第几站
+    
+上海公交
 
 sensor:
-    - platform: shbus
-      name: 748路
-      direction: 1
-      stop_id: 10
-    - platform: shbus
-      name: 748路
-      direction: 0
-      stop_id: 6
+    - platform: ha_cloud_music
+      name: 748路 
 
 """
+
+ 
  
 import requests
 import pickle
@@ -336,18 +327,18 @@ class ShBus(Entity):
             _list.append(item['stop_id'] + item['stop_name'])
         
         self._attr = {
-            "公交名称：": name,
-            "起始站": stops['from'],
-            "终点站": stops['to'], 
-            "本站名称": stop_name,
-            "到达本站还有(站)": None,
-            "到达本站时间(秒)": None,
-            "到达本站的距离(米)": None,
-            "状态": None,
-            "开始时间": stops['start_at'], 
-            "结束时间": stops['end_at'], 
-            "方向": self._direction,
-            "车牌号": None,            
+            "from": stops['from'],
+            "to": stops['to'], 
+            "stop_name": stop_name,
+            "start_at": stops['start_at'], 
+            "end_at": stops['end_at'], 
+            "bus_status": None,
+            "direction": self._direction,            
+            "stop_interval": None,
+            "time": None,
+            "distance": None,
+            
+            "plate_number": None,            
             "上次更新时间": None,
             "更新时间": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()),
             "车站列表": '、'.join(_list),            
@@ -382,7 +373,35 @@ class ShBus(Entity):
     def device_state_attributes(self):
         """设置其它一些属性值."""
         if self._state is not None:
-            return self._attr
+            attr = self._attr
+            return {
+                "公交名称": self.name,
+                "name": self.name,
+                "起始站": attr['from'],
+                "from": attr['from'],
+                "终点站": attr['to'], 
+                "to": attr['to'],                
+                "本站名称": attr['stop_name'],
+                "stop_name": attr['stop_name'],
+                "到达本站还有(站)": attr['stop_interval'],
+                "stop_interval": attr['stop_interval'],
+                "到达本站时间(秒)": attr['time'],
+                "time": attr['time'],
+                "到达本站的距离(米)": attr['distance'],
+                "distance": attr['distance'],
+                "状态": attr['bus_status'],
+                "开始时间": attr['start_at'], 
+                "start_at": attr['start_at'], 
+                "结束时间": attr['end_at'], 
+                "end_at": attr['end_at'], 
+                "方向": self._direction,
+                "direction": self._direction,
+                "车牌号": attr['plate_number'],
+                "plate_number": attr['plate_number'],
+                "上次更新时间": attr['上次更新时间'],
+                "更新时间": attr['更新时间'],
+                "车站列表": attr['车站列表'],
+            }
  
     @asyncio.coroutine
     def async_update(self):
@@ -391,8 +410,8 @@ class ShBus(Entity):
         
         if self._stop_id != '':
             r = self._bus.query_stop(self._friendly_name, self._direction, self._stop_id)
-            self._attr['车牌号'] = r['plate_number']
-            self._attr['到达本站还有(站)'] = r['stop_interval']
+            self._attr['plate_number'] = r['plate_number']
+            self._attr['stop_interval'] = r['stop_interval']
             _time = ''
             bus_status = '等待发车'
             # 如果当前有车运行
@@ -401,13 +420,11 @@ class ShBus(Entity):
                 _state = math.floor(_time / 60)
                 bus_status = '运行中'
             
-            self._attr['到达本站时间(秒)'] = _time
-            self._attr['到达本站的距离(米)'] = r['distance']            
-            self._attr['状态'] = bus_status
+            self._attr['time'] = _time
+            self._attr['distance'] = r['distance']            
+            self._attr['bus_status'] = bus_status
             self._attr['上次更新时间'] = self._attr['更新时间']
             self._attr['更新时间'] = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
             self._state = _state
         else:
             self._state = _state
-    
-    
