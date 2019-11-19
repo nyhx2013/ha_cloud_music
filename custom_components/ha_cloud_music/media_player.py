@@ -18,7 +18,7 @@ from aiohttp import web
 from aiohttp.web import FileResponse
 from typing import Optional
 from homeassistant.helpers.state import AsyncTrackStates
-from urllib.request import urlopen
+from urllib.request import urlopen, quote
 
 _LOGGER = logging.getLogger(__name__)
 ############## 日志记录
@@ -227,6 +227,9 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
     hass.services.register(DOMAIN, 'load', mp.load_songlist)
     # 注册服务【设置播放模式】
     hass.services.register(DOMAIN, 'play_mode', mp.play_mode)
+    # 注册服务【tts】
+    if mp.supported_vlc == True:
+        hass.services.register(DOMAIN, 'tts', mp.tts)
     
     # 添加到侧边栏
     coroutine = hass.components.frontend.async_register_built_in_panel(
@@ -362,6 +365,12 @@ class MediaPlayer(MediaPlayerDevice):
         self._timer_enable = True
         # 定时器
         track_time_interval(hass, self.interval, TIME_BETWEEN_UPDATES)
+        
+        #### TTS 相关配置 #####
+        self.tts_config = {
+            'vlc': None,
+            'play_state': None
+        }
     
     def interval(self, now):
         # 如果当前状态是播放，则进度累加（虽然我定时的是1秒，但不知道为啥2秒执行一次）
@@ -825,101 +834,7 @@ class MediaPlayer(MediaPlayerDevice):
         self._hass.services.call('persistent_notification', 'create', {"message": message, "title": "云音乐", "notification_id": "ha-cloud-music-" + type})
     
     ## 自定义方法
-
-    # 设置播放模式
-    def play_mode(self, call):
-        _mode = call.data['mode']
-        mode_list = [0, 1, 2, 3]
-        if mode_list.count(_mode) == 0:
-            _mode = 0
-        self._play_mode = _mode
-        _mode_name = "列表循环"
-        if self._play_mode == 1:
-            _mode_name = "顺序播放"
-        elif self._play_mode == 2:
-            _mode_name = "随机播放"
-        elif self._play_mode == 3:
-            _mode_name = "单曲循环"
-        _log_info('设置播放模式：%s', _mode_name)
-
-    # 加载播放列表
-    def load_songlist(self, call): 
-        list_index = 0    
-        if 'id' in call.data:
-            _id = call.data['id']
-            _type = "playlist"
-        elif 'rid' in call.data:
-            _id = call.data['rid']
-            _type = "djradio"
-        
-        if 'list_index' in call.data:
-            list_index = int(call.data['list_index']) - 1
-                        
-        if self.loading == True:
-            self.notification("正在加载歌单，请勿重复调用服务", "load_songlist")
-            return
-        self.loading = True                
-
-        try:
-            if _type == "playlist":
-                _log_info("加载歌单列表，ID：%s", _id)
-                # 获取播放列表
-                res = requests.get(API_URL + '/playlist/detail?id=' + str(_id))
-                obj = res.json()
-                if obj['code'] == 200:
-                    _list = obj['playlist']['tracks']
-                    _newlist = map(lambda item: {
-                        "id": int(item['id']),
-                        "name": item['name'],
-                        "album": item['al']['name'],
-                        "image": item['al']['picUrl'],
-                        "duration": int(item['dt']) / 1000,
-                        "url": "https://music.163.com/song/media/outer/url?id=" + str(item['id']),
-                        "song": item['name'],
-                        "singer": len(item['ar']) > 0 and item['ar'][0]['name'] or '未知'
-                        }, _list)            
-                    #_log_info(_result)
-                    if list_index < 0 or list_index >= len(_list):
-                        list_index = 0                      
-                    self.music_index = list_index
-                    self.play_media('music_playlist', list(_newlist))
-                    self.notification("正在播放歌单【"+obj['playlist']['name']+"】", "load_songlist")
-                else:
-                    # 这里弹出提示
-                    self.notification("没有找到id为【"+_id+"】的歌单信息", "load_songlist")
-            elif _type == "djradio":
-                _log_info("加载电台列表，ID：%s", _id)
-                # 获取播放列表
-                res = requests.get(API_URL + '/dj/program?rid='+str(_id)+'&limit=50')
-                obj = res.json()
-                if obj['code'] == 200:
-                    _list = obj['programs']
-                    _newlist = map(lambda item: {
-                        "id": int(item['mainSong']['id']),
-                        "name": item['name'],
-                        "album": item['dj']['brand'],
-                        "image": item['coverUrl'],
-                        "duration": int(item['mainSong']['duration']) / 1000,
-                        "song": item['name'],
-                        "type": "djradio",
-                        "singer": item['dj']['nickname']
-                        }, _list)            
-                    #_log_info(_result)
-                    if list_index < 0 or list_index >= len(_list):
-                        list_index = 0                      
-                    self.music_index = list_index
-                    self.play_media('music_playlist', list(_newlist))
-                    self.notification("正在播放电台【"+_list[0]['dj']['brand']+"】", "load_songlist")
-                else:
-                    # 这里弹出提示
-                    self.notification("没有找到id为【"+_id+"】的歌单信息", "load_songlist")
-            
-        except Exception as e:
-            print(e)
-            self.notification("加载歌单的时候出现了异常", "load_songlist")
-        finally:
-            # 这里重置    
-            self.loading = False
+   
         
     # 更新播放器列表
     def update_sound_mode_list(self):
@@ -1060,6 +975,103 @@ class MediaPlayer(MediaPlayerDevice):
         self.play_media('music_load', self.music_index)
     
     
+    ######### 服务 ##############
+    
+    # 设置播放模式
+    def play_mode(self, call):
+        _mode = call.data['mode']
+        mode_list = [0, 1, 2, 3]
+        if mode_list.count(_mode) == 0:
+            _mode = 0
+        self._play_mode = _mode
+        _mode_name = "列表循环"
+        if self._play_mode == 1:
+            _mode_name = "顺序播放"
+        elif self._play_mode == 2:
+            _mode_name = "随机播放"
+        elif self._play_mode == 3:
+            _mode_name = "单曲循环"
+        _log_info('设置播放模式：%s', _mode_name)
+
+    # 加载播放列表
+    def load_songlist(self, call): 
+        list_index = 0    
+        if 'id' in call.data:
+            _id = call.data['id']
+            _type = "playlist"
+        elif 'rid' in call.data:
+            _id = call.data['rid']
+            _type = "djradio"
+        
+        if 'list_index' in call.data:
+            list_index = int(call.data['list_index']) - 1
+                        
+        if self.loading == True:
+            self.notification("正在加载歌单，请勿重复调用服务", "load_songlist")
+            return
+        self.loading = True                
+
+        try:
+            if _type == "playlist":
+                _log_info("加载歌单列表，ID：%s", _id)
+                # 获取播放列表
+                res = requests.get(API_URL + '/playlist/detail?id=' + str(_id))
+                obj = res.json()
+                if obj['code'] == 200:
+                    _list = obj['playlist']['tracks']
+                    _newlist = map(lambda item: {
+                        "id": int(item['id']),
+                        "name": item['name'],
+                        "album": item['al']['name'],
+                        "image": item['al']['picUrl'],
+                        "duration": int(item['dt']) / 1000,
+                        "url": "https://music.163.com/song/media/outer/url?id=" + str(item['id']),
+                        "song": item['name'],
+                        "singer": len(item['ar']) > 0 and item['ar'][0]['name'] or '未知'
+                        }, _list)            
+                    #_log_info(_result)
+                    if list_index < 0 or list_index >= len(_list):
+                        list_index = 0                      
+                    self.music_index = list_index
+                    self.play_media('music_playlist', list(_newlist))
+                    self.notification("正在播放歌单【"+obj['playlist']['name']+"】", "load_songlist")
+                else:
+                    # 这里弹出提示
+                    self.notification("没有找到id为【"+_id+"】的歌单信息", "load_songlist")
+            elif _type == "djradio":
+                _log_info("加载电台列表，ID：%s", _id)
+                # 获取播放列表
+                res = requests.get(API_URL + '/dj/program?rid='+str(_id)+'&limit=50')
+                obj = res.json()
+                if obj['code'] == 200:
+                    _list = obj['programs']
+                    _newlist = map(lambda item: {
+                        "id": int(item['mainSong']['id']),
+                        "name": item['name'],
+                        "album": item['dj']['brand'],
+                        "image": item['coverUrl'],
+                        "duration": int(item['mainSong']['duration']) / 1000,
+                        "song": item['name'],
+                        "type": "djradio",
+                        "singer": item['dj']['nickname']
+                        }, _list)            
+                    #_log_info(_result)
+                    if list_index < 0 or list_index >= len(_list):
+                        list_index = 0                      
+                    self.music_index = list_index
+                    self.play_media('music_playlist', list(_newlist))
+                    self.notification("正在播放电台【"+_list[0]['dj']['brand']+"】", "load_songlist")
+                else:
+                    # 这里弹出提示
+                    self.notification("没有找到id为【"+_id+"】的歌单信息", "load_songlist")
+            
+        except Exception as e:
+            print(e)
+            self.notification("加载歌单的时候出现了异常", "load_songlist")
+        finally:
+            # 这里重置    
+            self.loading = False
+    
     ######################内置VLC播放器相关方法################################
     @property
     def supported_vlc(self):
@@ -1092,4 +1104,35 @@ class MediaPlayer(MediaPlayerDevice):
         if self._media != None and hasattr(self._media, 'ha_cloud_music') == True:
             self._media._vlc.release()
             self._media._instance.release()
+    
+    ######################文字转语音################################
+    # 文字转语音
+    def tts(self, call):
+        # 获取message参数
+        message = call.data['message']
+        # 如当前正在播放音乐，则先暂停        
+        if self._state == STATE_PLAYING:
+            self.tts_config['play_state'] = True
+            self.media_pause()
+        # 特殊符号替换成时间
+        localtime = time.localtime(time.time())
+        message = message.replace('%Y', str(localtime.tm_year)).replace('%m', str(localtime.tm_mon)).replace('%d', str(localtime.tm_mday)).replace('%H', str(str(localtime.tm_hour))).replace('%M', str(localtime.tm_min)).replace('%S', str(localtime.tm_sec))
+        _log_info('文字转语音：%s', message)
+        # 开始播放语音
+        import vlc
+        instance = vlc.Instance()
+        _vlc = instance.media_player_new()        
+        _event_manager = _vlc.event_manager()
+        _event_manager.event_attach(vlc.EventType.MediaPlayerEndReached, self.tts_end)
+        _vlc.set_media(instance.media_new("https://api.jiluxinqing.com/api/service/tts?text="+ quote(message)))
+        _vlc.play()
+        self.tts_config['vlc'] = instance
+            
+    # 播放结束  
+    def tts_end(self, event):
+        if self.tts_config['play_state'] == True:
+            self.media_play()
+        self.tts_config['play_state'] = False
+        self.tts_config['vlc'].release()
+            
 ###################媒体播放器##########################

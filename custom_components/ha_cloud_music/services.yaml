@@ -18,3 +18,9 @@ play_mode:
     mode:
       description: 播放模式（0：列表循环，1：顺序播放，2：随机播放，3：单曲循环）
       example: '1'
+tts:
+  description: 文字转语音
+  fields:
+    message:
+      description: 要播放的文字（目前只支持内置VLC）
+      example: '支持时间格式占位符，%Y年%m月%d日 %H:%M:%S天气真不错'
