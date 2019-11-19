@@ -8,15 +8,9 @@ pip3 install lxml
 上海公交
 
 sensor:
-    - platform: shbus
-      name: 748路
-      direction: 0
-      stop_id: 5
-    - platform: shbus
-      name: 748路
-      direction: 1
-      stop_id: 10
-      
+    - platform: ha_cloud_music
+      name: 748路 
+
 """
 
  
@@ -28,6 +22,9 @@ import time
 import math
 import json
 from bs4 import BeautifulSoup
+import aiohttp
+from aiohttp import web
+from aiohttp.web import FileResponse
 
 import logging
 from datetime import timedelta
@@ -105,8 +102,10 @@ def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
     
     ''')
     global SH_BUS
-    SH_BUS = bus
+    SH_BUS = bus    
     hass.http.register_view(HassGateView)
+    # 注册shbus状态卡片
+    hass.components.frontend.add_extra_js_url(hass, '/' + DOMAIN + '-api?v=1.1')
     async_add_devices([ShBus(name, hass, bus, stops, stop_id, stop_name)], True)
  
 ##### 网关控制
@@ -115,13 +114,12 @@ class HassGateView(HomeAssistantView):
 
     url = '/' + DOMAIN + '-api'
     name = DOMAIN
-    requires_auth = True
+    requires_auth = False
 
     async def get(self, request):    
         _raw_path = request.rel_url.raw_path
-        return self.json({
-            '请求路径': _raw_path
-        })
+        _path = os.path.dirname(__file__) + '/more-info-shbus.js'
+        return FileResponse(_path)
 
     async def post(self, request):
         """Update state of entity."""
