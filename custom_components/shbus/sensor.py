@@ -30,6 +30,7 @@ from datetime import timedelta
 import asyncio
 import async_timeout
 import aiohttp
+from homeassistant.components.http import HomeAssistantView
  
 import voluptuous as vol
  
@@ -48,6 +49,7 @@ _LOGGER = logging.getLogger(__name__)
  
 TIME_BETWEEN_UPDATES = timedelta(seconds=600)
 
+DOMAIN = 'shbus'
 
 CONF_DIRECTION = "direction"
 CONF_STOP_ID = "stop_id"
@@ -58,7 +60,175 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
     vol.Optional(CONF_DIRECTION, default="1"): cv.string,
     vol.Optional(CONF_STOP_ID, default=''): cv.string,
 })
+
+SH_BUS = None
+
+@asyncio.coroutine
+def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
+    
  
+    name = config.get(CONF_NAME)
+    direction = config.get(CONF_DIRECTION)
+    stop_id = config.get(CONF_STOP_ID)
+        
+    _install_tips = "安装成功"    
+    bus = Bus()
+    # 获取站点名称
+    stop_name = ''
+    try:        
+        stops = bus.query_router(name, direction)
+        if stop_id != "":
+            _list = list(filter(lambda x: x['stop_id'] == stop_id + '.',stops['stops']))        
+            if len(_list) > 0:
+                stop_name = _list[0]['stop_name']
+    except Exception as e:
+        _install_tips = "安装失败（没有找到公交线路）"
+    
+    # 提示
+    _LOGGER.info('''
+    
+    【上海公交传感器】    
+             
+     安装提示：''' + _install_tips + '''
+     
+     公交名称：''' + name + '''
+     
+     站点名称：''' + stop_name + '''
+     
+     公交方向：''' + direction + '''
+    
+    ''')
+    global SH_BUS
+    SH_BUS = bus
+    hass.http.register_view(HassGateView)
+    async_add_devices([ShBus(name, hass, bus, stops, stop_id, stop_name)], True)
+ 
+##### 网关控制
+class HassGateView(HomeAssistantView):
+    """View to handle Configuration requests."""
+
+    url = '/' + DOMAIN + '-api'
+    name = DOMAIN
+    requires_auth = True
+
+    async def get(self, request):    
+        _raw_path = request.rel_url.raw_path
+        return self.json({
+            '请求路径': _raw_path
+        })
+
+    async def post(self, request):
+        """Update state of entity."""
+        response = await request.json()
+        if 'name' in response and 'direction' in response and 'stop_id' in response:
+            response = SH_BUS.query_stop(response['name'], response['direction'], response['stop_id'])
+
+        return self.json(response)
+    
+ 
+##### 上海公交
+class ShBus(Entity):
+ 
+    def __init__(self, name, hass, bus, stops, stop_id, stop_name):
+        """初始化."""
+        self._object_id = name
+        self._friendly_name = name
+        self._icon = "mdi:bus"
+        self._unit_of_measurement = "分钟" 
+        self._state = None
+        self._hass = hass
+        self._bus = bus
+        # 要监听的站点
+        self._stop_id = stop_id
+        self._direction = stops['direction']
+                
+        self._attr = {
+            "from": stops['from'],
+            "to": stops['to'], 
+            "stop_name": stop_name,
+            "start_at": stops['start_at'], 
+            "end_at": stops['end_at'], 
+            "bus_status": None,
+            "direction": self._direction,            
+            "stop_interval": None,
+            "time": None,
+            "distance": None,
+            "plate_number": None,
+            "update_at": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()),
+            "stops":  json.dumps(stops['stops'],ensure_ascii=False),            
+        }
+ 
+    @property
+    def name(self):
+        """返回实体的名字."""
+        return self._object_id
+ 
+    @property
+    def registry_name(self):
+        """返回实体的friendly_name属性."""
+        return self._friendly_name
+ 
+    @property
+    def state(self):
+        """返回当前的状态."""
+        return self._state
+ 
+    @property
+    def icon(self):
+        """返回icon属性."""
+        return self._icon
+ 
+    @property
+    def unit_of_measurement(self):
+        """返回unit_of_measuremeng属性."""
+        return self._unit_of_measurement
+ 
+    @property
+    def device_state_attributes(self):
+        """设置其它一些属性值."""
+        if self._state is not None:
+            attr = self._attr
+            return {
+                "name": self.name,
+                "from": attr['from'],
+                "to": attr['to'],              
+                "stop_name": attr['stop_name'],
+                "stop_interval": attr['stop_interval'],
+                "time": attr['time'],
+                "distance": attr['distance'],
+                "start_at": attr['start_at'], 
+                "end_at": attr['end_at'], 
+                "direction": self._direction,
+                "plate_number": attr['plate_number'],
+                "bus_status": attr['bus_status'],
+                "update_at": attr['update_at'],
+                "stops": attr['stops'],
+            }
+ 
+    @asyncio.coroutine
+    def async_update(self):
+        """update函数变成了async_update.""" 
+        _state = -1
+        
+        if self._stop_id != '':
+            r = self._bus.query_stop(self._friendly_name, self._direction, self._stop_id)
+            self._attr['plate_number'] = r['plate_number']
+            self._attr['stop_interval'] = r['stop_interval']
+            _time = ''
+            # 如果当前有车运行
+            if r['status'] == 'running':
+                _time = int(r['time'])                
+                _state = math.floor(_time / 60)
+            
+            self._attr['time'] = _time
+            self._attr['distance'] = r['distance']            
+            self._attr['bus_status'] = r['status']
+            self._attr['update_at'] = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+            self._state = _state
+        else:
+            self._state = _state
+
+            
 
 
 #######################################支持的公交路线#######################################
@@ -265,165 +435,3 @@ class Bus:
 
         return router    
  
-@asyncio.coroutine
-def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
-    
- 
-    name = config.get(CONF_NAME)
-    direction = config.get(CONF_DIRECTION)
-    stop_id = config.get(CONF_STOP_ID)
-        
-    _install_tips = "安装成功"
-    bus = Bus()
-    # 获取站点名称
-    stop_name = ''
-    try:        
-        stops = bus.query_router(name, direction)
-        if stop_id != "":
-            _list = list(filter(lambda x: x['stop_id'] == stop_id + '.',stops['stops']))        
-            if len(_list) > 0:
-                stop_name = _list[0]['stop_name']
-    except Exception as e:
-        _install_tips = "安装失败（没有找到公交线路）"
-    
-    # 提示
-    _LOGGER.info('''
-    
-    【上海公交传感器】    
-             
-     安装提示：''' + _install_tips + '''
-     
-     公交名称：''' + name + '''
-     
-     站点名称：''' + stop_name + '''
-     
-     公交方向：''' + direction + '''
-    
-    ''')
-       
-    
-    async_add_devices([ShBus(name, hass, bus, stops, stop_id, stop_name)], True)
- 
- 
-class ShBus(Entity):
- 
-    def __init__(self, name, hass, bus, stops, stop_id, stop_name):
-        """初始化."""
-        self._object_id = name
-        self._friendly_name = name
-        self._icon = "mdi:bus"
-        self._unit_of_measurement = "分钟" 
-        self._state = None
-        self._hass = hass
-        self._bus = bus
-        # 要监听的站点
-        self._stop_id = stop_id
-        self._direction = stops['direction']
-        
-        # 调整格式
-        _list = []
-        for item in stops['stops']:
-            _list.append(item['stop_id'] + item['stop_name'])
-        
-        self._attr = {
-            "from": stops['from'],
-            "to": stops['to'], 
-            "stop_name": stop_name,
-            "start_at": stops['start_at'], 
-            "end_at": stops['end_at'], 
-            "bus_status": None,
-            "direction": self._direction,            
-            "stop_interval": None,
-            "time": None,
-            "distance": None,
-            
-            "plate_number": None,            
-            "上次更新时间": None,
-            "更新时间": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()),
-            "车站列表": '、'.join(_list),            
-        }
- 
-    @property
-    def name(self):
-        """返回实体的名字."""
-        return self._object_id
- 
-    @property
-    def registry_name(self):
-        """返回实体的friendly_name属性."""
-        return self._friendly_name
- 
-    @property
-    def state(self):
-        """返回当前的状态."""
-        return self._state
- 
-    @property
-    def icon(self):
-        """返回icon属性."""
-        return self._icon
- 
-    @property
-    def unit_of_measurement(self):
-        """返回unit_of_measuremeng属性."""
-        return self._unit_of_measurement
- 
-    @property
-    def device_state_attributes(self):
-        """设置其它一些属性值."""
-        if self._state is not None:
-            attr = self._attr
-            return {
-                "公交名称": self.name,
-                "name": self.name,
-                "起始站": attr['from'],
-                "from": attr['from'],
-                "终点站": attr['to'], 
-                "to": attr['to'],                
-                "本站名称": attr['stop_name'],
-                "stop_name": attr['stop_name'],
-                "到达本站还有(站)": attr['stop_interval'],
-                "stop_interval": attr['stop_interval'],
-                "到达本站时间(秒)": attr['time'],
-                "time": attr['time'],
-                "到达本站的距离(米)": attr['distance'],
-                "distance": attr['distance'],
-                "状态": attr['bus_status'],
-                "开始时间": attr['start_at'], 
-                "start_at": attr['start_at'], 
-                "结束时间": attr['end_at'], 
-                "end_at": attr['end_at'], 
-                "方向": self._direction,
-                "direction": self._direction,
-                "车牌号": attr['plate_number'],
-                "plate_number": attr['plate_number'],
-                "上次更新时间": attr['上次更新时间'],
-                "更新时间": attr['更新时间'],
-                "车站列表": attr['车站列表'],
-            }
- 
-    @asyncio.coroutine
-    def async_update(self):
-        """update函数变成了async_update.""" 
-        _state = -1
-        
-        if self._stop_id != '':
-            r = self._bus.query_stop(self._friendly_name, self._direction, self._stop_id)
-            self._attr['plate_number'] = r['plate_number']
-            self._attr['stop_interval'] = r['stop_interval']
-            _time = ''
-            bus_status = '等待发车'
-            # 如果当前有车运行
-            if r['status'] == 'running':
-                _time = int(r['time'])                
-                _state = math.floor(_time / 60)
-                bus_status = '运行中'
-            
-            self._attr['time'] = _time
-            self._attr['distance'] = r['distance']            
-            self._attr['bus_status'] = bus_status
-            self._attr['上次更新时间'] = self._attr['更新时间']
-            self._attr['更新时间'] = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
-            self._state = _state
-        else:
-            self._state = _state
