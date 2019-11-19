@@ -9,6 +9,7 @@ import random
 import re
 import urllib.parse
 import uuid
+import math
 
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.event import track_time_interval
@@ -1041,7 +1042,12 @@ class MediaPlayer(MediaPlayerDevice):
             elif _type == "djradio":
                 _log_info("加载电台列表，ID：%s", _id)
                 # 获取播放列表
-                res = requests.get(API_URL + '/dj/program?rid='+str(_id)+'&limit=50')
+                offset = 0
+                if list_index >= 50:
+                   offset = math.floor((list_index + 1) / 50)
+                # 取余
+                list_index = list_index % 50
+                res = requests.get(API_URL + '/dj/program?rid='+str(_id)+'&limit=50&offset='+str(offset * 50))
                 obj = res.json()
                 if obj['code'] == 200:
                     _list = obj['programs']
