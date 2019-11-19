@@ -8,9 +8,15 @@ pip3 install lxml
 上海公交
 
 sensor:
-    - platform: ha_cloud_music
-      name: 748路 
-
+    - platform: shbus
+      name: 748路
+      direction: 0
+      stop_id: 5
+    - platform: shbus
+      name: 748路
+      direction: 1
+      stop_id: 10
+      
 """
 
  
