@@ -8,9 +8,15 @@ pip3 install lxml
 上海公交
 
 sensor:
-    - platform: ha_cloud_music
-      name: 748路 
-
+  - platform: shbus
+    name: 748路
+    direction: 1
+    stop_id: 10
+  - platform: shbus
+    name: 748路
+    direction: 0
+    stop_id: 6
+    
 """
 
  
@@ -98,7 +104,7 @@ def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
      
      站点名称：''' + stop_name + '''
      
-     公交方向：''' + direction + '''
+     公交方向：''' + direction + '''【''' + stops['from'] + '''】到【''' + stops['to'] + '''】
     
     ''')
     global SH_BUS

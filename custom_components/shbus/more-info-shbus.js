@@ -51,7 +51,7 @@ class MoreInfoShbus extends HTMLElement {
       if(attr.bus_status === 'running'){
           this.shadow.querySelector('.title-info').innerHTML = `公交车【${attr.plate_number}】 距 【${attr.stop_name}】 <br/> 还有${attr.stop_interval}站，${attr.distance}米，约${this.stateObj.state}分钟`    
       }else{
-          this.shadow.querySelector('.title-info').innerHTML = `等待发车`
+          this.shadow.querySelector('.title-info').innerHTML = `【${attr.stop_name}】 等待发车`
       }
       
       let line = this.shadow.querySelector('.line')
