@@ -59,6 +59,7 @@ _LOGGER = logging.getLogger(__name__)
 TIME_BETWEEN_UPDATES = timedelta(seconds=600)
 
 DOMAIN = 'shbus'
+VERSION = '1.0'
 
 CONF_DIRECTION = "direction"
 CONF_STOP_ID = "stop_id"
@@ -95,23 +96,32 @@ def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
     
     # 提示
     _LOGGER.info('''
+-------------------------------------------------------------------
+
+    上海公交传感器【作者QQ：635147515】
+
+    版本：''' + VERSION + '''    
+
+    介绍：这是一个上海公交的实时到站插件
+
+    项目地址：https://github.com/shaonianzhentan/ha_cloud_music
+
+    安装信息：
+
+        安装提示：''' + _install_tips + '''
+        
+        公交名称：''' + name + '''
+        
+        站点名称：''' + stop_name + '''
+        
+        公交方向：''' + direction + '''【''' + stops['from'] + '''】到【''' + stops['to'] + '''】
     
-    【上海公交传感器】    
-             
-     安装提示：''' + _install_tips + '''
-     
-     公交名称：''' + name + '''
-     
-     站点名称：''' + stop_name + '''
-     
-     公交方向：''' + direction + '''【''' + stops['from'] + '''】到【''' + stops['to'] + '''】
-    
-    ''')
+-------------------------------------------------------------------''')
     global SH_BUS
     SH_BUS = bus    
     hass.http.register_view(HassGateView)
     # 注册shbus状态卡片
-    hass.components.frontend.add_extra_js_url(hass, '/' + DOMAIN + '-api?v=1.1')
+    hass.components.frontend.add_extra_js_url(hass, '/' + DOMAIN + '-api?v=' + VERSION)
     async_add_devices([ShBus(name, hass, bus, stops, stop_id, stop_name)], True)
  
 ##### 网关控制
@@ -213,6 +223,7 @@ class ShBus(Entity):
                 "bus_status": attr['bus_status'],
                 "update_at": attr['update_at'],
                 "stops": attr['stops'],
+                "custom_ui_more_info": "more-info-shbus",
             }
  
     @asyncio.coroutine

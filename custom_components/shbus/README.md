@@ -29,14 +29,6 @@ sensor:
 
 ```
 
-> 更多信息弹窗配置
-
-打开自定义实体，选中对应的公交实体
-
-在 custom_ui_more_info 中填入 more-info-shbus
-
-![配置更多信息]](./screenshots/微信截图_20191121105839.png)
-
 ## 图片预览
 
 ![手机显示]](./screenshots/微信截图_20191121105524.png)
