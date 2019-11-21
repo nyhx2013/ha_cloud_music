@@ -6,7 +6,7 @@
 
  将本项目【shbus文件夹】复制到HA的custom_components文件夹中
 
- > 插件配置
+> 插件配置
 
  然后在configuration.yaml中配置以下内容
 
