@@ -37,28 +37,6 @@ def getConfig():
     data = yaml.full_load(file_data)
     return data
 
-# 循环调用
-def loop():
-    while True:
-        try:
-            # 读取配置
-            cfg = getConfig()
-            global HAToken
-            HAToken = cfg['token']
-            global filter_mac
-            filter_mac = cfg['mac']
-            # 开始扫描设备
-            print("【" + str(datetime.datetime.now()) + "】【扫描设备】开始扫描蓝牙设备")
-            d = MyDiscoverer()
-            d.find_devices(lookup_names=True)
-            # 获取所有设备
-            d.read_devices()
-            print("【" + str(datetime.datetime.now()) + "】【扫描设备】扫描完成，当前蓝牙设备数量： ", len(d._devices))
-            time.sleep(12)
-        except Exception as e:
-            print('Error:', e)
-
-_thread.start_new_thread(loop, ())
 
 # 重启程序
 def restart_program():
@@ -154,3 +132,22 @@ class MyDiscoverer(bluetooth.DeviceDiscoverer):
                 self.process_event()
             if self.done:
                 break
+
+                
+# 循环调用
+while True:
+    try:
+        # 读取配置
+        cfg = getConfig()
+        HAToken = cfg['token']
+        filter_mac = cfg['mac']
+        # 开始扫描设备
+        print("【" + str(datetime.datetime.now()) + "】【扫描设备】开始扫描蓝牙设备")
+        d = MyDiscoverer()
+        d.find_devices(lookup_names=True)
+        # 获取所有设备
+        d.read_devices()
+        print("【" + str(datetime.datetime.now()) + "】【扫描设备】扫描完成，当前蓝牙设备数量： ", len(d._devices))
+        time.sleep(12)
+    except Exception as e:
+        print('Error:', e)
