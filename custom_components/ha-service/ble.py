@@ -3,33 +3,67 @@
 sudo apt-get install bluetooth libbluetooth-dev pkg-config libboost-python-dev libboost-thread-dev libglib2.0-dev python-dev
 安装python插件
 pip install pybluez
-开启服务
+开启扫描服务
 python3 ble.py
-
-调用URL获取扫描到的蓝牙列表
-http://localhost:8321/ble
 '''
 
-from http.server import HTTPServer, BaseHTTPRequestHandler
 import bluetooth
 import select
 import json
 import os
+import yaml
 import sys
 import datetime
 import time
 import _thread
 from requests import post
-from urllib import parse
 
-HTTP_DATA = "[]"
-# 与HA通信的token
-HAToken = ""
+# 扫描时间
+scan_time = datetime.datetime.now()
 # 要过滤的设备
 filter_mac = []
+# 与HA通信的token
+HAToken = ""
 
-scan_time = datetime.datetime.now()
-host = ('0.0.0.0', 8321)
+# 获取yaml文件数据
+current_path = os.path.abspath(".")
+yaml_path = os.path.join(current_path, "config.yaml")
+
+
+def getConfig():
+    file = open(yaml_path, 'r', encoding="utf-8")
+    file_data = file.read()
+    file.close()
+    data = yaml.full_load(file_data)
+    return data
+
+# 循环调用
+def loop():
+    while True:
+        try:
+            # 读取配置
+            cfg = getConfig()
+            global HAToken
+            HAToken = cfg['token']
+            global filter_mac
+            filter_mac = cfg['mac']
+            # 开始扫描设备
+            print("【" + str(datetime.datetime.now()) + "】【扫描设备】开始扫描蓝牙设备")
+            d = MyDiscoverer()
+            d.find_devices(lookup_names=True)
+            # 获取所有设备
+            d.read_devices()
+            print("【" + str(datetime.datetime.now()) + "】【扫描设备】扫描完成，当前蓝牙设备数量： ", len(d._devices))
+            time.sleep(12)
+        except Exception as e:
+            print('Error:', e)
+
+_thread.start_new_thread(loop, ())
+
+# 重启程序
+def restart_program():
+    python = sys.executable
+    os.execl(python, python, * sys.argv)
 
 # 蓝牙扫描类
 class MyDiscoverer(bluetooth.DeviceDiscoverer):
@@ -56,11 +90,11 @@ class MyDiscoverer(bluetooth.DeviceDiscoverer):
         if major_class < 7:
             # 类型
             class_type = major_classes[major_class]
-            #print("  %s" % major_classes[major_class])
+            # print("  %s" % major_classes[major_class])
         # else:
-            #print("  Uncategorized")
+            # print("  Uncategorized")
 
-        #print("  services:")
+        # print("  services:")
         service_classes = ((16, "positioning"),
                            (17, "networking"),
                            (18, "rendering"),
@@ -73,8 +107,8 @@ class MyDiscoverer(bluetooth.DeviceDiscoverer):
         for bitpos, classname in service_classes:
             if device_class & (1 << (bitpos-1)):
                 services.append(classname)
-                #print("    %s" % classname)
-        #print("  RSSI: " + str(rssi))
+                # print("    %s" % classname)
+        # print("  RSSI: " + str(rssi))
 
         # 设置扫描时间
         global scan_time
@@ -97,7 +131,7 @@ class MyDiscoverer(bluetooth.DeviceDiscoverer):
             # 通信HA更新
             url = 'http://localhost:8123/ble_tracker-api'
             headers = {
-                'Authorization': HAToken,
+                'Authorization': 'Bearer ' + HAToken,
                 'content-type': 'application/json',
             }
             response = post(url, json.dumps(_ble_info), headers=headers)
@@ -117,78 +151,3 @@ class MyDiscoverer(bluetooth.DeviceDiscoverer):
                 self.process_event()
             if self.done:
                 break
-
-    def filter_devices(self, address):
-        # 查看指定设备
-        filter_list = filter(
-            lambda x: x["mac"] == address.upper(), self._devices)
-        devices = list(filter_list)
-        if len(devices) > 0:
-            return devices[0]
-        return None
-
-# 循环调用
-
-
-def loop():
-    while True:
-        try:
-            print("【" + str(datetime.datetime.now()) + "】【扫描设备】开始扫描蓝牙设备")
-            d = MyDiscoverer()
-            d.find_devices(lookup_names=True)
-            # 获取所有设备
-            d.read_devices()
-            print("【" + str(datetime.datetime.now()) + "】【扫描设备】扫描完成，当前蓝牙设备数量： ", len(d._devices))
-            global HTTP_DATA
-            HTTP_DATA = json.dumps(d._devices, ensure_ascii=False)
-            global data_list
-            data_list = d._devices
-            time.sleep(12)
-        except Exception as e:
-            print('Error:', e)
-
-
-_thread.start_new_thread(loop, ())
-
-# 重启程序
-def restart_program():
-    python = sys.executable
-    os.execl(python, python, * sys.argv)
-
-# HTTP服务
-class Resquest(BaseHTTPRequestHandler):
-    def do_GET(self):
-        self.send_response(200)
-        self.send_header('Content-type', 'application/json')
-        self.end_headers()
-        # 解析URL地址
-        res = parse.urlparse('http://localhost:8321' + str(self.path))
-        # 参数转成字典
-        query = parse.parse_qs(res.query)
-        print(query)
-        if res.path == "/ble":
-            # 写入数据
-            self.wfile.write(HTTP_DATA.encode())
-            # 如果当前时间和扫描时间相差超过10分钟，则重启程序
-            print("【" + str(datetime.datetime.now()) + "】【读取状态】上次扫描时间：", scan_time)
-            seconds = (datetime.datetime.now() - scan_time).seconds
-            print("【" + str(datetime.datetime.now()) + "】【读取状态】距上次扫描相差时间：", seconds)
-            if seconds > 60:
-                restart_program()
-            
-            # 设置与HA通信的token
-            if 'token' in query:
-                global HAToken
-                HAToken = query['token'][0]
-            # 设置过滤的mac地址
-            if 'mac' in query:
-                global filter_mac
-                filter_mac = query['mac'][0].split(',')
-        else:
-            self.wfile.write("404".encode())
-
-
-if __name__ == '__main__':
-    server = HTTPServer(host, Resquest)
-    print("Starting server, listen at: %s:%s" % host)
-    server.serve_forever()
