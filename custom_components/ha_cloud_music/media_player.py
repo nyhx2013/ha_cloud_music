@@ -165,7 +165,10 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
     # 显示模式 全屏：fullscreen
     vol.Optional("show_mode", default="default"): cv.string,
     # 网易云音乐接口地址
-    vol.Required("api_url"): cv.string
+    vol.Required("api_url"): cv.string,
+    # TTS相关配置
+    vol.Optional("tts_before_message", default=""): cv.string,
+    vol.Optional("tts_after_message", default=""): cv.string,
 })
 
 def setup_platform(hass, config, add_entities, discovery_info=None):
@@ -192,6 +195,8 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
     _sidebar_icon = config.get("sidebar_icon")
     _show_mode = config.get("show_mode")
     _uid = config.get("uid")
+    mp.tts_config['before_message'] = config.get("tts_before_message")
+    mp.tts_config['after_message'] = config.get("tts_after_message")
     
     _show_mode_str = "正常模式"
     if _show_mode == 'fullscreen':
@@ -222,6 +227,7 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
         显示模式：''' + _show_mode_str + '''
         
         用户ID：''' + _uid + '''
+
 -------------------------------------------------------------------''')      
 
     # 注册服务【加载歌单】
@@ -370,7 +376,9 @@ class MediaPlayer(MediaPlayerDevice):
         #### TTS 相关配置 #####
         self.tts_config = {
             'vlc': None,
-            'play_state': None
+            'play_state': None,
+            'before_message': '',
+            'after_message': '',
         }
     
     def interval(self, now):
