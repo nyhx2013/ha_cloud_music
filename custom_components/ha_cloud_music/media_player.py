@@ -1120,6 +1120,12 @@ class MediaPlayer(MediaPlayerDevice):
             self._media._instance.release()
     
     ######################文字转语音################################
+    # 时间转换
+    def tts_time_format(self, num):
+        if num < 10:
+            return '0' + str(num)
+        return str(num)
+
     # 文字转语音
     def tts(self, call):
         # 获取message参数
@@ -1130,7 +1136,17 @@ class MediaPlayer(MediaPlayerDevice):
             self.media_pause()
         # 特殊符号替换成时间
         localtime = time.localtime(time.time())
-        message = message.replace('%Y', str(localtime.tm_year)).replace('%m', str(localtime.tm_mon)).replace('%d', str(localtime.tm_mday)).replace('%H', str(str(localtime.tm_hour))).replace('%M', str(localtime.tm_min)).replace('%S', str(localtime.tm_sec))
+
+        message = self.tts_config['before_message'] \
+            + message.replace('%Y', str(localtime.tm_year))\
+                .replace('%m', str(localtime.tm_mon))\
+                .replace('%d', str(localtime.tm_mday))\
+                .replace('%HH', self.tts_time_format(localtime.tm_hour))\
+                .replace('%H', str(localtime.tm_hour))\
+                .replace('%MM', self.tts_time_format(localtime.tm_min))\
+                .replace('%M', str(localtime.tm_min))\
+                .replace('%S', str(localtime.tm_sec)) \
+            + self.tts_config['after_message']
         _log_info('文字转语音：%s', message)
         # 开始播放语音
         import vlc

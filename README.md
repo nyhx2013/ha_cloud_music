@@ -42,6 +42,8 @@ media_player:
 # sidebar_icon: 侧边栏图标
 # show_mode: 显示模式（全屏显示: fullscreen）
 # uid: 网易云音乐的用户ID
+# tts_before_message: tts服务前置消息（可选）
+# tts_after_message: tts服务后置消息（可选）
 
 media_player:
   - platform: ha_cloud_music
@@ -50,6 +52,8 @@ media_player:
     sidebar_icon: mdi:music
     show_mode: fullscreen
     uid: 47445304
+    tts_before_message: '主人：'
+    tts_after_message: '。我是爱你的小喵'
 ```
 
 > 可选插件配置
@@ -140,6 +144,8 @@ PC端界面自我感觉还行， 就是移动端界面总觉得怪怪的，奈�
 ### V2.1.3
 - 加入一些电台
 - 加入tts服务，语音播放后继续播放当前音乐（内置VLC播放器）
+- 增加tts前后固定消息配置
+- 修正tts服务，时间格式占位符的问题
 - 电台列表加载服务，传入list_index会自动分页
 
 ### V2.1.2（2019-11-16）
