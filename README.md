@@ -17,13 +17,13 @@
 
 > 安装
 
-1.（建议）使用[HACS安装](https://github.com/custom-components/hacs)
+1.使用[HACS安装](https://github.com/custom-components/hacs)
 
 在HACS里输入：https://github.com/shaonianzhentan/ha_cloud_music 即可安装成功（类型选择Integration）
 
 2.自定义安装
 
-将本项目custom_components里的内容，放到HASS的custom_components文件夹中
+将本项目custom_components里的内容，放到HA的custom_components文件夹中
 
 > 后台插件配置
 
