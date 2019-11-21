@@ -134,8 +134,11 @@ class MyDiscoverer(bluetooth.DeviceDiscoverer):
                 'Authorization': 'Bearer ' + HAToken,
                 'content-type': 'application/json',
             }
-            response = post(url, json.dumps(_ble_info), headers=headers)
-            print("【更新结果】" + response.text)
+            try:
+                response = post(url, json.dumps(_ble_info), headers=headers)
+                print("【更新结果】" + response.text)
+            except Exception as e:
+                print("【出现异常】HomeAssistant没有响应")
 
     def inquiry_complete(self):
         self.done = True
