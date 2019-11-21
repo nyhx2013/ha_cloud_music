@@ -133,7 +133,23 @@ class MyDiscoverer(bluetooth.DeviceDiscoverer):
             if self.done:
                 break
 
-                
+
+
+
+
+def loop():
+    while True:
+        try:     
+            seconds = (datetime.datetime.now() - scan_time).seconds
+            print("【" + str(datetime.datetime.now()) + "】循环监听是否卡死【" + str(seconds) + "秒】")
+            if seconds > 60:
+                restart_program()
+            time.sleep(12)
+        except Exception as e:
+            print('Error:', e)
+
+_thread.start_new_thread(loop, ())
+
 # 循环调用
 while True:
     try:
