@@ -18,7 +18,7 @@ device_tracker:
 ```
 
 > 开启服务
-- 1.请将ha-service文件夹复制到树莓派中
+- 1.请将ha-service文件夹复制到树莓派中（随便放哪里）
 - 2.打开config.yaml文件，配置token（请在HomeAssistant里获取永久token）
 - 3.配置要监听的mac地址（必须大写）
 - 4.使用python3 ble.py启动服务
@@ -38,3 +38,15 @@ python3 ble.py
 
 ```
 
+## 配置内容
+```
+
+token: 这里配置HA的token
+# 要监听蓝牙MAC地址（可添加多个）
+mac:
+  - B4:C4:FC:66:A6:F0
+  - B4:C4:FC:66:A6:F1
+  - B4:C4:FC:66:A6:F2
+  - B4:C4:FC:66:A6:F3
+
+```
