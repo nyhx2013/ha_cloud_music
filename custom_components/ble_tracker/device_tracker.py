@@ -13,7 +13,7 @@ from homeassistant.helpers.typing import HomeAssistantType
 
 _LOGGER = logging.getLogger(__name__)
 
-VERSION = '1.0'
+VERSION = '1.1'
 DOMAIN = 'ble_tracker'
 BT_PREFIX = "BLE_"
 
@@ -33,7 +33,7 @@ async def see_device(
     }
     await async_see(
         mac=f"{BT_PREFIX}{mac}",
-        host_name=mac,
+        host_name=name,
         attributes=attributes,
         source_type='ble_tracker',
     )
