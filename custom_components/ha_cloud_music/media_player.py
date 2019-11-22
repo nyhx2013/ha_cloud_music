@@ -10,7 +10,7 @@ import re
 import urllib.parse
 import uuid
 import math
-
+from homeassistant.helpers.entity import Entity
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.event import track_time_interval
 from homeassistant.components.http import HomeAssistantView
@@ -88,7 +88,7 @@ TIME_BETWEEN_UPDATES = datetime.timedelta(seconds=1)
 ###################媒体播放器##########################
 
 
-VERSION = '2.1.3'
+VERSION = '2.1.4'
 DOMAIN = 'ha_cloud_music'
 
 _hass = None
@@ -238,6 +238,8 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
     if mp.supported_vlc == True:
         hass.services.register(DOMAIN, 'tts', mp.tts)
     
+    # 注册shbus状态卡片
+    hass.components.frontend.add_extra_js_url(hass, '/'+ DOMAIN + '/' + VERSION + '/dist/data/more-info-ha_cloud_music.js')
     # 添加到侧边栏
     coroutine = hass.components.frontend.async_register_built_in_panel(
         "iframe",
@@ -481,6 +483,13 @@ class MediaPlayer(MediaPlayerDevice):
             
         return True
 
+    @property
+    def state_attributes(self):
+        """Return the state attributes."""
+        attr = super().state_attributes
+        attr.update({'custom_ui_more_info': 'more-info-ha_cloud_music'})
+        return attr
+
     # 判断当前关联的播放器类型
     @property
     def player_type(self):
@@ -505,9 +514,19 @@ class MediaPlayer(MediaPlayerDevice):
         return self._name
     
     @property
-    def friendly_name(self):
-        """Return the name of the device."""
-        return "网易云音乐"
+    def registry_name(self):
+        """返回实体的friendly_name属性."""
+        return '网易云音乐'
+    
+    @property
+    def app_id(self):
+        """ID of the current running app."""
+        return self._name
+
+    @property
+    def app_name(self):
+        """Name of the current running app."""
+        return '网易云音乐'
     
     @property
     def media_image_url(self):
