@@ -66,6 +66,32 @@ def migu_search(songName, singerName):
         print("在咪咕搜索时出现错误：", e)
     return None
 
+# 喜马拉雅播放列表
+def ximalaya_playlist(id, index, size):
+    res = requests.get('https://mobile.ximalaya.com/mobile/v1/album/track?albumId=' + str(id) + '&device=android&isAsc=true&pageId='\
+        + str(index) + '&pageSize=' + str(size) +'&statEvent=pageview%2Falbum%40203355&statModule=%E6%9C%80%E5%A4%9A%E6%94%B6%E8%97%8F%E6%A6%9C&statPage=ranklist%40%E6%9C%80%E5%A4%9A%E6%94%B6%E8%97%8F%E6%A6%9C&statPosition=8')
+    obj = res.json()
+    if obj['ret'] == 0:
+        _list = obj['data']['list']
+        if len(_list) > 0:
+            # 获取专辑名称
+            _res = requests.get('http://mobile.ximalaya.com/v1/track/baseInfo?device=android&trackId='+str(_list[0]['trackId']))
+            _obj = _res.json()
+            # 格式化列表
+            _newlist = map(lambda item: {
+                "id": item['trackId'],
+                "name": item['title'],
+                "album": _obj['albumTitle'],
+                "image": item['coverLarge'],
+                "duration": item['duration'],
+                "song": item['title'],
+                "type": "url",
+                "url": item['playUrl64'],
+                "singer": item['nickname']
+                }, _list)
+            return list(_newlist)
+    return []
+    
 ###################媒体播放器##########################
 from homeassistant.components.media_player import (
     MediaPlayerDevice, PLATFORM_SCHEMA)
@@ -1026,24 +1052,26 @@ class MediaPlayer(MediaPlayerDevice):
                 _type = "djradio"
             elif call.data['type'] == 'ximalaya':
                 _type = "ximalaya"
-
-            if 'index' in call.data:
-                list_index = int(call.data['index']) - 1    
-        else:
-            # 旧的服务参数
-            if 'id' in call.data:
-                _id = call.data['id']
-                _type = "playlist"
-            elif 'rid' in call.data:
-                _id = call.data['rid']
-                _type = "djradio"
-            if 'list_index' in call.data:
-                list_index = int(call.data['list_index']) - 1
-                        
+            else:
+                self.notification("加载播放列表：type参数错误", "load_songlist")
+                return "type参数错误"
+        elif 'id' in call.data:
+            _id = call.data['id']
+            _type = "playlist"
+        elif 'rid' in call.data:
+            _id = call.data['rid']
+            _type = "djradio"
+        
+        # 兼容旧的格式
+        if 'list_index' in call.data:
+            list_index = int(call.data['list_index']) - 1
+        # 新的参数
+        if 'index' in call.data:
+            list_index = int(call.data['index']) - 1
         if self.loading == True:
             self.notification("正在加载歌单，请勿重复调用服务", "load_songlist")
             return
-        self.loading = True                
+        self.loading = True
 
         try:
             if _type == "playlist":
@@ -1105,44 +1133,15 @@ class MediaPlayer(MediaPlayerDevice):
                     self.notification("没有找到id为【"+_id+"】的电台信息", "load_songlist")
             elif _type == 'ximalaya':
                 _log_info("加载喜马拉雅专辑列表，ID：%s", _id)
-                # 获取播放列表
-                offset = 0
-                if list_index >= 50:
-                   offset = math.floor((list_index + 1) / 50)
                 # 取余
-                list_index = list_index % 50 
-                res = requests.get('https://mobile.ximalaya.com/mobile/v1/album/track?albumId='\
-                    +str(_id)+'&device=android&isAsc=true&pageId='\
-                    +str(list_index + 1)+'&pageSize=50&statEvent=pageview%2Falbum%40203355&statModule=%E6%9C%80%E5%A4%9A%E6%94%B6%E8%97%8F%E6%A6%9C&statPage=ranklist%40%E6%9C%80%E5%A4%9A%E6%94%B6%E8%97%8F%E6%A6%9C&statPosition=8')
-                obj = res.json()
-                if obj['ret'] == 0:
-                    _list = obj['list']
-                    if len(_list) > 0:
-                        # 获取专辑名称
-                        _res = request.get('http://mobile.ximalaya.com/v1/track/baseInfo?device=android&trackId='+str(_list[0]['trackId']))
-                        _obj = _res.json()
-                        # 格式化列表
-                        _newlist = map(lambda item: {
-                            "id": int(item['trackId']),
-                            "name": item['title'],
-                            "album": _obj['albumTitle'],
-                            "image": item['coverLarge'],
-                            "duration": item['duration'],
-                            "song": item['title'],
-                            "type": "url",
-                            "url": item['playUrl64'],
-                            "singer": item['nickname']
-                            }, _list)            
-                        #_log_info(_result)
-                        if list_index < 0 or list_index >= len(_list):
-                            list_index = 0                      
-                        self.music_index = list_index
-                        self.play_media('music_playlist', list(_newlist))
-                        self.notification("正在播放专辑【"+_obj['albumTitle']+"】", "load_songlist")
-                    else：
-                        self.notification("没有找到id为【"+_id+"】的专辑信息", "load_songlist")
+                list_index = list_index % 50
+                
+                _list = ximalaya_playlist(_id, list_index + 1, 50)    
+                if len(_list) > 0:
+                    self.music_index = list_index
+                    self.play_media('music_playlist', _list)
+                    self.notification("正在播放专辑【" + _list[0]['album'] + "】", "load_songlist")
                 else:
-                    # 这里弹出提示
                     self.notification("没有找到id为【"+_id+"】的专辑信息", "load_songlist")
                     
         except Exception as e:
