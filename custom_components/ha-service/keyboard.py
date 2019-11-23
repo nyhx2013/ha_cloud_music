@@ -34,13 +34,16 @@ def getConfig():
 
 # 调用服务
 def call_service(hass_token, domain, service, data):
-    url = 'http://localhost:8123/api/services/'+ domain +'/'+ service
-    headers = {
-        'Authorization': 'Bearer ' + hass_token,
-        'content-type': 'application/json',
-    }
-    response = post(url, json.dumps(data), headers=headers)
-    print(response.text)
+    try:
+        url = 'http://localhost:8123/api/services/'+ domain +'/'+ service
+        headers = {
+            'Authorization': 'Bearer ' + hass_token,
+            'content-type': 'application/json',
+        }
+        response = post(url, json.dumps(data), headers=headers)
+        print(response.text)
+    except Exception as e:
+        print('Error:', e)
     
 # 键码处理事件
 def keyEvent(code, is_long):
