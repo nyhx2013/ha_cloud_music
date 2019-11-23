@@ -369,7 +369,11 @@ class MoreInfoHaCloudMusic extends HTMLElement {
               'Authorization': `${auth.data.token_type} ${auth.accessToken}`
             }
         }).then(res=>res.json()).then(res=>{
-          // console.log(res)          
+          // console.log(res)
+          if (service === 'media_seek') {
+            let attr = res[0].attributes
+            this.shadow.querySelector('.progress ha-paper-slider').value = attr.media_position / attr.media_duration * 100 
+          }
         }).finally(()=>{
             //加载结束。。。
             this.hideLoading()

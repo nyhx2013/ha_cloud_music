@@ -694,23 +694,19 @@ class MediaPlayer(MediaPlayerDevice):
         """Set volume level, range 0..1."""        
         _log_info('设置音量：%s', volume)
         self.call('volume_set', {"volume": volume})
-        #self._volume = volume
 
     def media_play(self):
         """Send play command."""
-        #self._vlc.play()
         self.call('media_play')
         self._state = STATE_PLAYING
 
     def media_pause(self):
         """Send pause command."""
-        #self._vlc.pause()
         self.call('media_pause')
         self._state = STATE_PAUSED
 
     def media_stop(self):
         """Send stop command."""
-        #self._vlc.stop()
         self.call('media_stop')
         self._state = STATE_IDLE
 		
@@ -861,9 +857,6 @@ class MediaPlayer(MediaPlayerDevice):
     def notification(self, message, type):
         self._hass.services.call('persistent_notification', 'create', {"message": message, "title": "云音乐", "notification_id": "ha-cloud-music-" + type})
     
-    ## 自定义方法
-   
-        
     # 更新播放器列表
     def update_sound_mode_list(self):
         entity_list = self._hass.states.entity_ids('media_player')
@@ -1023,16 +1016,29 @@ class MediaPlayer(MediaPlayerDevice):
 
     # 加载播放列表
     def load_songlist(self, call): 
-        list_index = 0    
-        if 'id' in call.data:
+        list_index = 0
+        # 如果传入了id和type，则按最新的服务逻辑来操作
+        if 'id' in call.data and 'type' in call.data:
             _id = call.data['id']
-            _type = "playlist"
-        elif 'rid' in call.data:
-            _id = call.data['rid']
-            _type = "djradio"
-        
-        if 'list_index' in call.data:
-            list_index = int(call.data['list_index']) - 1
+            if call.data['type'] == 'playlist':
+                _type = "playlist"
+            elif call.data['type'] == 'djradio':
+                _type = "djradio"
+            elif call.data['type'] == 'ximalaya':
+                _type = "ximalaya"
+
+            if 'index' in call.data:
+                list_index = int(call.data['index']) - 1    
+        else:
+            # 旧的服务参数
+            if 'id' in call.data:
+                _id = call.data['id']
+                _type = "playlist"
+            elif 'rid' in call.data:
+                _id = call.data['rid']
+                _type = "djradio"
+            if 'list_index' in call.data:
+                list_index = int(call.data['list_index']) - 1
                         
         if self.loading == True:
             self.notification("正在加载歌单，请勿重复调用服务", "load_songlist")
@@ -1096,8 +1102,49 @@ class MediaPlayer(MediaPlayerDevice):
                     self.notification("正在播放电台【"+_list[0]['dj']['brand']+"】", "load_songlist")
                 else:
                     # 这里弹出提示
-                    self.notification("没有找到id为【"+_id+"】的歌单信息", "load_songlist")
-            
+                    self.notification("没有找到id为【"+_id+"】的电台信息", "load_songlist")
+            elif _type == 'ximalaya':
+                _log_info("加载喜马拉雅专辑列表，ID：%s", _id)
+                # 获取播放列表
+                offset = 0
+                if list_index >= 50:
+                   offset = math.floor((list_index + 1) / 50)
+                # 取余
+                list_index = list_index % 50 
+                res = requests.get('https://mobile.ximalaya.com/mobile/v1/album/track?albumId='\
+                    +str(_id)+'&device=android&isAsc=true&pageId='\
+                    +str(list_index + 1)+'&pageSize=50&statEvent=pageview%2Falbum%40203355&statModule=%E6%9C%80%E5%A4%9A%E6%94%B6%E8%97%8F%E6%A6%9C&statPage=ranklist%40%E6%9C%80%E5%A4%9A%E6%94%B6%E8%97%8F%E6%A6%9C&statPosition=8')
+                obj = res.json()
+                if obj['ret'] == 0:
+                    _list = obj['list']
+                    if len(_list) > 0:
+                        # 获取专辑名称
+                        _res = request.get('http://mobile.ximalaya.com/v1/track/baseInfo?device=android&trackId='+str(_list[0]['trackId']))
+                        _obj = _res.json()
+                        # 格式化列表
+                        _newlist = map(lambda item: {
+                            "id": int(item['trackId']),
+                            "name": item['title'],
+                            "album": _obj['albumTitle'],
+                            "image": item['coverLarge'],
+                            "duration": item['duration'],
+                            "song": item['title'],
+                            "type": "url",
+                            "url": item['playUrl64'],
+                            "singer": item['nickname']
+                            }, _list)            
+                        #_log_info(_result)
+                        if list_index < 0 or list_index >= len(_list):
+                            list_index = 0                      
+                        self.music_index = list_index
+                        self.play_media('music_playlist', list(_newlist))
+                        self.notification("正在播放专辑【"+_obj['albumTitle']+"】", "load_songlist")
+                    else：
+                        self.notification("没有找到id为【"+_id+"】的专辑信息", "load_songlist")
+                else:
+                    # 这里弹出提示
+                    self.notification("没有找到id为【"+_id+"】的专辑信息", "load_songlist")
+                    
         except Exception as e:
             print(e)
             self.notification("加载歌单的时候出现了异常", "load_songlist")
@@ -1176,7 +1223,7 @@ class MediaPlayer(MediaPlayerDevice):
         _vlc.set_media(instance.media_new("https://api.jiluxinqing.com/api/service/tts?text="+ quote(message)))
         _vlc.play()
         self.tts_config['vlc'] = instance
-            
+
     # 播放结束  
     def tts_end(self, event):
         if self.tts_config['play_state'] == True:

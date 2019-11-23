@@ -2,14 +2,12 @@ load:
   description: 加载网易云音乐歌单音乐列表
   fields:
     id:
-      description: >
-          （id与rid二选一）歌单的id【https://music.163.com/#/playlist?id=25724904】
+      description: 参数介绍【https://github.com/shaonianzhentan/ha_cloud_music/tree/master/custom_components/ha_cloud_music】
       example: '25724904'
-    rid:
-      description: >
-          （id与rid二选一）电台的id【https://music.163.com/#/djradio?id=1008】
-      example: '1008'
-    list_index:
+    type:
+      description: 参数介绍【https://github.com/shaonianzhentan/ha_cloud_music/tree/master/custom_components/ha_cloud_music】
+      example: 'playlist'
+    index:
       description: 要从第几首开始播放（如果超过列表总数量则从第1首开始播放）
       example: '1'
 play_mode:
