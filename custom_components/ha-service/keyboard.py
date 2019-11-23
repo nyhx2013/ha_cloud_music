@@ -18,6 +18,7 @@ from evdev import InputDevice
 from select import select
 from requests import post
 import json
+import time
 import yaml
 import os
 
@@ -40,9 +41,38 @@ def call_service(hass_token, domain, service, data):
     }
     response = post(url, json.dumps(data), headers=headers)
     print(response.text)
+    
+# 键码处理事件
+def keyEvent(code, is_long):
+    # 获取配置文件
+    cfg = getConfig()
+    _token = cfg['token']
+    # 如果当前code定义
+    if code in cfg['key']:
+        _result = cfg['key'][code]
+        # 如果有定义服务，则调用
+        if _result != None:
+            if is_long == 1:
+                print('执行长按事件')
+                _sv = _result['long_service'].split('.')
+                _domain = _sv[0]
+                _service = _sv[1]
+                call_service(_token, _domain, _service, _result['long_data'])
+            else:
+                print('执行短按事件')
+                _sv = _result['service'].split('.')
+                _domain = _sv[0]
+                _service = _sv[1]
+                call_service(_token, _domain, _service, _result['data'])
 
-def detectInputKey():    
-    input_event = '/dev/input/event5'
+
+
+# 判断是否按下键
+is_keydown = False
+
+# 监听键盘按键
+def detectInputKey():
+    input_event = '/dev/input/event3'
     print('''
     开始监听键盘设备：''' + input_event + '''
     注意：
@@ -55,26 +85,28 @@ def detectInputKey():
         select([dev], [], [])
         for event in dev.read():
             if (event.value == 1 or event.value == 0) and event.code != 0:
-                print(event.code, event.value)
+                code = event.code
+                print('当前键码： ' + str(code))
+                global is_keydown
                 if (event.value == 1):
-                    print('按下')
+                    print('开始记录按下时间')
+                    if is_keydown == False:
+                        is_keydown = True
+                        # 记录按下时间
+                        global key_record
+                        key_record = {code:  time.time()}
                 else:
-                    print('放开')
-                    # 获取配置文件
-                    cfg = getConfig()
-                    _token = cfg['token']
-                    _code = event.code
-                    # 如果当前code定义
-                    if _code in cfg['key']:
-                        _result = cfg['key'][_code]
-                        # 如果有定义服务，则调用
-                        if _result != None:
-                            _sv = _result['service'].split('.')
-                            _domain = _sv[0]
-                            _service = _sv[1]
-                            call_service(_token, _domain, _service, _result['data'])
-                    else:
-                        print('当前未定义处理事件')
+                    if code in key_record:
+                        # 如果当前时间和按下时间，间隔1秒以上，说明长按
+                        if time.time() - key_record[code] > 1:
+                            print('长按')
+                            keyEvent(code, 1)
+                        else:
+                            print('短按')
+                            keyEvent(code, 0)
+                    # 重置为否
+                    is_keydown = False
+
 
 if __name__ == '__main__':
     detectInputKey()

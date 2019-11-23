@@ -22,6 +22,15 @@ import time
 import yaml
 import os
 
+# 获取yaml文件数据
+current_path = os.path.abspath(".")
+yaml_path = os.path.join(current_path, "config.yaml")
+def getConfig():
+    file = open(yaml_path, 'r', encoding="utf-8")
+    file_data = file.read()
+    file.close()
+    data = yaml.full_load(file_data)
+    return data
 
 # 调用服务
 def call_service(hass_token, domain, service, data):
@@ -32,13 +41,30 @@ def call_service(hass_token, domain, service, data):
     }
     response = post(url, json.dumps(data), headers=headers)
     print(response.text)
-
+    
 # 键码处理事件
 def keyEvent(code, is_long):
-  if is_long == 1:
-    print('执行长按事件')
-  else:
-    print('执行短按事件')
+    # 获取配置文件
+    cfg = getConfig()
+    _token = cfg['token']
+    # 如果当前code定义
+    if code in cfg['key']:
+        _result = cfg['key'][code]
+        # 如果有定义服务，则调用
+        if _result != None:
+            if is_long == 1:
+                print('执行长按事件')
+                _sv = _result['long_service'].split('.')
+                _domain = _sv[0]
+                _service = _sv[1]
+                call_service(_token, _domain, _service, _result['long_data'])
+            else:
+                print('执行短按事件')
+                _sv = _result['service'].split('.')
+                _domain = _sv[0]
+                _service = _sv[1]
+                call_service(_token, _domain, _service, _result['data'])
+
 
 
 # 判断是否按下键
@@ -46,7 +72,7 @@ is_keydown = False
 
 # 监听键盘按键
 def detectInputKey():
-    input_event = '/dev/input/event5'
+    input_event = '/dev/input/event3'
     print('''
     开始监听键盘设备：''' + input_event + '''
     注意：

@@ -17,12 +17,22 @@ mac:
 key:
   # 键码
   71:
+    # 短按事件
     service: light.toggle
     data:
       entity_id: light.xiaomi_philips_light
+    # 长按事件
+    long_service: light.toggle
+    long_data:
+      entity_id: light.cai_deng        
   72:
     service: light.toggle
     data:
       entity_id: light.cai_deng
       
 ```
+
+## 更新记录
+
+### 2019-11-23
+- 支持长按事件

@@ -1,8 +1,7 @@
-token: 这里配置HA的token
+token: 这里是HA的token
 # 要监听蓝牙MAC地址
 mac:
   - B4:C4:FC:66:A6:F0
-  - B4:C4:FC:66:A6:F1
 # 监听按键
 key:
   71:
@@ -17,6 +16,14 @@ key:
       entity_id: light.cai_deng
   73:
     # 9
+    service: ha_cloud_music.load
+    data:
+      id: 19723756
+      type: playlist
+    long_service: ha_cloud_music.load
+    long_data:
+      id: 3779629
+      type: playlist
   74:
     # -
     service: media_player.volume_down
@@ -26,14 +33,22 @@ key:
     # 4
     service: switch.toggle
     data:
-      entity_id: media_player.dian_shi
+      entity_id: switch.dian_shi
   76:
     # 5
     service: switch.toggle
     data:
-      entity_id: media_player.tian_mao_he_zi
+      entity_id: switch.tian_mao_he_zi
   77:
     # 6
+    service: ha_cloud_music.load
+    data:
+      id: 2884035
+      type: playlist
+    long_service: ha_cloud_music.load
+    long_data:
+      id: 3778678
+      type: playlist
   78:
     # +
     service: media_player.volume_up
@@ -54,3 +69,8 @@ key:
     service: media_player.media_next_track
     data:
       entity_id: media_player.ha_cloud_music
+  96:
+    # 回车
+    service: automation.trigger
+    data:
+      entity_id: automation.gong_jiao_dao_zhan_bo_bao
