@@ -43,12 +43,32 @@
           </router-link>
         </div>
       </div>
+      <div class="topList-head">喜马拉雅专辑</div>
+      <div class="topList-content">
+        <div
+          v-for="(item,index) in xmlyList"
+          :key="index"
+          class="list-item"
+          :title="item.name+item.updateFrequency"
+        >
+          <router-link
+            :to="{path:`/music/fmlist/${item.id}?type=xmly`}"
+            tag="div"
+            class="topList-item"
+          >
+            <div class="topList-img">
+              <img v-lazy="`${item.picUrl}`" class="cover-img" />
+            </div>
+            <h3 class="name">{{ item.name }}</h3>
+          </router-link>
+        </div>
+      </div>
     </template>
   </div>
 </template>
 
 <script>
-import { getCategories, getFM163 } from 'api'
+import { getCategories, getFM163, getXMLY } from 'api'
 import MmLoading from 'base/mm-loading/mm-loading'
 import { loadMixin } from '@/utils/mixin'
 
@@ -61,14 +81,16 @@ export default {
   data() {
     return {
       hotList: [], // 热门歌单
-      fm163List: []
+      fm163List: [],
+      xmlyList: []
     }
   },
   created() {
-    Promise.all([getCategories(), getFM163()]).then(
-      ([hotList, fm163List]) => {
+    Promise.all([getCategories(), getFM163(), getXMLY()]).then(
+      ([hotList, fm163List, xmlyList]) => {
         this.hotList = hotList
         this.fm163List = fm163List
+        this.xmlyList = xmlyList
         this._hideLoad()
       }
     )

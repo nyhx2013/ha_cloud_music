@@ -192,6 +192,126 @@ export function getFmList({ id, page, size }) {
   })
 }
 
+/* -----------------------------喜马拉雅------------------------------- */
+export function getXMLY() {
+  return new Promise((resolve, reject) => {
+    let arr = [
+      // 情感
+      {
+        id: 258244,
+        name: '默默道来',
+        updateFrequency: '',
+        picUrl: 'https://imagev2.xmcdn.com/group5/M00/29/C3/wKgDtlOJtkzivkzmAADGuNXUrNM293.jpg!strip=1&quality=7&magick=jpg&op_type=5&upload_type=album&name=mobile_large&device_type=ios'
+      },
+      {
+        id: 294567,
+        name: '心有千千结',
+        updateFrequency: '',
+        picUrl: 'https://imagev2.xmcdn.com/group5/M06/64/A9/wKgDtlRXPuySHY8qAAFRlUZP_DQ151.jpg!strip=1&quality=7&magick=jpg&op_type=5&upload_type=album&name=mobile_large&device_type=ios'
+      },
+      {
+        id: 11037095,
+        name: '晚上十点',
+        updateFrequency: '',
+        picUrl: 'https://imagev2.xmcdn.com/group34/M08/C2/4D/wKgJYFnfFk-gmVIOAAB48t9YaOY252.jpg!strip=1&quality=7&magick=jpg&op_type=5&upload_type=album&name=mobile_large&device_type=ios'
+      },
+      {
+        id: 11848122,
+        name: '壹心理',
+        updateFrequency: '',
+        picUrl: 'https://imagev2.xmcdn.com/group61/M05/81/53/wKgMcF0KB6zA4hY9AAKWHls19a8292.jpg!strip=1&quality=7&magick=jpg&op_type=5&upload_type=album&name=mobile_large&device_type=ios'
+      },
+      // 新闻
+      {
+        id: 12580785,
+        name: '鲜快报',
+        updateFrequency: '',
+        picUrl: 'https://imagev2.xmcdn.com/group33/M02/85/08/wKgJTFpcaUCS86jcAADx8I4Z1Fs369.jpg!strip=1&quality=7&magick=jpg&op_type=5&upload_type=album&name=mobile_large&device_type=ios'
+      },
+      {
+        id: 9444470,
+        name: '36氪·商业情报局',
+        updateFrequency: '',
+        picUrl: 'https://imagev2.xmcdn.com/group48/M01/05/A5/wKgKlVtNg9OSD_d-AAN2EEUNIeE007.jpg!strip=1&quality=7&magick=jpg&op_type=5&upload_type=album&name=mobile_large&device_type=ios'
+      },
+      {
+        id: 4519297,
+        name: '新闻早餐',
+        updateFrequency: '',
+        picUrl: 'https://imagev2.xmcdn.com/group18/M01/19/DE/wKgJKleDXj2QJYOuAAFbNixU8BI237.png!strip=1&quality=7&magick=jpg&op_type=5&upload_type=album&name=mobile_large&device_type=ios'
+      },
+      // 娱乐
+      {
+        id: 203355,
+        name: '段子来了',
+        updateFrequency: '',
+        picUrl: 'https://imagev2.xmcdn.com/group5/M03/A6/D8/wKgDtlR1MD_T1DQHAANqZDyk48s720.jpg!strip=1&quality=7&magick=jpg&op_type=5&upload_type=album&name=mobile_large&device_type=ios'
+      },
+      {
+        id: 3493173,
+        name: '糗事播报',
+        updateFrequency: '',
+        picUrl: 'https://imagev2.xmcdn.com/group31/M0A/25/96/wKgJX1pdzZzjnr3NAAFNJ3rTL_0833.jpg!strip=1&quality=7&magick=jpg&op_type=5&upload_type=album&name=mobile_large&device_type=ios'
+      },
+      // 历史
+      {
+        id: 8291530,
+        name: '大锤说史',
+        updateFrequency: '',
+        picUrl: 'https://imagev2.xmcdn.com/group28/M05/62/A0/wKgJSFkn-2TDJDTmAAPtFtS38Pk707.jpg!strip=1&quality=7&magick=jpg&op_type=5&upload_type=album&name=mobile_large&device_type=ios'
+      },
+      {
+        id: 3144025,
+        name: '大力史',
+        updateFrequency: '',
+        picUrl: 'https://imagev2.xmcdn.com/group60/M08/30/7A/wKgLb1zH9TXj1zs7AADWaZ7G48A852.jpg!strip=1&quality=7&magick=jpg&op_type=5&upload_type=album&name=mobile_large&device_type=ios'
+      },
+      {
+        id: 29529692,
+        name: '短篇灵异故事',
+        updateFrequency: '',
+        picUrl: 'https://imagev2.xmcdn.com/group68/M06/27/B6/wKgMeF2pz_6yqZuHAABefvU6Zas974.jpg!strip=1&quality=7&magick=jpg&op_type=5&upload_type=album&name=mobile_large&device_type=ios'
+      }
+    ]
+    resolve(arr)
+  })
+}
+
+export function getXMLYlist({ id, page, size }) {
+  return new Promise((resolve, reject) => {
+    if (!page) page = 1
+    if (!size) size = 50
+    axios.post('https://api.jiluxinqing.com/api/service/proxy', {
+      method: 'GET',
+      url: `https://mobile.ximalaya.com/mobile/v1/album/track?albumId=${id}&device=android&isAsc=true&pageId=${page}&pageSize=${size}&statEvent=pageview%2Falbum%40203355&statModule=%E6%9C%80%E5%A4%9A%E6%94%B6%E8%97%8F%E6%A6%9C&statPage=ranklist%40%E6%9C%80%E5%A4%9A%E6%94%B6%E8%97%8F%E6%A6%9C&statPosition=8`
+    }).then(({ data }) => {
+      if (data.ret === 0) {
+        let res = data.data
+        let list = res.list
+
+        let arr = []
+        list.forEach(ele => {
+          arr.push({
+            album: '喜马拉雅',
+            duration: ele.duration,
+            id: ele.trackId,
+            image: ele.coverLarge,
+            name: ele.title,
+            singer: ele.nickname,
+            type: 'url',
+            url: ele.playUrl64
+          })
+        })
+
+        resolve({
+          list: arr,
+          total: res.totalCount
+        })
+      }
+    })
+  })
+}
+
 /* -----------------------------网易电台------------------------------- */
 // 获取电台
 export function getFM163() {

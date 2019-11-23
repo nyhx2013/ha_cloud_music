@@ -2,8 +2,14 @@
   <!--歌单详情-->
   <div class="details">
     <mm-loading v-model="mmLoadShow" />
-    <music-list :list="list" @select="selectItem">
-      <div slot="listBtn" class="list-btn">
+    <music-list
+      :list="list"
+      @select="selectItem"
+    >
+      <div
+        slot="listBtn"
+        class="list-btn"
+      >
         <span @click="loadMore">加载更多</span>
       </div>
     </music-list>
@@ -12,7 +18,7 @@
 
 <script>
 import { mapActions } from 'vuex'
-import { getFmList, getDjProgram } from 'api'
+import { getFmList, getDjProgram, getXMLYlist } from 'api'
 import MmLoading from 'base/mm-loading/mm-loading'
 import MusicList from 'components/music-list/music-list'
 import { loadMixin } from '@/utils/mixin'
@@ -46,41 +52,60 @@ export default {
       this.mmLoadShow = true
 
       if (type === '163') {
-        let size = 30
-        getDjProgram(id, (page - 1) * size, size).then(res => {
-          let { code, programs } = res.data
-          let arr = []
-          if (code === 200) {
-            programs.forEach(item => {
-              let { id, duration } = item.mainSong
-              let { brand, nickname } = item.dj
-              arr.push({
-                id,
-                name: item.name,
-                album: brand,
-                image: item.coverUrl,
-                duration: duration / 1000,
-                type: 'djradio',
-                singer: nickname,
-                url: '' + id
-              })
-            })
-          }
-          Array.prototype.push.apply(this.list, arr)
-          this.list.splice(0, 0)
-          this._hideLoad()
-          this.page += 1
-        })
+        this.loadDjProgram({ id, page })
+      } else if (type === 'xmly') {
+        this.loadXMLYlist({ id, page })
       } else {
-        // 获取歌单详情
-        getFmList({ id, page }).then(res => {
-          Array.prototype.push.apply(this.list, res.list)
-          this.list.splice(0, 0)
-          this._hideLoad()
-          this.page += 1
-          if (this.list.length >= res.total) this.isEnd = true
-        })
+        this.loadFmList({ id, page })
       }
+    },
+    // 获取DJ详情
+    loadDjProgram({ id, page }) {
+      let size = 30
+      getDjProgram(id, (page - 1) * size, size).then(res => {
+        let { code, programs } = res.data
+        let arr = []
+        if (code === 200) {
+          programs.forEach(item => {
+            let { id, duration } = item.mainSong
+            let { brand, nickname } = item.dj
+            arr.push({
+              id,
+              name: item.name,
+              album: brand,
+              image: item.coverUrl,
+              duration: duration / 1000,
+              type: 'djradio',
+              singer: nickname,
+              url: '' + id
+            })
+          })
+        }
+        Array.prototype.push.apply(this.list, arr)
+        this.list.splice(0, 0)
+        this._hideLoad()
+        this.page += 1
+      })
+    },
+    // 获取歌单详情
+    loadFmList({ id, page }) {
+      getFmList({ id, page }).then(res => {
+        Array.prototype.push.apply(this.list, res.list)
+        this.list.splice(0, 0)
+        this._hideLoad()
+        this.page += 1
+        if (this.list.length >= res.total) this.isEnd = true
+      })
+    },
+    // 获取歌单详情
+    loadXMLYlist({ id, page }) {
+      getXMLYlist({ id, page }).then(res => {
+        Array.prototype.push.apply(this.list, res.list)
+        this.list.splice(0, 0)
+        this._hideLoad()
+        this.page += 1
+        if (this.list.length >= res.total) this.isEnd = true
+      })
     },
     // 播放暂停事件
     selectItem(item, index) {
