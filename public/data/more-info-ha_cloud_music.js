@@ -372,7 +372,7 @@ class MoreInfoHaCloudMusic extends HTMLElement {
           // console.log(res)
           if (service === 'media_seek') {
             let attr = res[0].attributes
-            this.shadow.querySelector('.progress ha-paper-slider').value = attr.media_position / attr.media_duration * 100 
+            this.shadow.querySelector('.progress ha-paper-slider').value = data.seek_position / attr.media_duration * 100 
           }
         }).finally(()=>{
             //加载结束。。。

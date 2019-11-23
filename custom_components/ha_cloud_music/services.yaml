@@ -3,10 +3,10 @@ load:
   fields:
     id:
       description: 参数介绍【https://github.com/shaonianzhentan/ha_cloud_music/tree/master/custom_components/ha_cloud_music】
-      example: '25724904'
+      example: '258244'
     type:
       description: 网易歌单(playlist)、网易电台(djradio)、喜马拉雅专辑(ximalaya)
-      example: 'playlist'
+      example: 'ximalaya'
     index:
       description: 要从第几首开始播放（如果超过列表总数量则从第1首开始播放）
       example: '1'

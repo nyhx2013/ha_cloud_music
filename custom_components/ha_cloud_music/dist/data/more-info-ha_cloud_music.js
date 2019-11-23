@@ -68,7 +68,7 @@ class MoreInfoHaCloudMusic extends HTMLElement {
                  <div>
                     <ha-paper-slider min="0" max="100" value="50" />
                  </div>                 
-                 <div>03:28</div>
+                 <div>00:00</div>
                </div>
                
                <!-- 音乐控制 -->
@@ -372,7 +372,7 @@ class MoreInfoHaCloudMusic extends HTMLElement {
           // console.log(res)
           if (service === 'media_seek') {
             let attr = res[0].attributes
-            this.shadow.querySelector('.progress ha-paper-slider').value = attr.media_position / attr.media_duration * 100 
+            this.shadow.querySelector('.progress ha-paper-slider').value = data.seek_position / attr.media_duration * 100 
           }
         }).finally(()=>{
             //加载结束。。。
@@ -414,6 +414,7 @@ class MoreInfoHaCloudMusic extends HTMLElement {
             this.shadow.querySelector('.controls').style.display = 'flex'
             this.shadow.querySelector('.progress').style.display = 'flex'
             this.shadow.querySelector('.progress div:nth-child(1)').textContent = `${this.timeForamt(Math.floor(attr.media_position/60))}:${this.timeForamt(attr.media_position%60)}`
+            this.shadow.querySelector('.progress div:nth-child(3)').textContent = `${this.timeForamt(Math.floor(attr.media_duration/60))}:${this.timeForamt(attr.media_duration%60)}`
             if(attr.media_position <=  attr.media_duration){
                 this.shadow.querySelector('.progress ha-paper-slider').value = attr.media_position / attr.media_duration * 100    
             }            
