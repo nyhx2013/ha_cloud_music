@@ -10,6 +10,19 @@ import re
 import urllib.parse
 import uuid
 import math
+
+# ----------邮件相关---------- #
+from email import encoders
+from email.header import Header
+from email.mime.text import MIMEText
+from email.utils import parseaddr, formataddr
+import smtplib
+
+def _format_addr(s):
+    name, addr = parseaddr(s)
+    return formataddr((Header(name, 'utf-8').encode(), addr))
+# ----------邮件相关---------- #
+
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.event import track_time_interval
@@ -195,6 +208,9 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
     # TTS相关配置
     vol.Optional("tts_before_message", default=""): cv.string,
     vol.Optional("tts_after_message", default=""): cv.string,
+    # QQ邮箱相关配置（密码为QQ邮箱授权码【不是QQ密码】）
+    vol.Optional("mail_user", default=""): cv.string,
+    vol.Optional("mail_password", default=""): cv.string,
 })
 
 def setup_platform(hass, config, add_entities, discovery_info=None):
@@ -223,6 +239,8 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
     _uid = config.get("uid")
     mp.tts_config['before_message'] = config.get("tts_before_message")
     mp.tts_config['after_message'] = config.get("tts_after_message")
+    mp.mail['user'] = config.get("mail_user")
+    mp.mail['password'] = config.get("mail_password")
     
     _show_mode_str = "正常模式"
     if _show_mode == 'fullscreen':
@@ -263,7 +281,10 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
     # 注册服务【tts】
     if mp.supported_vlc == True:
         hass.services.register(DOMAIN, 'tts', mp.tts)
-    
+    # 注册服务【notify】
+    if mp.mail['user'] != '' and mp.mail['password'] != '':
+        hass.services.register(DOMAIN, 'notify', mp.notify)
+
     # 注册shbus状态卡片
     hass.components.frontend.add_extra_js_url(hass, '/'+ DOMAIN + '/' + VERSION + '/dist/data/more-info-ha_cloud_music.js')
     # 添加到侧边栏
@@ -401,12 +422,17 @@ class MediaPlayer(MediaPlayerDevice):
         # 定时器
         track_time_interval(hass, self.interval, TIME_BETWEEN_UPDATES)
         
-        #### TTS 相关配置 #####
+        #### TTS 相关配置 ####
         self.tts_config = {
             'vlc': None,
             'play_state': None,
             'before_message': '',
             'after_message': '',
+        }
+        #### 邮箱 相关配置 ####
+        self.mail = {
+            'user': '',
+            'password': ''
         }
     
     def interval(self, now):
@@ -1023,7 +1049,36 @@ class MediaPlayer(MediaPlayerDevice):
     
     
     ######### 服务 ##############
-    
+    # 邮件通知
+    def notify(self, call):
+        _title = call.data['title']
+        _message = call.data['message']
+        _user = self.mail['user']
+        from_addr = _user
+        password = self.mail['password']
+        to_addr = _user
+        # 目前只支持QQ和新浪，需要再加
+        if 'qq.com' in _user:
+            smtp_server = 'smtp.qq.com'
+        elif 'sina.cn' in _user:
+            smtp_server = 'smtp.sina.cn'
+        elif 'sina.com' in _user:
+            smtp_server = 'smtp.sina.com'
+
+        msg = MIMEText(_message, 'html', 'utf-8')
+        msg['From'] = _format_addr('HomeAssistant <%s>' % from_addr)
+        msg['To'] = _format_addr('智能家居 <%s>' % to_addr)
+        msg['Subject'] = Header(_title, 'utf-8').encode()
+        try:
+            server = smtplib.SMTP(smtp_server, 25)
+            server.set_debuglevel(1)
+            server.login(from_addr, password)
+            server.sendmail(from_addr, [to_addr], msg.as_string())
+            server.quit()
+            self.notification('邮件通知发送成功','mail')
+        except Exception as e:
+            self.notification('邮件通知发送失败','mail')
+
     # 设置播放模式
     def play_mode(self, call):
         _mode = call.data['mode']
