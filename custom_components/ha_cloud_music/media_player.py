@@ -43,68 +43,7 @@ def _log(*arg):
 
 def _log_info(*arg):
     _LOGGER.info(*arg)
-    
-# 全局请求头
-HEADERS = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.87 Safari/537.36'}
-# 接口请求地址
-API_URL = ""
-API_KEY = str(uuid.uuid4())
 
-
-# 获取重写向后的地址
-def get_redirect_url(url):
-    # 请求网页
-    response = requests.get(url, headers=HEADERS)
-    result_url = response.url
-    if result_url == 'https://music.163.com/404':
-        return None
-    return result_url
-
-# 进行咪咕搜索，可以播放周杰伦的歌歌
-def migu_search(songName, singerName):
-    try:
-        # 如果含有特殊字符，则直接使用名称搜索
-        searchObj = re.search(r'\(|（|：|:《', songName, re.M|re.I)
-        if searchObj:
-            keywords = songName
-        else:    
-            keywords = songName + ' - '+ singerName
-        _log_info("开始在咪咕搜索：%s", keywords)
-        response = requests.get("http://m.music.migu.cn/migu/remoting/scr_search_tag?rows=10&type=2&keyword=" + keywords + "&pgc=1", headers=HEADERS)
-        res = response.json()
-        
-        if 'musics' in res and len(res['musics']) > 0 and (songName in res['musics'][0]['songName'] or searchObj):
-            return res['musics'][0]['mp3']
-    except Exception as e:
-        print("在咪咕搜索时出现错误：", e)
-    return None
-
-# 喜马拉雅播放列表
-def ximalaya_playlist(id, index, size):
-    res = requests.get('https://mobile.ximalaya.com/mobile/v1/album/track?albumId=' + str(id) + '&device=android&isAsc=true&pageId='\
-        + str(index) + '&pageSize=' + str(size) +'&statEvent=pageview%2Falbum%40203355&statModule=%E6%9C%80%E5%A4%9A%E6%94%B6%E8%97%8F%E6%A6%9C&statPage=ranklist%40%E6%9C%80%E5%A4%9A%E6%94%B6%E8%97%8F%E6%A6%9C&statPosition=8')
-    obj = res.json()
-    if obj['ret'] == 0:
-        _list = obj['data']['list']
-        if len(_list) > 0:
-            # 获取专辑名称
-            _res = requests.get('http://mobile.ximalaya.com/v1/track/baseInfo?device=android&trackId='+str(_list[0]['trackId']))
-            _obj = _res.json()
-            # 格式化列表
-            _newlist = map(lambda item: {
-                "id": item['trackId'],
-                "name": item['title'],
-                "album": _obj['albumTitle'],
-                "image": item['coverLarge'],
-                "duration": item['duration'],
-                "song": item['title'],
-                "type": "url",
-                "url": item['playUrl64'],
-                "singer": item['nickname']
-                }, _list)
-            return list(_newlist)
-    return []
-    
 ###################媒体播放器##########################
 from homeassistant.components.media_player import (
     MediaPlayerDevice, PLATFORM_SCHEMA)
@@ -126,11 +65,17 @@ SUPPORT_VLC = SUPPORT_PAUSE | SUPPORT_VOLUME_SET | SUPPORT_VOLUME_MUTE | SUPPORT
 TIME_BETWEEN_UPDATES = datetime.timedelta(seconds=1)
 ###################媒体播放器##########################
 
+# 全局请求头
+HEADERS = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.87 Safari/537.36'}
+# 接口请求地址
+API_URL = ""
+API_KEY = str(uuid.uuid4())
+API_KEY_LIST = {}
 
 VERSION = '2.1.5'
 DOMAIN = 'ha_cloud_music'
 
-_hass = None
+HASS = None
 
 #
 # 读取所有静态文件
@@ -170,10 +115,32 @@ class HassGateView(HomeAssistantView):
 
     async def get(self, request):    
         _raw_path = request.rel_url.raw_path
-        #_log_info(_raw_path)
-        #if _raw_path == self.url:     
-        #    _api = request.query['api']
-        #    a = urllib.parse.unquote(_api)
+        # _log_info(request.rel_url)
+        if _raw_path == self.url:
+            # 提示地址
+            _tips_location = '/'+ DOMAIN + '/' + VERSION + '/dist/tips.html?msg='
+            if 'key' in request.query:
+                _key = request.query['key']
+                global API_KEY_LIST
+                if _key in API_KEY_LIST:
+                    # 如果Key超过一天，则提示过期
+                    if (API_KEY_LIST[_key] - datetime.datetime.now()).seconds < 3600 * 60 * 24:
+                        # 这里执行删除key的操作
+                        del API_KEY_LIST[_key]
+                        # 这里解析服务
+                        _action = urllib.parse.unquote(request.query['action'])
+                        arr = _action.split('.', 1)
+                        if arr[0] == 'script':
+                            await HASS.services.async_call('script', str(arr[1]))
+                        elif arr[0] == 'automation':
+                            await HASS.services.async_call('automation', 'trigger', {'entity_id': _action})
+                        return web.HTTPFound(location= _tips_location + '执行成功&id=' + _action)
+                    else:
+                        return web.HTTPFound(location= _tips_location + '通信密钥已过期')
+                else:
+                    return web.HTTPFound(location= _tips_location + '该操作【已执行】或者【已过期】')
+            #a = urllib.parse.unquote(_api)
+
         _path = os.path.dirname(__file__) + _raw_path.replace('/'+ DOMAIN + '/' + VERSION,'')        
         return FileResponse(_path)
 
@@ -209,16 +176,18 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
     vol.Optional("tts_before_message", default=""): cv.string,
     vol.Optional("tts_after_message", default=""): cv.string,
     # QQ邮箱相关配置（密码为QQ邮箱授权码【不是QQ密码】）
-    vol.Optional("mail_user", default=""): cv.string,
-    vol.Optional("mail_password", default=""): cv.string,
+    vol.Optional("mail_qq", default=""): cv.string,
+    vol.Optional("mail_code", default=""): cv.string,
+    vol.Optional("base_url", default=""): cv.string,
 })
 
 def setup_platform(hass, config, add_entities, discovery_info=None):
     """Set up the vlc platform."""
   
-    global _hass
-    _hass = hass
-    _hass.http.register_view(HassGateView)
+    global HASS
+    HASS = hass
+
+    hass.http.register_view(HassGateView)
     mp = MediaPlayer(hass)
     add_entities([mp])
     
@@ -239,8 +208,9 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
     _uid = config.get("uid")
     mp.tts_config['before_message'] = config.get("tts_before_message")
     mp.tts_config['after_message'] = config.get("tts_after_message")
-    mp.mail['user'] = config.get("mail_user")
-    mp.mail['password'] = config.get("mail_password")
+    mp.mail['qq'] = config.get("mail_qq")
+    mp.mail['code'] = config.get("mail_code")
+    mp.base_url = config.get("base_url")
     
     _show_mode_str = "正常模式"
     if _show_mode == 'fullscreen':
@@ -282,7 +252,7 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
     if mp.supported_vlc == True:
         hass.services.register(DOMAIN, 'tts', mp.tts)
     # 注册服务【notify】
-    if mp.mail['user'] != '' and mp.mail['password'] != '':
+    if mp.mail['qq'] != '' and mp.mail['code'] != '':
         hass.services.register(DOMAIN, 'notify', mp.notify)
 
     # 注册shbus状态卡片
@@ -307,80 +277,6 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
         pass    
     return True   
 
-
-###################内置VLC播放器##########################
-class VlcPlayer():
-    def __init__(self): 
-        import vlc
-        self.vlc = vlc
-        self._instance = vlc.Instance()
-        self._vlc = self._instance.media_player_new()
-        self.state = STATE_IDLE
-        self.attributes = {
-            "volume_level": 1,
-            "is_volume_muted": False,
-            "media_duration": 0,
-            "media_position_updated_at": None,
-            "media_position": 0,
-        }        
-        self.ha_cloud_music = True
-        self._event_manager = self._vlc.event_manager()
-        self._event_manager.event_attach(vlc.EventType.MediaPlayerEndReached, self.end)
-        self._event_manager.event_attach(vlc.EventType.MediaPlayerPositionChanged, self.update)
-    
-    def end(self, event):
-        self.state = STATE_OFF
-        
-    def update(self, event):
-        try:
-            status = self._vlc.get_state()
-            if status == self.vlc.State.Playing:
-                self.state = STATE_PLAYING
-            elif status == self.vlc.State.Paused:
-                self.state = STATE_PAUSED
-            else:
-                self.state = STATE_IDLE
-            
-            media_duration = self._vlc.get_length() / 1000
-            self.attributes['media_duration'] = media_duration
-            self.attributes['media_position'] = self._vlc.get_position() * media_duration
-            self.attributes['media_position_updated_at'] = datetime.datetime.now()
-            self.attributes['volume_level'] = self._vlc.audio_get_volume() / 100
-            self.attributes['is_volume_muted'] = (self._vlc.audio_get_mute() == 1)
-            
-            #_log_info(self.attributes)
-        except Exception as e:
-            print(e)
-
-    def load(self, url):
-        self._vlc.set_media(self._instance.media_new(url))
-        self._vlc.play()
-        self.state = STATE_PLAYING
-                
-    def play(self):
-        if self._vlc.is_playing() == False:
-            self._vlc.play()
-        self.state = STATE_PLAYING
-    
-    def pause(self):
-        if self._vlc.is_playing() == True:
-            self._vlc.pause()
-        self.state = STATE_PAUSED
-    
-    def volume_set(self, volume_level):
-        self.attributes['volume_level'] = volume_level
-        self._vlc.audio_set_volume(int(volume_level * 100))
-    
-    # 设置位置
-    def seek(self, position):
-        self.attributes['media_position'] = position
-        track_length = self._vlc.get_length()/1000
-        self._vlc.set_position(position/track_length)
-    
-    # 静音
-    def mute_volume(self, mute):
-        self.attributes['is_volume_muted'] = mute
-        self._vlc.audio_set_mute(mute)
     
 ###################媒体播放器##########################
 class MediaPlayer(MediaPlayerDevice):
@@ -421,7 +317,7 @@ class MediaPlayer(MediaPlayerDevice):
         self._timer_enable = True
         # 定时器
         track_time_interval(hass, self.interval, TIME_BETWEEN_UPDATES)
-        
+        self.base_url = None
         #### TTS 相关配置 ####
         self.tts_config = {
             'vlc': None,
@@ -431,8 +327,8 @@ class MediaPlayer(MediaPlayerDevice):
         }
         #### 邮箱 相关配置 ####
         self.mail = {
-            'user': '',
-            'password': ''
+            'qq': '',
+            'code': ''
         }
     
     def interval(self, now):
@@ -1053,18 +949,30 @@ class MediaPlayer(MediaPlayerDevice):
     def notify(self, call):
         _title = call.data['title']
         _message = call.data['message']
-        _user = self.mail['user']
-        from_addr = _user
-        password = self.mail['password']
-        to_addr = _user
-        # 目前只支持QQ和新浪，需要再加
-        if 'qq.com' in _user:
-            smtp_server = 'smtp.qq.com'
-        elif 'sina.cn' in _user:
-            smtp_server = 'smtp.sina.cn'
-        elif 'sina.com' in _user:
-            smtp_server = 'smtp.sina.com'
+        # 执行命令
+        if 'action' in call.data:
+            _key = str(uuid.uuid4())
+            if self.base_url != '':
+                global API_KEY_LIST
+                for item in API_KEY_LIST:
+                    # 如果当前key大于24小时，则删除
+                    if (API_KEY_LIST[item] - datetime.datetime.now()).seconds > 3600 * 60 * 24:
+                        del API_KEY_LIST[item]
+                # 把这个通知的key加入到字典中
+                API_KEY_LIST.update({_key: datetime.datetime.now()})
+                _message = _message + '<br/><br/><a href="' + self.base_url.strip('/') + '/'+ DOMAIN + '-api?key=' + _key + '&action=' +  call.data['action'] + '" style="background:#03a9f4;color:white;padding:15px 0;text-decoration:none;display:block;text-align:center;">执行命令</a>' 
+            else:
+                self.notification('【' + _title + '】没有配置base_url参数','mail')
 
+        _user = self.mail['qq']
+        # 如果没有后缀，则加上
+        if '@qq.com' not in _user:
+            _user = _user + '@qq.com'
+        
+        from_addr = _user
+        password = self.mail['code']
+        to_addr = _user
+        smtp_server = 'smtp.qq.com'
         msg = MIMEText(_message, 'html', 'utf-8')
         msg['From'] = _format_addr('HomeAssistant <%s>' % from_addr)
         msg['To'] = _format_addr('智能家居 <%s>' % to_addr)
@@ -1075,9 +983,9 @@ class MediaPlayer(MediaPlayerDevice):
             server.login(from_addr, password)
             server.sendmail(from_addr, [to_addr], msg.as_string())
             server.quit()
-            self.notification('邮件通知发送成功','mail')
+            self.notification('【' + _title + '】邮件通知发送成功','mail')
         except Exception as e:
-            self.notification('邮件通知发送失败','mail')
+            self.notification('【' + _title + '】邮件通知发送失败','mail')
 
     # 设置播放模式
     def play_mode(self, call):
@@ -1163,28 +1071,12 @@ class MediaPlayer(MediaPlayerDevice):
                    offset = math.floor((list_index + 1) / 50)
                 # 取余
                 list_index = list_index % 50
-                res = requests.get(API_URL + '/dj/program?rid='+str(_id)+'&limit=50&offset='+str(offset * 50))
-                obj = res.json()
-                if obj['code'] == 200:
-                    _list = obj['programs']
-                    _newlist = map(lambda item: {
-                        "id": int(item['mainSong']['id']),
-                        "name": item['name'],
-                        "album": item['dj']['brand'],
-                        "image": item['coverUrl'],
-                        "duration": int(item['mainSong']['duration']) / 1000,
-                        "song": item['name'],
-                        "type": "djradio",
-                        "singer": item['dj']['nickname']
-                        }, _list)            
-                    #_log_info(_result)
-                    if list_index < 0 or list_index >= len(_list):
-                        list_index = 0                      
+                _list = djradio_playlist(_id, offset, 50)
+                if len(_list) > 0:
                     self.music_index = list_index
-                    self.play_media('music_playlist', list(_newlist))
-                    self.notification("正在播放电台【"+_list[0]['dj']['brand']+"】", "load_songlist")
+                    self.play_media('music_playlist', _list)
+                    self.notification("正在播放专辑【" + _list[0]['album'] + "】", "load_songlist")
                 else:
-                    # 这里弹出提示
                     self.notification("没有找到id为【"+_id+"】的电台信息", "load_songlist")
             elif _type == 'ximalaya':
                 _log_info("加载喜马拉雅专辑列表，ID：%s", _id)
@@ -1286,3 +1178,152 @@ class MediaPlayer(MediaPlayerDevice):
         self.tts_config['vlc'].release()
             
 ###################媒体播放器##########################
+
+
+###################内置VLC播放器##########################
+class VlcPlayer():
+    def __init__(self): 
+        import vlc
+        self.vlc = vlc
+        self._instance = vlc.Instance()
+        self._vlc = self._instance.media_player_new()
+        self.state = STATE_IDLE
+        self.attributes = {
+            "volume_level": 1,
+            "is_volume_muted": False,
+            "media_duration": 0,
+            "media_position_updated_at": None,
+            "media_position": 0,
+        }        
+        self.ha_cloud_music = True
+        self._event_manager = self._vlc.event_manager()
+        self._event_manager.event_attach(vlc.EventType.MediaPlayerEndReached, self.end)
+        self._event_manager.event_attach(vlc.EventType.MediaPlayerPositionChanged, self.update)
+    
+    def end(self, event):
+        self.state = STATE_OFF
+        
+    def update(self, event):
+        try:
+            status = self._vlc.get_state()
+            if status == self.vlc.State.Playing:
+                self.state = STATE_PLAYING
+            elif status == self.vlc.State.Paused:
+                self.state = STATE_PAUSED
+            else:
+                self.state = STATE_IDLE
+            
+            media_duration = self._vlc.get_length() / 1000
+            self.attributes['media_duration'] = media_duration
+            self.attributes['media_position'] = self._vlc.get_position() * media_duration
+            self.attributes['media_position_updated_at'] = datetime.datetime.now()
+            self.attributes['volume_level'] = self._vlc.audio_get_volume() / 100
+            self.attributes['is_volume_muted'] = (self._vlc.audio_get_mute() == 1)
+            
+            #_log_info(self.attributes)
+        except Exception as e:
+            print(e)
+
+    def load(self, url):
+        self._vlc.set_media(self._instance.media_new(url))
+        self._vlc.play()
+        self.state = STATE_PLAYING
+                
+    def play(self):
+        if self._vlc.is_playing() == False:
+            self._vlc.play()
+        self.state = STATE_PLAYING
+    
+    def pause(self):
+        if self._vlc.is_playing() == True:
+            self._vlc.pause()
+        self.state = STATE_PAUSED
+    
+    def volume_set(self, volume_level):
+        self.attributes['volume_level'] = volume_level
+        self._vlc.audio_set_volume(int(volume_level * 100))
+    
+    # 设置位置
+    def seek(self, position):
+        self.attributes['media_position'] = position
+        track_length = self._vlc.get_length()/1000
+        self._vlc.set_position(position/track_length)
+    
+    # 静音
+    def mute_volume(self, mute):
+        self.attributes['is_volume_muted'] = mute
+        self._vlc.audio_set_mute(mute)
+
+# 获取重写向后的地址
+def get_redirect_url(url):
+    # 请求网页
+    response = requests.get(url, headers=HEADERS)
+    result_url = response.url
+    if result_url == 'https://music.163.com/404':
+        return None
+    return result_url
+
+# 进行咪咕搜索，可以播放周杰伦的歌歌
+def migu_search(songName, singerName):
+    try:
+        # 如果含有特殊字符，则直接使用名称搜索
+        searchObj = re.search(r'\(|（|：|:《', songName, re.M|re.I)
+        if searchObj:
+            keywords = songName
+        else:    
+            keywords = songName + ' - '+ singerName
+        _log_info("开始在咪咕搜索：%s", keywords)
+        response = requests.get("http://m.music.migu.cn/migu/remoting/scr_search_tag?rows=10&type=2&keyword=" + keywords + "&pgc=1", headers=HEADERS)
+        res = response.json()
+        
+        if 'musics' in res and len(res['musics']) > 0 and (songName in res['musics'][0]['songName'] or searchObj):
+            return res['musics'][0]['mp3']
+    except Exception as e:
+        print("在咪咕搜索时出现错误：", e)
+    return None
+
+# 网易电台
+def djradio_playlist(id, offset, size):
+    res = requests.get(API_URL + '/dj/program?rid='+str(id)+'&limit=50&offset='+str(offset * size))
+    obj = res.json()
+    if obj['code'] == 200:
+        _list = obj['programs']
+        _newlist = map(lambda item: {
+            "id": int(item['mainSong']['id']),
+            "name": item['name'],
+            "album": item['dj']['brand'],
+            "image": item['coverUrl'],
+            "duration": int(item['mainSong']['duration']) / 1000,
+            "song": item['name'],
+            "type": "djradio",
+            "singer": item['dj']['nickname']
+            }, _list)            
+        return list(_newlist)
+    else:
+        return []
+        
+# 喜马拉雅播放列表
+def ximalaya_playlist(id, index, size):
+    res = requests.get('https://mobile.ximalaya.com/mobile/v1/album/track?albumId=' + str(id) + '&device=android&isAsc=true&pageId='\
+        + str(index) + '&pageSize=' + str(size) +'&statEvent=pageview%2Falbum%40203355&statModule=%E6%9C%80%E5%A4%9A%E6%94%B6%E8%97%8F%E6%A6%9C&statPage=ranklist%40%E6%9C%80%E5%A4%9A%E6%94%B6%E8%97%8F%E6%A6%9C&statPosition=8')
+    obj = res.json()
+    if obj['ret'] == 0:
+        _list = obj['data']['list']
+        if len(_list) > 0:
+            # 获取专辑名称
+            _res = requests.get('http://mobile.ximalaya.com/v1/track/baseInfo?device=android&trackId='+str(_list[0]['trackId']))
+            _obj = _res.json()
+            # 格式化列表
+            _newlist = map(lambda item: {
+                "id": item['trackId'],
+                "name": item['title'],
+                "album": _obj['albumTitle'],
+                "image": item['coverLarge'],
+                "duration": item['duration'],
+                "song": item['title'],
+                "type": "url",
+                "url": item['playUrl64'],
+                "singer": item['nickname']
+                }, _list)
+            return list(_newlist)
+    return []
