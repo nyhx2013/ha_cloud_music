@@ -36,6 +36,7 @@ media_player:
 ```
 
 ```
+
 # 可选配置
 # api_url: 接口请求地址（必填项）
 # sidebar_title: 侧边栏名称
@@ -60,6 +61,7 @@ media_player:
     mail_qq: QQ号码（会自动加上@qq.com）
     mail_code: QQ邮箱授权码
     base_url: 外网地址（在邮件里点操作时与HA通信需要使用）
+
 ```
 
 > 可选插件配置
