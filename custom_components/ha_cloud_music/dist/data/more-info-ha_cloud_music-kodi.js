@@ -27,16 +27,12 @@ class MoreInfoHaCloudMusicKodi extends HTMLElement {
                             
              <!-- 源播放器 -->
              <div class="source">
-               
+                <paper-input type="search" id="keyInput" placeholder="请输入要搜索的影片"></paper-input>
              </div>
              
              <!-- 音乐面板 -->
              <div class="music-panel">
-               <div class="music-lyric">
-                  暂无歌词
-                  <br/>
-                  这个不重要，有时间再开发
-               </div>
+               <div class="music-list"></div>
              </div>
              
              <!-- 音乐进度 -->
@@ -51,7 +47,7 @@ class MoreInfoHaCloudMusicKodi extends HTMLElement {
              <!-- 音乐控制 -->
              <div class="controls">
                  <div>
-                  <iron-icon class="play_mode" icon="mdi:repeat"></iron-icon>
+                  <iron-icon class="play_mode" icon="mdi:repeat" style="display:none;"></iron-icon>
                  </div>
                  <div>
                  <iron-icon class="prev" icon="mdi:skip-previous-outline"></iron-icon>
@@ -63,7 +59,7 @@ class MoreInfoHaCloudMusicKodi extends HTMLElement {
                  <iron-icon class="next" icon="mdi:skip-next-outline"></iron-icon>
                  </div>
                  <div>
-                 <iron-icon class="controls-list" icon="mdi:playlist-music-outline"></iron-icon>
+                 <iron-icon class="controls-list" icon="mdi:playlist-music-outline" style="display:none;"></iron-icon>
                  </div>
              </div>
              
@@ -86,6 +82,7 @@ class MoreInfoHaCloudMusicKodi extends HTMLElement {
              <div class="toast">
               弹窗提示
              </div>
+          
       `
       shadow.appendChild(div);
       // 绑定事件
@@ -113,6 +110,15 @@ class MoreInfoHaCloudMusicKodi extends HTMLElement {
           // 下一曲
           _this.call({entity_id: _this.stateObj.entity_id}, 'media_next_track')
           _this.toast("播放下一首")
+      }
+      // 搜索影片
+      div.querySelector('#keyInput').onkeydown = function(e){
+          if(e.keyCode === 13){
+            let value = this.value.trim()
+            if(value){
+                _this.search(value)
+            }
+          }
       }
       // 静音
       div.querySelector('.volume-off').onclick = function(){
@@ -192,9 +198,12 @@ class MoreInfoHaCloudMusicKodi extends HTMLElement {
        .controls div:nth-child(3) iron-icon{width:40px;height:40px;}
        
        .music-panel{background-size:cover; overflow:auto;}
-       .music-panel .music-lyric{width:100%;height:100%;background:rgba(0,0,0,.7);color:white;overflow:auto;text-align:center;padding:20px 10px;
-          line-height:30px;    
-          box-sizing: border-box;}
+       .music-panel .music-list{width:100%;height:100%;overflow:auto;}
+       .music-list p{padding:5px 10px;margin:0;border-bottom:1px solid silver;font-size:12px;}
+       .music-list ul{margin:0;padding:10px 0;list-style:none;font-size:14px;}
+        .music-list ul li{padding:10px;display:flex;    align-items: center;}
+        .music-list ul li span{width:100%;display:block;}
+        .music-list ul li iron-icon{width:30px;}
        
        @media (min-width: 451px){
           .music-panel{height:300px;}       
@@ -208,9 +217,11 @@ class MoreInfoHaCloudMusicKodi extends HTMLElement {
       `;
       shadow.appendChild(style);   
       this.shadow = shadow
-      
-      this.info = document.createElement('div')
-      
+        
+    // 初始化加载本地列表
+    if(this.kodi_video_list.length > 0){
+      this.loadVideoList(this.kodi_video_list)
+    }
   }
   
   showMask(){
@@ -254,6 +265,78 @@ class MoreInfoHaCloudMusicKodi extends HTMLElement {
       },3000)
   }
   
+  // 加载视频列表
+  loadVideoList(list){
+    let music_list = this.shadow.querySelector('.music-list')
+    music_list.innerHTML = ''
+    let fragment = document.createDocumentFragment();
+    list.forEach((ele, index) => {
+        // 添加标题
+        let p = document.createElement('p')
+        p.textContent = ele.name
+        fragment.appendChild(p)
+        // 添加播放列表         
+        let ul = document.createElement('ul')
+        
+        let eps = ele.source.eps
+        eps.forEach( s => {
+            let li = document.createElement('li')
+            let span = document.createElement('span')
+            span.textContent = s.name
+            li.appendChild(span)
+            let ironIcon = document.createElement('iron-icon')
+            ironIcon.setAttribute('icon','mdi:play-circle-outline')
+            ironIcon.onclick = () => {
+                // 这里播放音乐
+                // console.log(index,ele)                        
+                // 德鲁娜酒店
+                this.call({
+                    entity_id: this.stateObj.entity_id,
+                    media_content_id: s.url,
+                    media_content_type: 'video'
+                },'play_media')                        
+                this.toast(`开始播放： ${s.name}`)
+            }
+            li.appendChild(ironIcon)
+            
+            ul.appendChild(li)
+        })                
+        fragment.appendChild(ul)
+    })            
+    music_list.appendChild(fragment)
+  }
+  
+  get kodi_video_list(){
+      try{
+        let list = JSON.parse(localStorage['HA-CLOUDE-MUSIC-KODI-VIDEO-LIST'])    
+        return Array.isArray(list) ? list : []
+      }catch{
+        return []
+      }
+  }
+  
+  set kodi_video_list(value){
+      localStorage['HA-CLOUDE-MUSIC-KODI-VIDEO-LIST'] = JSON.stringify(value)
+  }
+  
+  search(keywords){
+    this.showLoading()
+    fetch(`https://api.jiluxinqing.com/api/service/vipvideo/video?url=${keywords}`).then(res=>res.json()).then(res=>{
+        let { code, data, msg } = res
+        if (code === 0) {
+            let list = data.data            
+            this.loadVideoList(list)
+            if(list.length > 0){
+                this.kodi_video_list = list
+            }
+        }else{
+            this.toast(msg)
+        }
+    }).finally(() => {
+        this.hideLoading()
+    })
+  }
+  
   // 调用接口
   call(data, service, domain = 'media_player'){
       this.showLoading()
@@ -271,10 +354,6 @@ class MoreInfoHaCloudMusicKodi extends HTMLElement {
           }
       }).then(res=>res.json()).then(res=>{
         // console.log(res)
-        if (service === 'media_seek') {
-          let attr = res[0].attributes
-          this.shadow.querySelector('.progress ha-paper-slider').value = data.seek_position / attr.media_duration * 100 
-        }
       }).finally(()=>{
           //加载结束。。。
           this.hideLoading()
@@ -291,13 +370,16 @@ class MoreInfoHaCloudMusicKodi extends HTMLElement {
       const _this = this
       let attr = this.stateObj.attributes
       let state = this.stateObj.state
+      // console.log(this.stateObj)
       this.shadow.querySelector('.controls .action').setAttribute('icon', state==='playing' ? this.icon.pause : this.icon.play)        
       this.shadow.querySelector('.volume .volume-off').setAttribute('icon', attr.is_volume_muted ? this.icon.volume_off : this.icon.volume_high)
       this.shadow.querySelector('.volume ha-paper-slider').value = attr.volume_level * 100
-      this.shadow.querySelector('.progress div:nth-child(1)').textContent = `${this.timeForamt(Math.floor(attr.media_position/60))}:${this.timeForamt(attr.media_position%60)}`
-      this.shadow.querySelector('.progress div:nth-child(3)').textContent = `${this.timeForamt(Math.floor(attr.media_duration/60))}:${this.timeForamt(attr.media_duration%60)}`
-      if(attr.media_position <=  attr.media_duration){
-          this.shadow.querySelector('.progress ha-paper-slider').value = attr.media_position / attr.media_duration * 100    
+      if('media_position' in attr && 'media_duration' in attr){
+        this.shadow.querySelector('.progress div:nth-child(1)').textContent = `${this.timeForamt(Math.floor(attr.media_position/60))}:${this.timeForamt(attr.media_position%60)}`
+        this.shadow.querySelector('.progress div:nth-child(3)').textContent = `${this.timeForamt(Math.floor(attr.media_duration/60))}:${this.timeForamt(attr.media_duration%60)}`
+        if(attr.media_position <=  attr.media_duration){
+            this.shadow.querySelector('.progress ha-paper-slider').value = attr.media_position / attr.media_duration * 100    
+        }   
       }
   }    
   
