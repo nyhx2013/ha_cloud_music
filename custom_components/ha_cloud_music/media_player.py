@@ -255,8 +255,9 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
     if mp.mail['qq'] != '' and mp.mail['code'] != '':
         hass.services.register(DOMAIN, 'notify', mp.notify)
 
-    # 注册shbus状态卡片
+    # 添加状态卡片
     hass.components.frontend.add_extra_js_url(hass, '/'+ DOMAIN + '/' + VERSION + '/dist/data/more-info-ha_cloud_music.js')
+    hass.components.frontend.add_extra_js_url(hass, '/'+ DOMAIN + '/' + VERSION + '/dist/data/more-info-ha_cloud_music-kodi.js')
     # 添加到侧边栏
     coroutine = hass.components.frontend.async_register_built_in_panel(
         "iframe",
