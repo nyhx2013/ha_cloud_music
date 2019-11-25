@@ -240,8 +240,7 @@ class MoreInfoHaCloudMusic extends HTMLElement {
             z-index:1001;
             display:none;
             opacity: 0;
-            height: 64px;
-            line-height: 64px;
+            padding:22px 10px;
             font-weight:bold;
             font-size:14px;
             transition: opacity 0.5s;}
