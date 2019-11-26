@@ -72,7 +72,7 @@ API_URL = ""
 API_KEY = str(uuid.uuid4())
 API_KEY_LIST = {}
 
-VERSION = '2.1.5'
+VERSION = '2.1.6'
 DOMAIN = 'ha_cloud_music'
 
 HASS = None
@@ -179,6 +179,8 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
     vol.Optional("mail_qq", default=""): cv.string,
     vol.Optional("mail_code", default=""): cv.string,
     vol.Optional("base_url", default=""): cv.string,
+    # 启用百度地图
+    vol.Optional("map_ak", default=""): cv.string,
 })
 
 def setup_platform(hass, config, add_entities, discovery_info=None):
@@ -206,6 +208,7 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
     _sidebar_icon = config.get("sidebar_icon")
     _show_mode = config.get("show_mode")
     _uid = config.get("uid")
+    _map_ak = config.get("map_ak")
     mp.tts_config['before_message'] = config.get("tts_before_message")
     mp.tts_config['after_message'] = config.get("tts_after_message")
     mp.mail['qq'] = config.get("mail_qq")
@@ -258,6 +261,7 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
     # 添加状态卡片
     hass.components.frontend.add_extra_js_url(hass, '/'+ DOMAIN + '/' + VERSION + '/dist/data/more-info-ha_cloud_music.js')
     hass.components.frontend.add_extra_js_url(hass, '/'+ DOMAIN + '/' + VERSION + '/dist/data/more-info-ha_cloud_music-kodi.js')
+    hass.components.frontend.add_extra_js_url(hass, '/'+ DOMAIN + '/' + VERSION + '/dist/data/ha-panel-baidu-map.js')
     # 添加到侧边栏
     coroutine = hass.components.frontend.async_register_built_in_panel(
         "iframe",
@@ -275,9 +279,19 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
         if coroutine != None:
             coroutine.send(None)
     except StopIteration:
-        pass    
-    return True   
+        pass
 
+    # 添加百度地图（测试中，请勿使用）
+    if _map_ak != '':
+        hass.components.frontend.async_register_built_in_panel(
+            "baidu-map",
+            "百度地图",
+            "mdi:map-marker-radius",
+            frontend_url_path=None,
+            config={"ak": _map_ak},
+            require_admin=True,
+        )
+    return True   
     
 ###################媒体播放器##########################
 class MediaPlayer(MediaPlayerDevice):
