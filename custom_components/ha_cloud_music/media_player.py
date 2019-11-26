@@ -77,40 +77,12 @@ DOMAIN = 'ha_cloud_music'
 
 HASS = None
 
-#
-# 读取所有静态文件
-#
-#
-allpath=[]
-allname=[]
-def getallfile(path):
-    allfilelist=os.listdir(path)
-    # 遍历该文件夹下的所有目录或者文件
-    for file in allfilelist:
-        filepath=os.path.join(path,file)
-        # 如果是文件夹，递归调用函数
-        if os.path.isdir(filepath):
-            getallfile(filepath)
-        # 如果不是文件夹，保存文件路径及文件名
-        elif os.path.isfile(filepath):
-            allpath.append(filepath)
-            allname.append(file)
-    return allpath, allname
-
-__dirname = os.path.dirname(__file__)
-files, names = getallfile(__dirname+'/dist')
-
-extra_urls = []
-for file in files:
-    extra_urls.append('/'+ DOMAIN + '/' + VERSION + file.replace(__dirname,'').replace('\\','/'))
-
 ##### 网关控制
 class HassGateView(HomeAssistantView):
     """View to handle Configuration requests."""
 
     url = '/' + DOMAIN + '-api'
     name = DOMAIN
-    extra_urls = extra_urls
     requires_auth = False
 
     async def get(self, request):    
@@ -188,7 +160,11 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
   
     global HASS
     HASS = hass
-
+    # 注册静态目录
+    local = hass.config.path("custom_components/ha_cloud_music")
+    if os.path.isdir(local):
+        hass.http.register_static_path('/'+ DOMAIN + '/' + VERSION, local, False)
+    
     hass.http.register_view(HassGateView)
     mp = MediaPlayer(hass)
     add_entities([mp])
