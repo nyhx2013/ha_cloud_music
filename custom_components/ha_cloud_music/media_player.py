@@ -236,8 +236,7 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
 
     # 添加状态卡片
     hass.components.frontend.add_extra_js_url(hass, '/'+ DOMAIN + '/' + VERSION + '/dist/data/more-info-ha_cloud_music.js')
-    hass.components.frontend.add_extra_js_url(hass, '/'+ DOMAIN + '/' + VERSION + '/dist/data/more-info-ha_cloud_music-kodi.js')
-    hass.components.frontend.add_extra_js_url(hass, '/'+ DOMAIN + '/' + VERSION + '/dist/data/ha-panel-baidu-map.js')
+    hass.components.frontend.add_extra_js_url(hass, '/'+ DOMAIN + '/' + VERSION + '/dist/data/more-info-ha_cloud_music-kodi.js')    
     # 添加到侧边栏
     coroutine = hass.components.frontend.async_register_built_in_panel(
         "iframe",
@@ -259,6 +258,7 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
 
     # 添加百度地图（测试中，请勿使用）
     if _map_ak != '':
+        hass.components.frontend.add_extra_js_url(hass, '/'+ DOMAIN + '/' + VERSION + '/dist/data/ha-panel-baidu-map.js')
         hass.components.frontend.async_register_built_in_panel(
             "baidu-map",
             "百度地图",
