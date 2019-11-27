@@ -292,6 +292,8 @@ class HaPanelBaiduMap extends HTMLElement {
         let ak = value.config.ak
         if (ak) {
             if (ak === 'ha_cloud_music') { ak = 'hNT4WeW0AGvh2GuzuO92OfM6hCW25HhX' }
+            window.BMAP_PROTOCOL = "https"
+            window.BMap_loadScriptTime = (new Date).getTime()
             this.loadScript(`https://api.map.baidu.com/getscript?v=3.0&ak=${ak}`).then(res => {
                 this.ready()
             })
