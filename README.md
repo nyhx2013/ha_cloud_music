@@ -48,6 +48,7 @@ media_player:
 # mail_qq: QQ号码（可选）
 # mail_code: QQ邮箱授权码（可选）
 # base_url: 当前外网的地址[http://xxx.com:8123]（在使用消息提醒，功能操作时必填）
+# map_ak: 百度地图AK密钥（可选）
 
 media_player:
   - platform: ha_cloud_music
@@ -61,6 +62,7 @@ media_player:
     mail_qq: QQ号码（会自动加上@qq.com）
     mail_code: QQ邮箱授权码
     base_url: 外网地址（在邮件里点操作时与HA通信需要使用）
+    map_ak: 百度地图AK密钥（配置后启用百度地图）
 
 ```
 
@@ -151,7 +153,7 @@ PC端界面自我感觉还行， 就是移动端界面总觉得怪怪的，奈�
 
 ### V2.1.6
 - 优化代码
-- 测试百度地图功能
+- 加入百度地图功能
 
 ### V2.1.5（2019-11-25）
 - 加入一些喜马拉雅的电台
