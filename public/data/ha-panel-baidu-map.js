@@ -19,6 +19,22 @@ class HaPanelBaiduMap extends HTMLElement {
                 color: var(--text-primary-color, white);
             }
             #baidu-map{width:100%;height:calc(100vh - 64px); z-index: 0;}
+            .select-device{padding:2px 0 5px 10px;border:none;max-width:100px;font-size:12px;text-align:center;line-height:23px;}
+            .device-marker{
+              position:absolute;
+              vertical-align: top;
+              display: block;
+              margin: 0 auto;
+              width: 2.5em;
+              text-align: center;
+              height: 2.5em;
+              line-height: 2.5em;
+              font-size: 1.5em;
+              border-radius: 50%;
+              border: 0.1em solid var(--ha-marker-color, var(--default-primary-color));
+              color: rgb(76, 76, 76);
+              background-color: white;
+            }
         `;
         shadow.appendChild(style);
         this.shadow = shadow
@@ -59,18 +75,13 @@ class HaPanelBaiduMap extends HTMLElement {
                 this.actionPanel()
 
                 this.translate({ longitude, latitude }).then(res => {
-                    // 添加圆形区域
                     let mPoint = res[0]
-                    var circle = new BMap.Circle(mPoint, 100, { fillColor: "blue", strokeWeight: 1, fillOpacity: 0.3, strokeOpacity: 0.3 });
-                    map.addOverlay(circle);
-                    // 添加家坐标
-                    this.addOverlay({ latitude: mPoint.lat, longitude: mPoint.lng, pic: 'https://api.jiluxinqing.com/api/service/cdn/home.png' }, 'zone')
                     // 中心点
                     map.centerAndZoom(mPoint, 18);
                 })
 
-
-                this.update()
+                this.loadZone()
+                //this.update()
                 /*
                 var top_left_control = new BMap.ScaleControl({anchor: BMAP_ANCHOR_TOP_LEFT});// 左上角，添加比例尺
                 var top_left_navigation = new BMap.NavigationControl();  //左上角，添加默认缩放平移控件
@@ -80,46 +91,124 @@ class HaPanelBaiduMap extends HTMLElement {
                 mp.addControl(top_right_navigation);    
                 */
             } else {
-                this.update()
+                this.loadDevice()
             }
         }
     }
-
-    // 设置定位
-    addOverlay({ latitude, longitude, pic }, type, click) {
-        let mPoint = new BMap.Point(longitude, latitude)
-        let size = new BMap.Size(80, 80)
-        if (type === 'zone') {
-            size = new BMap.Size(32, 32)
+    
+    /**************************** 加载区域 ********************************/
+    
+    // 添加Icon标记
+    addIconMarker(point, icon, key){
+        let _this = this
+        const map = this.map        
+        // 复杂的自定义覆盖物
+        function ComplexCustomOverlay(){}
+        
+        ComplexCustomOverlay.prototype = new BMap.Overlay();
+        ComplexCustomOverlay.prototype.initialize = function(map){
+          this._map = map;
+          var div = this._div = document.createElement("div");
+          div.style.position = "absolute";
+          div.style.zIndex = BMap.Overlay.getZIndex(point.lat);
+          div.style.MozUserSelect = "none";
+          div.innerHTML = `<iron-icon icon="${icon}"></iron-icon>`
+          map.getPanes().labelPane.appendChild(div);
+          div.onclick = function(){
+            _this.fire('hass-more-info', { entityId: key })
+          }
+          return div;
         }
-
-        //创建家庭图标
-        var myIcon = new BMap.Icon(pic, size, {
-            imageSize: size
-        });
-        var marker = new BMap.Marker(mPoint, { icon: myIcon });  // 创建标注        
-        marker.type = type
-        marker.addEventListener("click", function () {
-            if (typeof click === 'function') {
-                click(this)
-            }
-        });
-        this.map.addOverlay(marker);              // 将标注添加到地图中
+        ComplexCustomOverlay.prototype.draw = function(){
+          var pixel = map.pointToOverlayPixel(point);
+          this._div.style.left = pixel.x - 12 + "px";
+          this._div.style.top  = pixel.y - 12 + "px";
+        }
+        var myCompOverlay = new ComplexCustomOverlay();
+        
+        map.addOverlay(myCompOverlay);
     }
-
-    // 更新位置
-    update() {
+    
+    //加载区域
+    loadZone(){
         let map = this.map
+        this.debounce(async () => {
+            // 这里添加设备
+            let states = this.hass.states
+            let keys = Object.keys(states).filter(ele => ele.indexOf('zone') === 0)
+            for (let key of keys) {
+                let stateObj = states[key]
+                let attr = stateObj.attributes
+                // 如果有经纬度，并且不在家，则标记
+                if ('longitude' in attr && 'latitude' in attr) {
+                    let res = await this.translate({ longitude: attr.longitude, latitude: attr.latitude })
+                    let point = res[0]
+                    // 添加圆形区域
+                    var circle = new BMap.Circle(point, attr.radius, { fillColor: "#FF9800", strokeColor: 'orange', strokeWeight: 1, fillOpacity: 0.3, strokeOpacity: 0.5 });
+                    map.addOverlay(circle);
+                    // 添加图标
+                    this.addIconMarker(point, attr.icon, key)
+                }
+            }
+            // 加载完区域之后
+            this.loadDevice()
+        }, 1000)
+    }
+    
+    /**************************** 加载设备 ********************************/
+    
+    // 添加设备标记
+    addEntityMarker(point, { id, name, picture}){
+        let _this = this
+        const map = this.map 
+
+        
         // 删除所有设备
         let allOverlay = map.getOverlays();
         if (allOverlay.length > 0) {
-            for (let i = 0; i < allOverlay.length - 1; i++) {
-                if (allOverlay[i].type === "device") {
-                    map.removeOverlay(allOverlay[i]);
-                }
+            let index = allOverlay.findIndex(ele=>ele['id']===id)
+            if(index >= 0){
+                map.removeOverlay(allOverlay[i]);
             }
         }
-
+        
+        console.log(allOverlay)
+        
+        // 复杂的自定义覆盖物
+        function ComplexCustomOverlay(){}
+        
+        ComplexCustomOverlay.prototype = new BMap.Overlay();
+        ComplexCustomOverlay.prototype.initialize = function(map){
+          this._map = map;
+          var div = this._div = document.createElement("div");
+          div.className = "device-marker";
+          div.style.zIndex = BMap.Overlay.getZIndex(point.lat);
+          // console.log(id,name,picture)
+          if(picture){
+            div.style.backgroundImage = `url(${picture})`
+            div.style.backgroundSize = 'cover'
+          }else{
+            div.textContent = name[0]
+          }
+          div.onclick = function(){
+            _this.fire('hass-more-info', { entityId: id })
+          }
+          map.getPanes().labelPane.appendChild(div);
+          return div;
+        }
+        ComplexCustomOverlay.prototype.draw = function(){
+          var pixel = map.pointToOverlayPixel(point);
+          this._div.style.left = pixel.x - 28 + "px";
+          this._div.style.top  = pixel.y - 28 + "px";
+        }
+        var myCompOverlay = new ComplexCustomOverlay();
+        myCompOverlay.id = id
+        map.addOverlay(myCompOverlay);
+    }
+    
+    // 更新位置
+    loadDevice() {
+        let map = this.map        
         this.debounce(async () => {
             // 这里添加设备
             let states = this.hass.states
@@ -129,15 +218,12 @@ class HaPanelBaiduMap extends HTMLElement {
                 let attr = stateObj.attributes
                 // 如果有经纬度，并且不在家，则标记
                 if ('longitude' in attr && 'latitude' in attr && stateObj.state != 'home') {
-                    let pic = 'https://api.jiluxinqing.com/api/service/cdn/people.png'
-                    if ('entity_picture' in attr) {
-                        pic = attr.entity_picture
-                    }
                     let res = await this.translate({ longitude: attr.longitude, latitude: attr.latitude })
                     let point = res[0]
-                    this.addOverlay({ latitude: point.lat, longitude: point.lng, pic }, 'device', () => {
-                        // this.fire("hass-notification", { message:'这是一条测试数据' });
-                        this.fire('hass-more-info', { entityId: key })
+                    this.addEntityMarker(point, { 
+                        id: key,
+                        name: attr.friendly_name,
+                        picture: attr['entity_picture']
                     })
                 }
             }
@@ -170,17 +256,12 @@ class HaPanelBaiduMap extends HTMLElement {
 
     // 操作面板
     actionPanel() {
-        let { latitude, longitude } = this.hass.config
+        
         // 获取所有设备
-        this.deviceList = [{
-            id: '',
-            name: '家',
-            longitude,
-            latitude
-        }]
+        this.deviceList = []
 
         let states = this.hass.states
-        let keys = Object.keys(states).filter(ele => ele.indexOf('device_tracker') === 0)
+        let keys = Object.keys(states).filter(ele => ele.indexOf('device_tracker') === 0 || ele.indexOf('zone') === 0)
         keys.forEach(key => {
             let stateObj = states[key]
             let attr = stateObj.attributes
@@ -211,6 +292,7 @@ class HaPanelBaiduMap extends HTMLElement {
             // 创建一个DOM元素
             var div = document.createElement("div");
             let select = document.createElement('select')
+            select.className = "select-device"
             this.deviceList.forEach(ele => {
                 let option = document.createElement('option')
                 option.value = ele.id
