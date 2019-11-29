@@ -243,7 +243,8 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
         _sidebar_title,
         _sidebar_icon,
         DOMAIN,
-        {"url": "/" + DOMAIN+"/" + VERSION + "/dist/index.html?show_mode=" + _show_mode
+        {"url": "/" + DOMAIN+"/" + VERSION + "/dist/index.html?ver=" + VERSION 
+        + "&show_mode=" + _show_mode
         + "&api_key=" + API_KEY
         + "&ak=" + _map_ak
         + "&uid=" + _uid
