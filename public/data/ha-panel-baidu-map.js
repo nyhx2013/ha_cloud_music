@@ -161,49 +161,48 @@ class HaPanelBaiduMap extends HTMLElement {
     addEntityMarker(point, { id, name, picture}){
         let _this = this
         const map = this.map 
-
         
         // 删除所有设备
         let allOverlay = map.getOverlays();
         if (allOverlay.length > 0) {
             let index = allOverlay.findIndex(ele=>ele['id']===id)
             if(index >= 0){
-                map.removeOverlay(allOverlay[i]);
+                map.removeOverlay(allOverlay[index]);
             }
         }
-        
-        console.log(allOverlay)
-        
-        // 复杂的自定义覆盖物
-        function ComplexCustomOverlay(){}
-        
-        ComplexCustomOverlay.prototype = new BMap.Overlay();
-        ComplexCustomOverlay.prototype.initialize = function(map){
-          this._map = map;
-          var div = this._div = document.createElement("div");
-          div.className = "device-marker";
-          div.style.zIndex = BMap.Overlay.getZIndex(point.lat);
-          // console.log(id,name,picture)
-          if(picture){
-            div.style.backgroundImage = `url(${picture})`
-            div.style.backgroundSize = 'cover'
-          }else{
-            div.textContent = name[0]
-          }
-          div.onclick = function(){
-            _this.fire('hass-more-info', { entityId: id })
-          }
-          map.getPanes().labelPane.appendChild(div);
-          return div;
-        }
-        ComplexCustomOverlay.prototype.draw = function(){
-          var pixel = map.pointToOverlayPixel(point);
-          this._div.style.left = pixel.x - 28 + "px";
-          this._div.style.top  = pixel.y - 28 + "px";
-        }
-        var myCompOverlay = new ComplexCustomOverlay();
-        myCompOverlay.id = id
-        map.addOverlay(myCompOverlay);
+        // console.log(allOverlay)
+        setTimeout(()=>{
+            // 复杂的自定义覆盖物
+            function ComplexCustomOverlay(){}
+            
+            ComplexCustomOverlay.prototype = new BMap.Overlay();
+            ComplexCustomOverlay.prototype.initialize = function(map){
+              this._map = map;
+              var div = this._div = document.createElement("div");
+              div.className = "device-marker";
+              div.style.zIndex = BMap.Overlay.getZIndex(point.lat);
+              // console.log(id,name,picture)
+              if(picture){
+                div.style.backgroundImage = `url(${picture})`
+                div.style.backgroundSize = 'cover'
+              }else{
+                div.textContent = name[0]
+              }
+              div.onclick = function(){
+                _this.fire('hass-more-info', { entityId: id })
+              }
+              map.getPanes().labelPane.appendChild(div);
+              return div;
+            }
+            ComplexCustomOverlay.prototype.draw = function(){
+              var pixel = map.pointToOverlayPixel(point);
+              this._div.style.left = pixel.x - 28 + "px";
+              this._div.style.top  = pixel.y - 28 + "px";
+            }
+            var myCompOverlay = new ComplexCustomOverlay();
+            myCompOverlay.id = id
+            map.addOverlay(myCompOverlay);
+        },0)
     }
     
     // 更新位置
