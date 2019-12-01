@@ -176,18 +176,19 @@ class IsHolidaySensor(BinarySensorDevice):
             self._holiday_name = _list[0].name
             return True
         # 判断是否在传统假日连休列表里
-        _holiday = obj['holiday']
-        if isinstance(_holiday,list):
-            for item in _holiday:
-                _result = self.findHoliday(today, item['list'])
+        if 'holiday' in obj:
+            _holiday = obj['holiday']
+            if isinstance(_holiday,list):
+                for item in _holiday:
+                    _result = self.findHoliday(today, item['list'])
+                    if _result != None:
+                        self._holiday_name = item['name']
+                        return _result
+            elif isinstance(_holiday,dict):
+                _result = self.findHoliday(today, _holiday['list'])
                 if _result != None:
-                    self._holiday_name = item['name']
+                    self._holiday_name = _holiday['name']
                     return _result
-        elif isinstance(_holiday,dict):
-            _result = self.findHoliday(today, _holiday['list'])
-            if _result != None:
-                self._holiday_name = _holiday['name']
-                return _result    
         # 判断是否双休日
         if localtime.tm_wday == 5:
             self._holiday_name = '周六'
