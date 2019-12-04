@@ -68,8 +68,10 @@ TIME_BETWEEN_UPDATES = datetime.timedelta(seconds=1)
 HEADERS = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.87 Safari/537.36'}
 # 接口请求地址
 API_URL = ""
-API_KEY = str(uuid.uuid4())
 API_KEY_LIST = {}
+
+API_KEY = str(uuid.uuid4())
+
 
 VERSION = '2.1.7'
 DOMAIN = 'ha_cloud_music'
@@ -121,7 +123,7 @@ class HassGateView(HomeAssistantView):
         hass = request.app["hass"]
         
         if 'key' in response:
-            # 如果密钥不一致，则提示刷新页面
+            # 如果密钥不一致，则提示没有权限
             if response['key'] == API_KEY:
                 if 'type' in response:
                     _type = response['type'] 
@@ -133,13 +135,48 @@ class HassGateView(HomeAssistantView):
                     elif _type == 'text':
                         # 这里进行文本解析
                         _text = response['text']
-                        
-                        intent_type = 'HassTurnOff'
+                        # 音乐控制解析
+                        if '下一曲' in _text or '下一首' in _text:
+                            await hass.services.async_call('media_player', 'media_previous_track', {'entity_id': 'media_player.ha_cloud_music'})
+                            return self.json({'code': 0, 'msg': '执行成功'})
+                        elif '上一曲' in _text or '上一首' in _text:
+                            await hass.services.async_call('media_player', 'media_next_track', {'entity_id': 'media_player.ha_cloud_music'})
+                            return self.json({'code': 0, 'msg': '执行成功'})
+                        elif '播放' in _text:
+                            await hass.services.async_call('media_player', 'media_play', {'entity_id': 'media_player.ha_cloud_music'})
+                            return self.json({'code': 0, 'msg': '执行成功'})
+                        elif '暂停' in _text or '停止' in _text:
+                            await hass.services.async_call('media_player', 'media_pause', {'entity_id': 'media_player.ha_cloud_music'})
+                            return self.json({'code': 0, 'msg': '执行成功'})
+
+                        # 开关控制
+                        intent_type = ''
+                        if '打开' in _text or '开启' in _text or '启动' in _text :
+                            intent_type = 'HassTurnOn'
+                        elif '关闭' in _text or '关掉' in _text  or '关上' in _text :
+                            intent_type = 'HassTurnOff'
+
                         try:
-                            intent_response = await intent.async_handle(hass, DOMAIN, intent_type, {'name': {'value': '灯'}})
-                            _log_info(intent_response.intent)
-                            _log_info(intent_response.speech)
-                            _log_info(intent_response.card)
+                            if intent_type != '':
+                                # 获取要操作的名称                                
+                                if '打开' in _text:
+                                    _name = _text.split('打开')[1]
+                                elif '开启' in _text:
+                                    _name = _text.split('开启')[1]
+                                elif '启动' in _text:
+                                    _name = _text.split('启动')[1]
+                                elif '关闭' in _text:
+                                    _name = _text.split('关闭')[1]
+                                elif '关掉' in _text:
+                                    _name = _text.split('关掉')[1]
+                                elif '关上' in _text:
+                                    _name = _text.split('关上')[1]
+
+                                intent_response = await intent.async_handle(hass, DOMAIN, intent_type, {'name': {'value': _name}})
+                                _log_info(intent_response.intent)
+                                _log_info(intent_response.speech)
+                                _log_info(intent_response.card)
+                                return self.json(intent_response.speech)
                         except intent.UnknownIntent as err:
                             _LOGGER.warning('接收到未知的意图 %s', intent_type)
                         except intent.InvalidSlotInfo as err:
@@ -161,6 +198,7 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
     vol.Optional("show_mode", default="default"): cv.string,
     # 网易云音乐接口地址
     vol.Required("api_url"): cv.string,
+    vol.Optional("api_key", default=''): cv.string,
     # TTS相关配置
     vol.Optional("tts_before_message", default=""): cv.string,
     vol.Optional("tts_after_message", default=""): cv.string,
@@ -190,6 +228,14 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
     # 设置API地址
     global API_URL
     API_URL = config.get("api_url")
+
+    # 验证api_key是否设置为uuid格式（为了安全，必须要这么做）
+    _api_key = config.get("api_key")
+    global API_KEY
+    if _api_key != '' and re.match('\w{8}(-\w{4}){3}-\w{12}', _api_key):
+        _log_info('使用自定义api_key：' + _api_key)
+        API_KEY = _api_key
+
     # 判断是否支持VLC
     supported_vlc_tips = '不支持'
     _is_vlc = '0'
