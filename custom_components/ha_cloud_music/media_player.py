@@ -22,9 +22,8 @@ def _format_addr(s):
     name, addr = parseaddr(s)
     return formataddr((Header(name, 'utf-8').encode(), addr))
 # ----------邮件相关---------- #
-
 from homeassistant.helpers.entity import Entity
-from homeassistant.helpers import config_validation as cv
+from homeassistant.helpers import config_validation as cv, intent
 from homeassistant.helpers.event import track_time_interval
 from homeassistant.components.http import HomeAssistantView
 import aiohttp
@@ -72,7 +71,7 @@ API_URL = ""
 API_KEY = str(uuid.uuid4())
 API_KEY_LIST = {}
 
-VERSION = '2.1.6.3'
+VERSION = '2.1.7'
 DOMAIN = 'ha_cloud_music'
 
 HASS = None
@@ -119,18 +118,36 @@ class HassGateView(HomeAssistantView):
     async def post(self, request):
         """Update state of entity."""
         response = await request.json()
+        hass = request.app["hass"]
         
         if 'key' in response:
             # 如果密钥不一致，则提示刷新页面
             if response['key'] == API_KEY:
-                if 'type' in response and response['type'] == 'web':
-                    _api = response['url']
-                    async with aiohttp.request('GET',API_URL + _api) as r:
-                        _result = await r.json(encoding="utf-8")
-                        return self.json(_result)
+                if 'type' in response:
+                    _type = response['type'] 
+                    if _type == 'web':
+                        _api = response['url']
+                        async with aiohttp.request('GET',API_URL + _api) as r:
+                            _result = await r.json(encoding="utf-8")
+                            return self.json(_result)
+                    elif _type == 'text':
+                        # 这里进行文本解析
+                        _text = response['text']
+                        
+                        intent_type = 'HassTurnOff'
+                        try:
+                            intent_response = await intent.async_handle(hass, DOMAIN, intent_type, {'name': {'value': '灯'}})
+                            _log_info(intent_response.intent)
+                            _log_info(intent_response.speech)
+                            _log_info(intent_response.card)
+                        except intent.UnknownIntent as err:
+                            _LOGGER.warning('接收到未知的意图 %s', intent_type)
+                        except intent.InvalidSlotInfo as err:
+                            _LOGGER.error('接收到无效的插槽数据: %s', err)
+                        except intent.IntentError:
+                            _LOGGER.exception('处理请求时出错 %s', intent_type)
             else:
                 return self.json({"code": 401})
-        
         return self.json(response)
 
         
