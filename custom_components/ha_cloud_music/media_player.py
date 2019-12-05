@@ -139,17 +139,17 @@ class HassGateView(HomeAssistantView):
                         _text = response['text']
                         # 音乐控制解析
                         if '下一曲' in _text or '下一首' in _text:
-                            await hass.services.async_call('media_player', 'media_previous_track', {'entity_id': 'media_player.ha_cloud_music'})
-                            return self.json({'code': 0, 'msg': '执行成功'})
-                        elif '上一曲' in _text or '上一首' in _text:
                             await hass.services.async_call('media_player', 'media_next_track', {'entity_id': 'media_player.ha_cloud_music'})
-                            return self.json({'code': 0, 'msg': '执行成功'})
+                            return self.json({'code': 0, 'msg': '执行下一曲成功'})
+                        elif '上一曲' in _text or '上一首' in _text:
+                            await hass.services.async_call('media_player', 'media_previous_track', {'entity_id': 'media_player.ha_cloud_music'})
+                            return self.json({'code': 0, 'msg': '执行上一曲成功'})
                         elif '播放' in _text:
                             await hass.services.async_call('media_player', 'media_play', {'entity_id': 'media_player.ha_cloud_music'})
-                            return self.json({'code': 0, 'msg': '执行成功'})
+                            return self.json({'code': 0, 'msg': '执行播放成功'})
                         elif '暂停' in _text or '停止' in _text:
                             await hass.services.async_call('media_player', 'media_pause', {'entity_id': 'media_player.ha_cloud_music'})
-                            return self.json({'code': 0, 'msg': '执行成功'})
+                            return self.json({'code': 0, 'msg': '执行暂停成功'})
 
                         # 开关控制
                         intent_type = ''
@@ -345,7 +345,7 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
 
     # 添加语音服务
     if mp.base_url != '':
-        _plaintext = '{"host": "' + mp.base_url + '", "key": "' + API_KEY + '"}'
+        _plaintext = '{"host": "' + mp.base_url.strip('/') + '", "key": "' + API_KEY + '"}'
         encodestr = base64.b64encode(_plaintext.encode('utf-8'))
         _encryption = str(encodestr,'utf-8')
         #_log_info('加密信息')
