@@ -10,6 +10,7 @@ import re
 import urllib.parse
 import uuid
 import math
+import base64 
 
 # ----------邮件相关---------- #
 from email import encoders
@@ -25,6 +26,7 @@ def _format_addr(s):
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers import config_validation as cv, intent
 from homeassistant.helpers.event import track_time_interval
+from homeassistant.components import weblink
 from homeassistant.components.http import HomeAssistantView
 import aiohttp
 from aiohttp import web
@@ -176,7 +178,16 @@ class HassGateView(HomeAssistantView):
                                 _log_info(intent_response.intent)
                                 _log_info(intent_response.speech)
                                 _log_info(intent_response.card)
-                                return self.json(intent_response.speech)
+                                return self.json({'code':0, 'data': intent_response.speech, 'type': 'intent'})
+                            else:
+                                # 调用自定义的意图                                
+                                if hass.services.has_service('conversation','process'):
+                                    _log_info("调用自定义的意图")
+                                    await hass.services.async_call('conversation', 'process', {'text': _text})
+                                    return self.json({'code': 0, 'msg': '调用自定义的意图成功'})
+                                else:
+                                    return self.json({'code': 0, 'msg': '对不起，没有开启自定义意图'})
+
                         except intent.UnknownIntent as err:
                             _LOGGER.warning('接收到未知的意图 %s', intent_type)
                         except intent.InvalidSlotInfo as err:
@@ -320,7 +331,7 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
     except StopIteration:
         pass
 
-    # 添加百度地图（测试中，请勿使用）
+    # 添加百度地图
     if _map_ak != '':
         hass.components.frontend.add_extra_js_url(hass, '/'+ DOMAIN + '/' + VERSION + '/dist/data/ha-panel-baidu-map.js')
         hass.components.frontend.async_register_built_in_panel(
@@ -331,6 +342,18 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
             config={"ak": _map_ak},
             require_admin=True,
         )
+
+    # 添加语音服务
+    if mp.base_url != '':
+        _plaintext = '{"host": "' + mp.base_url + '", "key": "' + API_KEY + '"}'
+        encodestr = base64.b64encode(_plaintext.encode('utf-8'))
+        _encryption = str(encodestr,'utf-8')
+        #_log_info('加密信息')
+        #_log_info(_encryption)
+        weblink.setup(hass,{'weblink': {
+                'entities': [{'name': '云音乐语音服务', 'url': 'https://api.jiluxinqing.com/voice.html?key=' + _encryption, 'icon': 'mdi:microphone'}]
+            }
+        })
     return True   
     
 ###################媒体播放器##########################
