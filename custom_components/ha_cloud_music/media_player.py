@@ -75,7 +75,7 @@ API_KEY_LIST = {}
 API_KEY = str(uuid.uuid4())
 
 
-VERSION = '2.1.7'
+VERSION = '2.1.7.1'
 DOMAIN = 'ha_cloud_music'
 
 HASS = None
