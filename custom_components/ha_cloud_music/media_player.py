@@ -194,7 +194,7 @@ class HassGateView(HomeAssistantView):
                             _LOGGER.error('接收到无效的插槽数据: %s', err)
                         except intent.IntentError as err:
                             _LOGGER.exception('处理请求时出错 %s', intent_type)
-                            return self.json({'code': 0, 'msg': '处理请求时出错，您可能没有这个设备'})
+                            return self.json({'code': 1, 'msg': '处理请求时出错，您可能没有这个设备'})
 
             else:
                 return self.json({"code": 401})
