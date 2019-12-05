@@ -351,7 +351,7 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
         #_log_info('加密信息')
         #_log_info(_encryption)
         weblink.setup(hass,{'weblink': {
-                'entities': [{'name': '云音乐语音服务', 'url': 'https://api.jiluxinqing.com/voice.html?key=' + _encryption, 'icon': 'mdi:microphone'}]
+                'entities': [{'name': '云音乐语音服务', 'url': 'https://api.jiluxinqing.com/ha/voice.html?key=' + _encryption, 'icon': 'mdi:microphone'}]
             }
         })
     return True   
