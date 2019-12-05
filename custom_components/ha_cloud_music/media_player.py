@@ -136,7 +136,7 @@ class HassGateView(HomeAssistantView):
                             return self.json(_result)
                     elif _type == 'text':
                         # 这里进行文本解析
-                        _text = response['text']
+                        _text = response['text'].strip('。')
                         # 我想听xxx的歌
                         pattern = re.compile(r"我想听(.+)的歌")
                         singer = pattern.findall(_text)
