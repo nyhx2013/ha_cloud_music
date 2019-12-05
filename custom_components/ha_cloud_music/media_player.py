@@ -137,6 +137,22 @@ class HassGateView(HomeAssistantView):
                     elif _type == 'text':
                         # 这里进行文本解析
                         _text = response['text']
+                        # 我想听xxx的歌
+                        pattern = re.compile(r"我想听(.+)的歌")
+                        singer = pattern.findall(_text)
+                        if len(singer) == 1:
+                            # 正在播放xxx的歌
+                            singerName = singer[0]
+                            _result_text = '正在播放'+ singerName +'的歌'
+                            await hass.services.async_call('media_player', 'play_media', {
+                                    'entity_id': 'media_player.ha_cloud_music',
+                                    'media_content_id': "https://api.jiluxinqing.com/api/service/tts?text="+ quote(_result_text),
+                                    'media_content_type': 'music'
+                                }, blocking=True)
+                            # 开始搜索当前歌手的热门歌曲
+                            await play_singer_hotsong(hass, singerName)
+                            return self.json({'code': 0, 'msg': _result_text})
+                        
                         # 音乐控制解析
                         if '下一曲' in _text or '下一首' in _text:
                             await hass.services.async_call('media_player', 'media_next_track', {'entity_id': 'media_player.ha_cloud_music'})
@@ -1407,3 +1423,40 @@ def ximalaya_playlist(id, index, size):
                 }, _list)
             return list(_newlist)
     return []
+
+# 播放歌手的热门歌曲
+async def play_singer_hotsong(hass, singerName):
+    res = requests.get(API_URL + '/search?keywords='+ singerName +'&limit=1')
+    obj = res.json()
+    if obj['code'] == 200:
+        songs = obj['result']['songs']
+        if len(songs) > 0:
+            singerId = songs[0]['artists'][0]['id']
+            # 获取热门歌曲
+            hot_res = requests.get(API_URL + '/artists/top/song?id='+ str(singerId))
+            hot_obj = hot_res.json()
+            if hot_obj['code'] == 200:
+                _list = hot_obj['hotSongs']
+                _newlist = map(lambda item: {
+                    "id": int(item['id']),
+                    "name": item['name'],
+                    "album": item['al']['name'],
+                    "image": item['al']['picUrl'],
+                    "duration": int(item['dt']) / 1000,
+                    "url": "https://music.163.com/song/media/outer/url?id=" + str(item['id']),
+                    "song": item['name'],
+                    "singer": len(item['ar']) > 0 and item['ar'][0]['name'] or '未知'
+                    }, _list)
+                # 调用服务，执行播放
+                _dict = {
+                    'index': 0,
+                    'list': json.dumps(list(_newlist), ensure_ascii=False)
+                }
+                await hass.services.async_call('media_player', 'play_media', {
+                                    'entity_id': 'media_player.ha_cloud_music',
+                                    'media_content_id': json.dumps(_dict, ensure_ascii=False),
+                                    'media_content_type': 'music_playlist'
+                                }, blocking=True)
+            
+    else:
+        return None
