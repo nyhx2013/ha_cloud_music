@@ -781,9 +781,6 @@ class MediaPlayer(MediaPlayerDevice):
             #初始化源播放器
             self.media_stop()
             _log('绑定数据源：%s', self._source_list)
-            # 防止进行自动下一曲的操作
-            self.next_count = -15
-            self._timer_enable = True
         elif media_type == 'music_playlist':
             _log('初始化播放列表')
             
@@ -807,6 +804,9 @@ class MediaPlayer(MediaPlayerDevice):
             self._source_list = source_list
             #初始化源播放器
             self.media_stop()
+            # 防止进行自动下一曲的操作
+            self.next_count = -15
+            self._timer_enable = True
         else:
             _LOGGER.error(
                 "不受支持的媒体类型 %s",media_type)
