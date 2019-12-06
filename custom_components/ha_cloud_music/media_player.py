@@ -1355,11 +1355,12 @@ class VlcPlayer():
 
 # 获取重写向后的地址
 def get_redirect_url(url):
-    # 请求网页
+    # 请求网页    
     response = requests.get(url, headers=HEADERS)
     result_url = response.url
     if result_url == 'https://music.163.com/404':
         return None
+    _log_info('获取真实播放地址：' + result_url)
     return result_url
 
 # 进行咪咕搜索，可以播放周杰伦的歌歌
