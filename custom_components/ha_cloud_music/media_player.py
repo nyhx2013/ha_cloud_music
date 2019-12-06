@@ -152,7 +152,17 @@ class HassGateView(HomeAssistantView):
                             # 开始搜索当前歌手的热门歌曲
                             await play_singer_hotsong(hass, singerName)
                             return self.json({'code': 0, 'msg': _result_text})
-                        
+                        # 播放电台 xxxx
+                        if '播放电台' in _text:
+                            _name = _text.split('播放电台')[1]
+                            await play_dj_hotsong(hass, _name)
+                            return self.json({'code': 0, 'msg': '正在' + _text})
+                        # 播放歌单 xxxx
+                        if '播放歌单' in _text:
+                            _name = _text.split('播放歌单')[1]
+                            await play_list_hotsong(hass, _name)
+                            return self.json({'code': 0, 'msg': '正在' + _text})
+
                         # 音乐控制解析
                         if '下一曲' in _text or '下一首' in _text:
                             await hass.services.async_call('media_player', 'media_next_track', {'entity_id': 'media_player.ha_cloud_music'})
@@ -1139,26 +1149,14 @@ class MediaPlayer(MediaPlayerDevice):
             if _type == "playlist":
                 _log_info("加载歌单列表，ID：%s", _id)
                 # 获取播放列表
-                res = requests.get(API_URL + '/playlist/detail?id=' + str(_id))
-                obj = res.json()
-                if obj['code'] == 200:
-                    _list = obj['playlist']['tracks']
-                    _newlist = map(lambda item: {
-                        "id": int(item['id']),
-                        "name": item['name'],
-                        "album": item['al']['name'],
-                        "image": item['al']['picUrl'],
-                        "duration": int(item['dt']) / 1000,
-                        "url": "https://music.163.com/song/media/outer/url?id=" + str(item['id']),
-                        "song": item['name'],
-                        "singer": len(item['ar']) > 0 and item['ar'][0]['name'] or '未知'
-                        }, _list)            
-                    #_log_info(_result)
-                    if list_index < 0 or list_index >= len(_list):
-                        list_index = 0                      
+                obj = music_playlist(_id)      
+                if obj != None and len(obj['list']) > 0:
+                    _newlist = obj['list']
+                    if list_index < 0 or list_index >= len(_newlist):
+                        list_index = 0
                     self.music_index = list_index
-                    self.play_media('music_playlist', list(_newlist))
-                    self.notification("正在播放歌单【"+obj['playlist']['name']+"】", "load_songlist")
+                    self.play_media('music_playlist', _newlist)
+                    self.notification("正在播放歌单【"+obj['name']+"】", "load_songlist")
                 else:
                     # 这里弹出提示
                     self.notification("没有找到id为【"+_id+"】的歌单信息", "load_songlist")
@@ -1382,6 +1380,29 @@ def migu_search(songName, singerName):
         print("在咪咕搜索时出现错误：", e)
     return None
 
+# 网易歌单
+def music_playlist(id):
+    res = requests.get(API_URL + '/playlist/detail?id=' + str(id))
+    obj = res.json()
+    if obj['code'] == 200:
+        _list = obj['playlist']['tracks']
+        _newlist = map(lambda item: {
+            "id": int(item['id']),
+            "name": item['name'],
+            "album": item['al']['name'],
+            "image": item['al']['picUrl'],
+            "duration": int(item['dt']) / 1000,
+            "url": "https://music.163.com/song/media/outer/url?id=" + str(item['id']),
+            "song": item['name'],
+            "singer": len(item['ar']) > 0 and item['ar'][0]['name'] or '未知'
+            }, _list)
+        return {
+            'name': obj['playlist']['name'],
+            'list': list(_newlist)
+        }
+    else:
+        return None
+
 # 网易电台
 def djradio_playlist(id, offset, size):
     res = requests.get(API_URL + '/dj/program?rid='+str(id)+'&limit=50&offset='+str(offset * size))
@@ -1430,12 +1451,12 @@ def ximalaya_playlist(id, index, size):
 
 # 播放歌手的热门歌曲
 async def play_singer_hotsong(hass, singerName):
-    res = requests.get(API_URL + '/search?keywords='+ singerName +'&limit=1')
+    res = requests.get(API_URL + '/search?keywords='+ singerName +'&type=100')
     obj = res.json()
     if obj['code'] == 200:
-        songs = obj['result']['songs']
-        if len(songs) > 0:
-            singerId = songs[0]['artists'][0]['id']
+        artists = obj['result']['artists']
+        if len(artists) > 0:
+            singerId = artists[0]['id']
             # 获取热门歌曲
             hot_res = requests.get(API_URL + '/artists/top/song?id='+ str(singerId))
             hot_obj = hot_res.json()
@@ -1455,6 +1476,55 @@ async def play_singer_hotsong(hass, singerName):
                 _dict = {
                     'index': 0,
                     'list': json.dumps(list(_newlist), ensure_ascii=False)
+                }
+                await hass.services.async_call('media_player', 'play_media', {
+                                    'entity_id': 'media_player.ha_cloud_music',
+                                    'media_content_id': json.dumps(_dict, ensure_ascii=False),
+                                    'media_content_type': 'music_playlist'
+                                }, blocking=True)
+            
+    else:
+        return None
+
+# 播放电台
+async def play_dj_hotsong(hass, djName):
+    res = requests.get(API_URL + '/search?keywords='+ djName +'&type=1009')
+    obj = res.json()
+    if obj['code'] == 200:
+        artists = obj['result']['djRadios']
+        if len(artists) > 0:
+            singerId = artists[0]['id']
+            _newlist = djradio_playlist(singerId, 0, 50)
+            if len(_newlist) > 0:
+                # 调用服务，执行播放
+                _dict = {
+                    'index': 0,
+                    'list': json.dumps(list(_newlist), ensure_ascii=False)
+                }
+                await hass.services.async_call('media_player', 'play_media', {
+                                    'entity_id': 'media_player.ha_cloud_music',
+                                    'media_content_id': json.dumps(_dict, ensure_ascii=False),
+                                    'media_content_type': 'music_playlist'
+                                }, blocking=True)
+            
+    else:
+        return None
+
+# 播放歌单
+async def play_list_hotsong(hass, djName):
+    res = requests.get(API_URL + '/search?keywords='+ djName +'&type=1000')
+    obj = res.json()
+    if obj['code'] == 200:
+        artists = obj['result']['playlists']
+        if len(artists) > 0:
+            singerId = artists[0]['id']
+            obj = music_playlist(singerId)
+            if obj != None and len(obj['list']) > 0:
+                _newlist = obj['list']
+                # 调用服务，执行播放
+                _dict = {
+                    'index': 0,
+                    'list': json.dumps(_newlist, ensure_ascii=False)
                 }
                 await hass.services.async_call('media_player', 'play_media', {
                                     'entity_id': 'media_player.ha_cloud_music',
