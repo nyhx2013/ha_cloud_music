@@ -35,6 +35,18 @@ from aiohttp.web import FileResponse
 from typing import Optional
 from homeassistant.helpers.state import AsyncTrackStates
 from urllib.request import urlopen, quote
+from homeassistant.core import Event
+from homeassistant.components.media_player import (
+    MediaPlayerDevice, PLATFORM_SCHEMA)
+from homeassistant.components.media_player.const import (
+    MEDIA_TYPE_MUSIC,MEDIA_TYPE_URL, SUPPORT_PAUSE, SUPPORT_PLAY, SUPPORT_NEXT_TRACK, SUPPORT_PREVIOUS_TRACK, SUPPORT_TURN_ON, SUPPORT_TURN_OFF,
+    SUPPORT_PLAY_MEDIA, SUPPORT_STOP, SUPPORT_VOLUME_MUTE, SUPPORT_VOLUME_SET, SUPPORT_SELECT_SOURCE, SUPPORT_CLEAR_PLAYLIST, SUPPORT_STOP, 
+    SUPPORT_SELECT_SOUND_MODE, SUPPORT_SHUFFLE_SET, SUPPORT_SEEK, SUPPORT_VOLUME_STEP)
+from homeassistant.const import (
+    CONF_NAME, STATE_IDLE, STATE_PAUSED, STATE_PLAYING, STATE_OFF, STATE_UNAVAILABLE, EVENT_HOMEASSISTANT_STOP)
+import homeassistant.helpers.config_validation as cv
+import homeassistant.util.dt as dt_util
+from homeassistant.helpers import discovery, device_registry as dr
 
 _LOGGER = logging.getLogger(__name__)
 ############## 日志记录
@@ -47,17 +59,6 @@ def _log_info(*arg):
     _LOGGER.info(*arg)
 
 ###################媒体播放器##########################
-from homeassistant.components.media_player import (
-    MediaPlayerDevice, PLATFORM_SCHEMA)
-from homeassistant.components.media_player.const import (
-    MEDIA_TYPE_MUSIC,MEDIA_TYPE_URL, SUPPORT_PAUSE, SUPPORT_PLAY, SUPPORT_NEXT_TRACK, SUPPORT_PREVIOUS_TRACK, SUPPORT_TURN_ON, SUPPORT_TURN_OFF,
-    SUPPORT_PLAY_MEDIA, SUPPORT_STOP, SUPPORT_VOLUME_MUTE, SUPPORT_VOLUME_SET, SUPPORT_SELECT_SOURCE, SUPPORT_CLEAR_PLAYLIST, SUPPORT_STOP, 
-    SUPPORT_SELECT_SOUND_MODE, SUPPORT_SHUFFLE_SET, SUPPORT_SEEK, SUPPORT_VOLUME_STEP)
-from homeassistant.const import (
-    CONF_NAME, STATE_IDLE, STATE_PAUSED, STATE_PLAYING, STATE_OFF, STATE_UNAVAILABLE)
-import homeassistant.helpers.config_validation as cv
-import homeassistant.util.dt as dt_util
-from homeassistant.helpers import discovery, device_registry as dr
 
 SUPPORT_VLC = SUPPORT_PAUSE | SUPPORT_VOLUME_SET | SUPPORT_VOLUME_MUTE | SUPPORT_STOP | SUPPORT_SELECT_SOUND_MODE | SUPPORT_TURN_ON | SUPPORT_TURN_OFF | \
     SUPPORT_PLAY_MEDIA | SUPPORT_PLAY | SUPPORT_STOP | SUPPORT_NEXT_TRACK | SUPPORT_PREVIOUS_TRACK | SUPPORT_SELECT_SOURCE | SUPPORT_CLEAR_PLAYLIST | \
@@ -1557,8 +1558,6 @@ def run_frpc(hass, frpc_path):
       return False
 
   hass.data['tunnel2local'] = process
-
-  _LOGGER.info("tunnel2local started, hass can be visited from internet - %s", url)
 
   def probe_frpc(now):
       if(process.returncode):
