@@ -10,7 +10,8 @@ import re
 import urllib.parse
 import uuid
 import math
-import base64 
+import base64
+import asyncio
 
 # ----------邮件相关---------- #
 from email import encoders
@@ -25,8 +26,8 @@ def _format_addr(s):
 # ----------邮件相关---------- #
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers import config_validation as cv, intent
-from homeassistant.helpers.event import track_time_interval
-from homeassistant.components import weblink
+from homeassistant.helpers.event import track_time_interval, async_call_later
+from homeassistant.components.weblink import Link
 from homeassistant.components.http import HomeAssistantView
 import aiohttp
 from aiohttp import web
@@ -75,7 +76,7 @@ API_KEY_LIST = {}
 API_KEY = str(uuid.uuid4())
 
 
-VERSION = '2.1.7.2'
+VERSION = '2.1.7.3'
 DOMAIN = 'ha_cloud_music'
 
 HASS = None
@@ -247,6 +248,8 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
     vol.Optional("base_url", default=""): cv.string,
     # 启用百度地图
     vol.Optional("map_ak", default=""): cv.string,
+    # frpc目录
+    vol.Optional("frpc", default=""): cv.string,
 })
 
 def setup_platform(hass, config, add_entities, discovery_info=None):
@@ -287,6 +290,7 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
     _show_mode = config.get("show_mode")
     _uid = config.get("uid")
     _map_ak = config.get("map_ak")
+    _frpc = config.get("frpc")
     mp.tts_config['before_message'] = config.get("tts_before_message")
     mp.tts_config['after_message'] = config.get("tts_after_message")
     mp.mail['qq'] = config.get("mail_qq")
@@ -378,10 +382,16 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
         _encryption = str(encodestr,'utf-8')
         #_log_info('加密信息')
         #_log_info(_encryption)
-        weblink.setup(hass,{'weblink': {
-                'entities': [{'name': '云音乐语音服务', 'url': 'https://api.jiluxinqing.com/ha/voice.html?key=' + _encryption, 'icon': 'mdi:microphone'}]
-            }
-        })
+        Link(hass, "云音乐语音服务", 'https://api.jiluxinqing.com/ha/voice.html?key=' + _encryption, "mdi:microphone")
+    
+    # 添加frp服务
+    if _frpc != '':
+      _log_info("添加frp服务")
+      loop =  asyncio.new_event_loop()
+      asyncio.set_event_loop(loop)
+      loop.run_until_complete(run_frpc(hass, _frpc))
+      loop.close()
+    
     return True   
     
 ###################媒体播放器##########################
@@ -1534,3 +1544,41 @@ async def play_list_hotsong(hass, djName):
             
     else:
         return None
+
+# ---------------------- 运行命令 ---------------------- #
+@asyncio.coroutine
+def run_frpc(hass, frpc_path):
+  _log_info('加载frpc目录：' + frpc_path)
+  try:
+      command = [frpc_path + 'frpc', '-c', frpc_path + 'frpc.ini']
+      process = yield from run_cmd(command)
+  except:
+      _LOGGER.error("不能启动服务 %s", command[0])
+      return False
+
+  hass.data['tunnel2local'] = process
+
+  _LOGGER.info("tunnel2local started, hass can be visited from internet - %s", url)
+
+  def probe_frpc(now):
+      if(process.returncode):
+          _LOGGER.error("frpc exited, returncode: %d", process.returncode )
+      else:
+          _LOGGER.info("frpc pid: %d", process.pid )
+
+  async_call_later(hass, 60, probe_frpc)
+
+  def stop_frpc(event: Event):
+      """Stop frpc process."""
+      hass.data['tunnel2local'].terminate()
+
+  hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STOP, stop_frpc)
+
+@asyncio.coroutine
+def run_cmd(command):
+    _LOGGER.info(command)
+
+    p = yield from asyncio.create_subprocess_exec(*command, stdout=asyncio.subprocess.PIPE,
+                         stderr=asyncio.subprocess.PIPE,
+                         stdin=asyncio.subprocess.PIPE)
+    return p
