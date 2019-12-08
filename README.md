@@ -35,6 +35,7 @@ media_player:
 
 ```
 
+[配置文档](./docs/ "配置文档")
 ```
 
 # 可选配置
@@ -58,7 +59,7 @@ media_player:
     show_mode: fullscreen
     uid: 47445304
     tts_before_message: '主人：'
-    tts_after_message: '。我是爱你的小喵',
+    tts_after_message: '。我是爱你的小喵'
     mail_qq: QQ号码（会自动加上@qq.com）
     mail_code: QQ邮箱授权码
     base_url: 外网地址（在邮件里点操作时与HA通信需要使用）
@@ -150,6 +151,11 @@ PC端界面自我感觉还行， 就是移动端界面总觉得怪怪的，奈�
 ![移动端二](./screenshots/8.jpg)
 
 ## 更新说明
+
+### V2.1.7.3
+- 加入cors_allowed配置，需要先在http配置跨域，语音发送访问更快
+- 加入frpc配置，完全使用官方自定义配置格式
+- 代码优化，按配置加载功能
 
 ### V2.1.7.2
 - 支持播放电台xxxx

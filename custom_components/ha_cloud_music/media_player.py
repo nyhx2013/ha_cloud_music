@@ -238,7 +238,7 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
     # 显示模式 全屏：fullscreen
     vol.Optional("show_mode", default="default"): cv.string,
     # 网易云音乐接口地址
-    vol.Required("api_url"): cv.string,
+    vol.Optional("api_url", default=''): cv.string,
     vol.Optional("api_key", default=''): cv.string,
     # TTS相关配置
     vol.Optional("tts_before_message", default=""): cv.string,
@@ -247,6 +247,8 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
     vol.Optional("mail_qq", default=""): cv.string,
     vol.Optional("mail_code", default=""): cv.string,
     vol.Optional("base_url", default=""): cv.string,
+    # 是否在http配置里设置了允许跨域
+    vol.Optional("cors_allowed", default=False): cv.boolean,
     # 启用百度地图
     vol.Optional("map_ak", default=""): cv.string,
     # frpc目录
@@ -254,30 +256,45 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
 })
 
 def setup_platform(hass, config, add_entities, discovery_info=None):
-    """Set up the vlc platform."""
-  
+    """ 配置文件 """
+    _sidebar_title = config.get("sidebar_title")
+    _sidebar_icon = config.get("sidebar_icon")
+    _uid = config.get("uid")
+    _show_mode = config.get("show_mode")
+    _api_url = config.get("api_url")
+    _api_key = config.get("api_key")
+    _tts_before_message = config.get("tts_before_message")
+    _tts_after_message = config.get("tts_after_message")
+    _mail_qq = config.get("mail_qq")
+    _mail_code = config.get("mail_code")
+    _base_url = config.get("base_url")
+    _cors_allowed = config.get('cors_allowed')
+    _map_ak = config.get("map_ak")
+    _frpc = config.get("frpc")
+
     global HASS
     HASS = hass
+    # 设置API地址
+    global API_URL
+    API_URL = _api_url
+    # 验证api_key是否设置为uuid格式（为了安全，必须要这么做）
+    global API_KEY
+    if _api_key != '' and re.match('\w{8}(-\w{4}){3}-\w{12}', _api_key):
+        _log_info('使用自定义api_key：' + _api_key)
+        API_KEY = _api_key
     # 注册静态目录
     local = hass.config.path("custom_components/ha_cloud_music")
     if os.path.isdir(local):
         hass.http.register_static_path('/'+ DOMAIN + '/' + VERSION, local, False)
     
     hass.http.register_view(HassGateView)
+    # 播放器实例
     mp = MediaPlayer(hass)
-    add_entities([mp])
-    
-    
-    # 设置API地址
-    global API_URL
-    API_URL = config.get("api_url")
-
-    # 验证api_key是否设置为uuid格式（为了安全，必须要这么做）
-    _api_key = config.get("api_key")
-    global API_KEY
-    if _api_key != '' and re.match('\w{8}(-\w{4}){3}-\w{12}', _api_key):
-        _log_info('使用自定义api_key：' + _api_key)
-        API_KEY = _api_key
+    mp.tts_config['before_message'] = _tts_before_message
+    mp.tts_config['after_message'] = _tts_after_message
+    mp.mail['qq'] = _mail_qq
+    mp.mail['code'] = _mail_code
+    mp.base_url = _base_url
 
     # 判断是否支持VLC
     supported_vlc_tips = '不支持'
@@ -285,23 +302,80 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
     if mp.supported_vlc == True:
         _is_vlc = '1'
         supported_vlc_tips = '支持'
- 
-    _sidebar_title = config.get("sidebar_title")
-    _sidebar_icon = config.get("sidebar_icon")
-    _show_mode = config.get("show_mode")
-    _uid = config.get("uid")
-    _map_ak = config.get("map_ak")
-    _frpc = config.get("frpc")
-    mp.tts_config['before_message'] = config.get("tts_before_message")
-    mp.tts_config['after_message'] = config.get("tts_after_message")
-    mp.mail['qq'] = config.get("mail_qq")
-    mp.mail['code'] = config.get("mail_code")
-    mp.base_url = config.get("base_url")
-    
+    # 显示模式
     _show_mode_str = "正常模式"
     if _show_mode == 'fullscreen':
         _show_mode_str = "全屏模式"
+
+    # 注册服务【notify】
+    if _mail_qq != '' and _mail_code != '':
+        hass.services.register(DOMAIN, 'notify', mp.notify)
     
+    # 事件循环
+
+    # 添加云音乐
+    if _api_url != '':
+        # 添加实体
+        add_entities([mp])
+        # 注册服务【加载歌单】
+        hass.services.register(DOMAIN, 'load', mp.load_songlist)
+        # 注册服务【设置播放模式】
+        hass.services.register(DOMAIN, 'play_mode', mp.play_mode)
+        # 注册服务【tts】
+        if mp.supported_vlc == True:
+            hass.services.register(DOMAIN, 'tts', mp.tts)
+
+        # 添加状态卡片
+        hass.components.frontend.add_extra_js_url(hass, '/'+ DOMAIN + '/' + VERSION + '/dist/data/more-info-ha_cloud_music.js')
+        hass.components.frontend.add_extra_js_url(hass, '/'+ DOMAIN + '/' + VERSION + '/dist/data/more-info-ha_cloud_music-kodi.js')    
+        
+        _log_info("添加云音乐")
+        hass.components.frontend.async_register_built_in_panel(
+            "iframe",
+            _sidebar_title,
+            _sidebar_icon,
+            DOMAIN,
+            {"url": "/" + DOMAIN+"/" + VERSION + "/dist/index.html?ver=" + VERSION 
+            + "&show_mode=" + _show_mode
+            + "&api_key=" + API_KEY
+            + "&ak=" + _map_ak
+            + "&uid=" + _uid
+            + "&vlc=" + _is_vlc},
+            require_admin=True
+        )
+
+    # 添加百度地图
+    if _map_ak != '':
+        _log_info("添加百度地图")
+        hass.components.frontend.add_extra_js_url(hass, '/'+ DOMAIN + '/' + VERSION + '/dist/data/ha-panel-baidu-map.js')
+        hass.components.frontend.async_register_built_in_panel(
+            "baidu-map",
+            "百度地图",
+            "mdi:map-marker-radius",
+            frontend_url_path=None,
+            config={"ak": _map_ak},
+            require_admin=True
+        )
+
+    # 添加语音服务
+    if _base_url != '':
+        _log_info("添加语音服务")
+        _plaintext = json.dumps({'host': _base_url.strip('/'), 'key': API_KEY, 'cors_allowed': _cors_allowed})
+        encodestr = base64.b64encode(_plaintext.encode('utf-8'))
+        _encryption = str(encodestr,'utf-8')
+        #_log_info('加密信息')
+        #_log_info(_encryption)
+        Link(hass, "云音乐语音服务", 'https://api.jiluxinqing.com/ha/voice.html?key=' + _encryption, "mdi:microphone")
+    
+    # 添加frp服务
+    if _frpc != '':
+        _log_info("添加frp服务")        
+        loop =  asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        loop.run_until_complete(run_frpc(hass, _frpc))
+        loop.close()
+    
+    # 显示插件信息
     _LOGGER.info('''
 -------------------------------------------------------------------
     ha_cloud_music云音乐插件【作者QQ：635147515】
@@ -328,71 +402,7 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
         
         用户ID：''' + _uid + '''
 
--------------------------------------------------------------------''')      
-
-    # 注册服务【加载歌单】
-    hass.services.register(DOMAIN, 'load', mp.load_songlist)
-    # 注册服务【设置播放模式】
-    hass.services.register(DOMAIN, 'play_mode', mp.play_mode)
-    # 注册服务【tts】
-    if mp.supported_vlc == True:
-        hass.services.register(DOMAIN, 'tts', mp.tts)
-    # 注册服务【notify】
-    if mp.mail['qq'] != '' and mp.mail['code'] != '':
-        hass.services.register(DOMAIN, 'notify', mp.notify)
-
-    # 添加状态卡片
-    hass.components.frontend.add_extra_js_url(hass, '/'+ DOMAIN + '/' + VERSION + '/dist/data/more-info-ha_cloud_music.js')
-    hass.components.frontend.add_extra_js_url(hass, '/'+ DOMAIN + '/' + VERSION + '/dist/data/more-info-ha_cloud_music-kodi.js')    
-    # 添加到侧边栏
-    coroutine = hass.components.frontend.async_register_built_in_panel(
-        "iframe",
-        _sidebar_title,
-        _sidebar_icon,
-        DOMAIN,
-        {"url": "/" + DOMAIN+"/" + VERSION + "/dist/index.html?ver=" + VERSION 
-        + "&show_mode=" + _show_mode
-        + "&api_key=" + API_KEY
-        + "&ak=" + _map_ak
-        + "&uid=" + _uid
-        + "&vlc=" + _is_vlc},
-        require_admin=True,
-    )
-    try:
-        if coroutine != None:
-            coroutine.send(None)
-    except StopIteration:
-        pass
-
-    # 添加百度地图
-    if _map_ak != '':
-        hass.components.frontend.add_extra_js_url(hass, '/'+ DOMAIN + '/' + VERSION + '/dist/data/ha-panel-baidu-map.js')
-        hass.components.frontend.async_register_built_in_panel(
-            "baidu-map",
-            "百度地图",
-            "mdi:map-marker-radius",
-            frontend_url_path=None,
-            config={"ak": _map_ak},
-            require_admin=True,
-        )
-
-    # 添加语音服务
-    if mp.base_url != '':
-        _plaintext = '{"host": "' + mp.base_url.strip('/') + '", "key": "' + API_KEY + '"}'
-        encodestr = base64.b64encode(_plaintext.encode('utf-8'))
-        _encryption = str(encodestr,'utf-8')
-        #_log_info('加密信息')
-        #_log_info(_encryption)
-        Link(hass, "云音乐语音服务", 'https://api.jiluxinqing.com/ha/voice.html?key=' + _encryption, "mdi:microphone")
-    
-    # 添加frp服务
-    if _frpc != '':
-      _log_info("添加frp服务")
-      loop =  asyncio.new_event_loop()
-      asyncio.set_event_loop(loop)
-      loop.run_until_complete(run_frpc(hass, _frpc))
-      loop.close()
-    
+-------------------------------------------------------------------''')
     return True   
     
 ###################媒体播放器##########################
