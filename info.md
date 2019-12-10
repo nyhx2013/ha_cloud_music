@@ -1,44 +1,22 @@
-在configuration.yaml中配置以下内容
 
-```
-media_player:
-  - platform: ha_cloud_music
-    api_url: 接口请求地址（必填项）
 
-```
-
-```
-
-# 可选配置
-# api_url: 接口请求地址（必填项）
-# sidebar_title: 侧边栏名称
-# sidebar_icon: 侧边栏图标
-# show_mode: 显示模式（全屏显示: fullscreen）
-# uid: 网易云音乐的用户ID
-# tts_before_message: tts服务前置消息（可选）
-# tts_after_message: tts服务后置消息（可选）
-# mail_qq: QQ号码（可选）
-# mail_code: QQ邮箱授权码（可选）
-# base_url: 当前外网的地址[http://xxx.com:8123]（在使用消息提醒，功能操作时必填）
-# map_ak: 百度地图AK密钥（可选）
-
-media_player:
-  - platform: ha_cloud_music
-    api_url: 'http://localhost:3000',
-    sidebar_title: 云音乐
-    sidebar_icon: mdi:music
-    show_mode: fullscreen
-    uid: 47445304
-    tts_before_message: '主人：'
-    tts_after_message: '。我是爱你的小喵',
-    mail_qq: QQ号码（会自动加上@qq.com）
-    mail_code: QQ邮箱授权码
-    base_url: 外网地址（在邮件里点操作时与HA通信需要使用）
-    map_ak: 百度地图AK密钥（配置后启用百度地图）
-
-```
+[完整配置文档](https://github.com/shaonianzhentan/ha_cloud_music/tree/master/docs "完整配置文档")
 
 ## 更新说明
+
+### V2.1.7.3
+- 加入cors_allowed配置，需要先在http配置跨域，语音发送访问更快
+- 加入frpc配置，完全使用官方自定义配置格式
+- 代码优化，按配置加载功能
+
+### V2.1.7.2
+- 支持播放电台xxxx
+- 支持播放歌单xxxx
+
+### V2.1.7.1
+- 解决语音不能关灯的问题
+- 支持我想听XXX的歌
+- 修复一些问题
 
 ### V2.1.7
 - 加入语音控制功能
@@ -46,16 +24,6 @@ media_player:
 - 加入语音服务weblink组件
 - 完善语音操作界面
 - 修复全屏模式还能看到导航栏的问题
-
-### V2.1.6.3
-- 修复百度地图的一些问题
-
-### V2.1.6.2
-- 解决地图无法显示更多区域的问题
-- 解决地图头像展示的问题
-
-### V2.1.6.1
-- 解决百度地图在https下无法加载的问题
 
 ### V2.1.6
 - 优化代码
