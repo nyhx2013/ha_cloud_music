@@ -73,11 +73,12 @@ HEADERS = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/
 # 接口请求地址
 API_URL = ""
 API_KEY_LIST = {}
-
 API_KEY = str(uuid.uuid4())
+# 语音密钥
+API_VOICE_KEY = ""
 
 
-VERSION = '2.1.7.3'
+VERSION = '2.1.7.4'
 DOMAIN = 'ha_cloud_music'
 
 HASS = None
@@ -94,10 +95,11 @@ class HassGateView(HomeAssistantView):
         _raw_path = request.rel_url.raw_path
         # _log_info(request.rel_url)
         if _raw_path == self.url:
-            # 提示地址
-            _tips_location = '/'+ DOMAIN + '/' + VERSION + '/dist/tips.html?msg='
+            # 邮箱操作
             if 'key' in request.query:
                 _key = request.query['key']
+                # 提示地址
+                _tips_location = '/'+ DOMAIN + '/' + VERSION + '/dist/tips.html?msg='
                 global API_KEY_LIST
                 if _key in API_KEY_LIST:
                     # 如果Key超过一天，则提示过期
@@ -116,6 +118,12 @@ class HassGateView(HomeAssistantView):
                         return web.HTTPFound(location= _tips_location + '通信密钥已过期')
                 else:
                     return web.HTTPFound(location= _tips_location + '该操作【已执行】或者【已过期】')
+            # 重定向语音地址
+            elif 'api_key' in request.query:
+                _api_key = request.query['api_key']
+                _type = request.query['type']
+                if _api_key == API_KEY and _type == 'voice':
+                    return web.HTTPFound(location=('https://api.jiluxinqing.com/ha/voice.html?key=' + API_VOICE_KEY))
             #a = urllib.parse.unquote(_api)
 
         _path = os.path.dirname(__file__) + _raw_path.replace('/'+ DOMAIN + '/' + VERSION,'')        
@@ -363,9 +371,12 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
         _plaintext = json.dumps({'host': _base_url.strip('/'), 'key': API_KEY, 'cors_allowed': _cors_allowed})
         encodestr = base64.b64encode(_plaintext.encode('utf-8'))
         _encryption = str(encodestr,'utf-8')
+        global API_VOICE_KEY
+        API_VOICE_KEY = _encryption
+        
         #_log_info('加密信息')
         #_log_info(_encryption)
-        Link(hass, "云音乐语音服务", 'https://api.jiluxinqing.com/ha/voice.html?key=' + _encryption, "mdi:microphone")
+        Link(hass, "云音乐语音服务", '/ha_cloud_music-api?type=voice&api_key=' + API_KEY, "mdi:microphone")
     
     # 添加frp服务
     if _frpc != '':
