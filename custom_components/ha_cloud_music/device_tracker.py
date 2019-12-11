@@ -1,5 +1,9 @@
 """ 
 
+这个插件会把HA搞的卡死，千万别用
+这个插件会把HA搞的卡死，千万别用
+这个插件会把HA搞的卡死，千万别用
+
 安装对应依赖
 sudo apt-get install bluetooth libbluetooth-dev pkg-config libboost-python-dev libboost-thread-dev libglib2.0-dev python-dev
 安装python插件
@@ -35,8 +39,6 @@ DOMAIN = 'ha_cloud_music'
 BT_PREFIX = "HA_BT_"
 CONF_MAC = 'mac'
 
-IS_SCANING = False
-
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
     {
         vol.Optional(CONF_MAC): cv.string,
@@ -56,29 +58,22 @@ async def async_setup_scanner(
     mac = config.get(CONF_MAC)
     # 定义扫描器    
     async def scanner(now=None):
-        _LOGGER.info('重新扫描')
-        global IS_SCANING
-        if IS_SCANING == False:
-            IS_SCANING = True
-            _LOGGER.info('开始扫描：'+ now_format_time())
-            name = bluetooth.lookup_name(mac.upper())
-            _LOGGER.info('扫描完成：'+ now_format_time())
-            _LOGGER.info(name)
-            if name != None:
-                attributes = {
-                    "mac": mac,
-                    "device_name": name,
-                    "scan_time": now_format_time()
-                }
-                await async_see(
-                    mac=f"{BT_PREFIX}{mac}",
-                    host_name=name,
-                    attributes=attributes,
-                    source_type='ha_cloud_music',
-                )
-                IS_SCANING = False
-            else:
-                IS_SCANING = False
+        _LOGGER.debug('开始扫描：'+ now_format_time())
+        name = bluetooth.lookup_name(mac.upper())
+        _LOGGER.debug('扫描完成：'+ now_format_time())
+        _LOGGER.debug(name)
+        if name != None:
+            attributes = {
+                "mac": mac,
+                "device_name": name,
+                "scan_time": now_format_time()
+            }
+            await async_see(
+                mac=f"{BT_PREFIX}{mac}",
+                host_name=name,
+                attributes=attributes,
+                source_type='ha_cloud_music',
+            )
     # 设置定时器
     hass.async_create_task(scanner())
     async_track_time_interval(hass, scanner, interval)
