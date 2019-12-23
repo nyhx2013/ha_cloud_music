@@ -78,7 +78,7 @@ API_KEY = str(uuid.uuid4())
 API_VOICE_KEY = ""
 
 
-VERSION = '2.1.7.4'
+VERSION = '2.1.7.5'
 DOMAIN = 'ha_cloud_music'
 
 HASS = None
@@ -861,8 +861,8 @@ class MediaPlayer(MediaPlayerDevice):
             if 'media_type' in music_info and music_info['media_type'] == 'video':
                 play_type = "video"
             # 如果没有url则下一曲（如果超过3个错误，则停止）
-            # 如果是云音乐播放列表 并且格式不是mp3，则下一曲
-            elif url == None or (media_type == 'music_load' and url.find(".mp3") < 0):
+            # 如果是云音乐播放列表 并且格式不是mp3不是m4a，则下一曲
+            elif url == None or (media_type == 'music_load' and url.find(".mp3") < 0 and url.find('.m4a') < 0):
                self.notification("没有找到【" + self._media_name + "】的播放链接，自动为您跳到下一首", "load_song_url")
                self.error_count = self.error_count + 1
                if self.error_count < 3:
@@ -1209,19 +1209,20 @@ class MediaPlayer(MediaPlayerDevice):
                     self.notification("没有找到id为【"+_id+"】的电台信息", "load_songlist")
             elif _type == 'ximalaya':
                 _log_info("加载喜马拉雅专辑列表，ID：%s", _id)
-                # 取余
-                list_index = list_index % 50
-                
-                _list = ximalaya_playlist(_id, list_index + 1, 50)    
+                # 播放第几条音乐
+                music_index = list_index % 50
+                # 获取第几页
+                list_index =  math.floor(list_index / 50) + 1
+                _list = ximalaya_playlist(_id, list_index, 50)
                 if len(_list) > 0:
-                    self.music_index = list_index
+                    self.music_index = music_index
                     self.play_media('music_playlist', _list)
                     self.notification("正在播放专辑【" + _list[0]['album'] + "】", "load_songlist")
                 else:
                     self.notification("没有找到id为【"+_id+"】的专辑信息", "load_songlist")
                     
         except Exception as e:
-            print(e)
+            _log_info(e)
             self.notification("加载歌单的时候出现了异常", "load_songlist")
         finally:
             # 这里重置    
@@ -1441,6 +1442,7 @@ def djradio_playlist(id, offset, size):
     obj = res.json()
     if obj['code'] == 200:
         _list = obj['programs']
+        _totalCount = obj['count']
         _newlist = map(lambda item: {
             "id": int(item['mainSong']['id']),
             "name": item['name'],
@@ -1448,6 +1450,12 @@ def djradio_playlist(id, offset, size):
             "image": item['coverUrl'],
             "duration": int(item['mainSong']['duration']) / 1000,
             "song": item['name'],
+            "load":{
+                'id': id,
+                'type': 'djradio',
+                'index': offset,
+                'total': _totalCount
+            },
             "type": "djradio",
             "singer": item['dj']['nickname']
             }, _list)            
@@ -1462,6 +1470,7 @@ def ximalaya_playlist(id, index, size):
     obj = res.json()
     if obj['ret'] == 0:
         _list = obj['data']['list']
+        _totalCount = obj['data']['totalCount']
         if len(_list) > 0:
             # 获取专辑名称
             _res = requests.get('http://mobile.ximalaya.com/v1/track/baseInfo?device=android&trackId='+str(_list[0]['trackId']))
@@ -1474,6 +1483,12 @@ def ximalaya_playlist(id, index, size):
                 "image": item['coverLarge'],
                 "duration": item['duration'],
                 "song": item['title'],
+                "load":{
+                    'id': id,
+                    'type': 'ximalaya',
+                    'index': index,
+                    'total': _totalCount
+                },
                 "type": "url",
                 "url": item['playUrl64'],
                 "singer": item['nickname']

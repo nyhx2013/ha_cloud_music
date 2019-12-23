@@ -201,13 +201,13 @@ class IsHolidaySensor(BinarySensorDevice):
 
     async def async_update(self):
         """判断是否节假日，获取当天详细信息."""
-        if self._today != self.today:
-            now = time.time()
-            self.get_details(now)
-            # 重置假日名称
-            self._holiday_name = None
-            self._state = self.is_holiday(now)            
-            self._today = self.today
+        # if self._today != self.today:
+        now = time.time()
+        self.get_details(now)
+        # 重置假日名称
+        self._holiday_name = None
+        self._state = self.is_holiday(now)            
+        self._today = self.today
 
 # --------------字符串转JSON-----------------------
 def skip_ws(txt, pos):
