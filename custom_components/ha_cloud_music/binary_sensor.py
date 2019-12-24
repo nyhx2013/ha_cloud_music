@@ -3,7 +3,7 @@
 
 配置
 binary_sensor:
-  - platform: holiday
+  - platform: ha_cloud_music
 
 """
 import logging

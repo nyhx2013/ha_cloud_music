@@ -36,3 +36,25 @@ media_player:
     frpc: '/home/pi/frp/'
 
 ```
+
+## 节假日
+
+```
+
+binary_sensor:
+  - platform: ha_cloud_music
+
+```
+
+## 文字转语音插件
+
+```
+# 文字转语音插件
+# 注意：加在message之后加两个“。哦”可以解决vlc播放不完整的问题
+# before_message: 添加在message之前的文字
+# after_message: 添加在message之后的文字
+tts:
+  - platform: ha_cloud_music
+    before_message: '主人：'
+    after_message: '。我是爱你的小喵'
+```

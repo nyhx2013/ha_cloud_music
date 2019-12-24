@@ -78,7 +78,7 @@ API_KEY = str(uuid.uuid4())
 API_VOICE_KEY = ""
 
 
-VERSION = '2.1.7.5'
+VERSION = '2.1.7.6'
 DOMAIN = 'ha_cloud_music'
 
 HASS = None
