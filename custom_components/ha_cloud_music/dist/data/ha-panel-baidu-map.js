@@ -264,7 +264,7 @@ class HaPanelBaiduMap extends HTMLElement {
         keys.forEach(key => {
             let stateObj = states[key]
             let attr = stateObj.attributes
-            if ('longitude' in attr && 'latitude' in attr) {
+            if (!('hidden' in attr) && 'longitude' in attr && 'latitude' in attr) {
                 this.deviceList.push({
                     id: key,
                     name: attr.friendly_name,
