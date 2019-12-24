@@ -140,7 +140,7 @@ class HaPanelBaiduMap extends HTMLElement {
                 let stateObj = states[key]
                 let attr = stateObj.attributes
                 // 如果有经纬度，并且不在家，则标记
-                if ('longitude' in attr && 'latitude' in attr) {
+                if (!attr['passive'] && 'longitude' in attr && 'latitude' in attr) {
                     let res = await this.translate({ longitude: attr.longitude, latitude: attr.latitude })
                     let point = res[0]
                     // 添加圆形区域
@@ -216,7 +216,7 @@ class HaPanelBaiduMap extends HTMLElement {
                 let stateObj = states[key]
                 let attr = stateObj.attributes
                 // 如果有经纬度，并且不在家，则标记
-                if ('longitude' in attr && 'latitude' in attr && stateObj.state != 'home') {
+                if (!attr['hidden'] && 'longitude' in attr && 'latitude' in attr && stateObj.state != 'home') {
                     let res = await this.translate({ longitude: attr.longitude, latitude: attr.latitude })
                     let point = res[0]
                     this.addEntityMarker(point, { 
@@ -264,7 +264,7 @@ class HaPanelBaiduMap extends HTMLElement {
         keys.forEach(key => {
             let stateObj = states[key]
             let attr = stateObj.attributes
-            if (!('hidden' in attr) && 'longitude' in attr && 'latitude' in attr) {
+            if ('longitude' in attr && 'latitude' in attr) {
                 this.deviceList.push({
                     id: key,
                     name: attr.friendly_name,
