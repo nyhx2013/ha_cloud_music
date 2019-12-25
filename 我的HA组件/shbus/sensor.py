@@ -59,7 +59,7 @@ _LOGGER = logging.getLogger(__name__)
 TIME_BETWEEN_UPDATES = timedelta(seconds=600)
 
 DOMAIN = 'shbus'
-VERSION = '1.0'
+VERSION = '1.1'
 
 CONF_DIRECTION = "direction"
 CONF_STOP_ID = "stop_id"
@@ -151,7 +151,7 @@ class ShBus(Entity):
  
     def __init__(self, name, hass, bus, stops, stop_id, stop_name):
         """初始化."""
-        self._object_id = name
+        self._object_id = name + '_' + stop_name
         self._friendly_name = name
         self._icon = "mdi:bus"
         self._unit_of_measurement = "分钟" 
