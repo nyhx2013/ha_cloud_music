@@ -78,7 +78,7 @@ API_KEY = str(uuid.uuid4())
 API_VOICE_KEY = ""
 
 
-VERSION = '2.1.7.6'
+VERSION = '2.1.7.7'
 DOMAIN = 'ha_cloud_music'
 
 HASS = None
@@ -259,8 +259,6 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
     vol.Optional("cors_allowed", default=False): cv.boolean,
     # 启用百度地图
     vol.Optional("map_ak", default=""): cv.string,
-    # frpc目录
-    vol.Optional("frpc", default=""): cv.string,
 })
 
 def setup_platform(hass, config, add_entities, discovery_info=None):
@@ -278,7 +276,6 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
     _base_url = config.get("base_url")
     _cors_allowed = config.get('cors_allowed')
     _map_ak = config.get("map_ak")
-    _frpc = config.get("frpc")
 
     global HASS
     HASS = hass
@@ -377,15 +374,7 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
         #_log_info('加密信息')
         #_log_info(_encryption)
         Link(hass, "云音乐语音服务", '/ha_cloud_music-api?type=voice&api_key=' + API_KEY, "mdi:microphone")
-    
-    # 添加frp服务
-    if _frpc != '':
-        _log_info("添加frp服务")        
-        loop =  asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        loop.run_until_complete(run_frpc(hass, _frpc))
-        loop.close()
-    
+        
     # 显示插件信息
     _LOGGER.info('''
 -------------------------------------------------------------------
@@ -1581,39 +1570,3 @@ async def play_list_hotsong(hass, djName):
             
     else:
         return None
-
-# ---------------------- 运行命令 ---------------------- #
-@asyncio.coroutine
-def run_frpc(hass, frpc_path):
-  _log_info('加载frpc目录：' + frpc_path)
-  try:
-      command = [frpc_path + 'frpc', '-c', frpc_path + 'frpc.ini']
-      process = yield from run_cmd(command)
-  except:
-      _LOGGER.error("不能启动服务 %s", command[0])
-      return False
-
-  hass.data['tunnel2local'] = process
-
-  def probe_frpc(now):
-      if(process.returncode):
-          _LOGGER.error("frpc exited, returncode: %d", process.returncode )
-      else:
-          _LOGGER.info("frpc pid: %d", process.pid )
-
-  async_call_later(hass, 60, probe_frpc)
-
-  def stop_frpc(event: Event):
-      """Stop frpc process."""
-      hass.data['tunnel2local'].terminate()
-
-  hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STOP, stop_frpc)
-
-@asyncio.coroutine
-def run_cmd(command):
-    _LOGGER.info(command)
-
-    p = yield from asyncio.create_subprocess_exec(*command, stdout=asyncio.subprocess.PIPE,
-                         stderr=asyncio.subprocess.PIPE,
-                         stdin=asyncio.subprocess.PIPE)
-    return p
