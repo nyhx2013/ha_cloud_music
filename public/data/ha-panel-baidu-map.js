@@ -6,7 +6,7 @@ class HaPanelBaiduMap extends HTMLElement {
         div.innerHTML = `
             <app-toolbar>
             </app-toolbar>
-            <div id="baidu-map"></dvi>
+            <div id="baidu-map"></div>
         `
 
         shadow.appendChild(div)
