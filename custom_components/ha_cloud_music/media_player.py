@@ -74,8 +74,6 @@ HEADERS = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/
 API_URL = ""
 API_KEY_LIST = {}
 API_KEY = str(uuid.uuid4())
-# 语音密钥
-API_VOICE_KEY = ""
 
 
 VERSION = '2.1.7.7'
@@ -118,12 +116,6 @@ class HassGateView(HomeAssistantView):
                         return web.HTTPFound(location= _tips_location + '通信密钥已过期')
                 else:
                     return web.HTTPFound(location= _tips_location + '该操作【已执行】或者【已过期】')
-            # 重定向语音地址
-            elif 'api_key' in request.query:
-                _api_key = request.query['api_key']
-                _type = request.query['type']
-                if _api_key == API_KEY and _type == 'voice':
-                    return web.HTTPFound(location=('https://api.jiluxinqing.com/ha/voice.html?key=' + API_VOICE_KEY))
             #a = urllib.parse.unquote(_api)
 
         _path = os.path.dirname(__file__) + _raw_path.replace('/'+ DOMAIN + '/' + VERSION,'')        
@@ -144,94 +136,6 @@ class HassGateView(HomeAssistantView):
                         async with aiohttp.request('GET',API_URL + _api) as r:
                             _result = await r.json(encoding="utf-8")
                             return self.json(_result)
-                    elif _type == 'text':
-                        # 这里进行文本解析
-                        _text = response['text'].strip('。')
-                        # 我想听xxx的歌
-                        pattern = re.compile(r"我想听(.+)的歌")
-                        singer = pattern.findall(_text)
-                        if len(singer) == 1:
-                            # 正在播放xxx的歌
-                            singerName = singer[0]
-                            _result_text = '正在播放'+ singerName +'的歌'
-                            await hass.services.async_call('media_player', 'play_media', {
-                                    'entity_id': 'media_player.ha_cloud_music',
-                                    'media_content_id': "https://api.jiluxinqing.com/api/service/tts?text="+ quote(_result_text),
-                                    'media_content_type': 'music'
-                                }, blocking=True)
-                            # 开始搜索当前歌手的热门歌曲
-                            await play_singer_hotsong(hass, singerName)
-                            return self.json({'code': 0, 'msg': _result_text})
-                        # 播放电台 xxxx
-                        if '播放电台' in _text:
-                            _name = _text.split('播放电台')[1]
-                            await play_dj_hotsong(hass, _name)
-                            return self.json({'code': 0, 'msg': '正在' + _text})
-                        # 播放歌单 xxxx
-                        if '播放歌单' in _text:
-                            _name = _text.split('播放歌单')[1]
-                            await play_list_hotsong(hass, _name)
-                            return self.json({'code': 0, 'msg': '正在' + _text})
-
-                        # 音乐控制解析
-                        if '下一曲' in _text or '下一首' in _text:
-                            await hass.services.async_call('media_player', 'media_next_track', {'entity_id': 'media_player.ha_cloud_music'})
-                            return self.json({'code': 0, 'msg': '执行下一曲成功'})
-                        elif '上一曲' in _text or '上一首' in _text:
-                            await hass.services.async_call('media_player', 'media_previous_track', {'entity_id': 'media_player.ha_cloud_music'})
-                            return self.json({'code': 0, 'msg': '执行上一曲成功'})
-                        elif '播放' in _text:
-                            await hass.services.async_call('media_player', 'media_play', {'entity_id': 'media_player.ha_cloud_music'})
-                            return self.json({'code': 0, 'msg': '执行播放成功'})
-                        elif '暂停' in _text or '停止' in _text:
-                            await hass.services.async_call('media_player', 'media_pause', {'entity_id': 'media_player.ha_cloud_music'})
-                            return self.json({'code': 0, 'msg': '执行暂停成功'})
-
-                        # 开关控制
-                        intent_type = ''
-                        if '打开' in _text or '开启' in _text or '启动' in _text :
-                            intent_type = 'HassTurnOn'
-                        elif '关闭' in _text or '关掉' in _text  or '关上' in _text :
-                            intent_type = 'HassTurnOff'
-
-                        try:
-                            if intent_type != '':
-                                # 获取要操作的名称                                
-                                if '打开' in _text:
-                                    _name = _text.split('打开')[1]
-                                elif '开启' in _text:
-                                    _name = _text.split('开启')[1]
-                                elif '启动' in _text:
-                                    _name = _text.split('启动')[1]
-                                elif '关闭' in _text:
-                                    _name = _text.split('关闭')[1]
-                                elif '关掉' in _text:
-                                    _name = _text.split('关掉')[1]
-                                elif '关上' in _text:
-                                    _name = _text.split('关上')[1]
-
-                                intent_response = await intent.async_handle(hass, DOMAIN, intent_type, {'name': {'value': _name}})
-                                _log_info(intent_response.intent)
-                                _log_info(intent_response.speech)
-                                _log_info(intent_response.card)
-                                return self.json({'code':0, 'data': intent_response.speech, 'type': 'intent'})
-                            else:
-                                # 调用自定义的意图                                
-                                if hass.services.has_service('conversation','process'):
-                                    _log_info("调用自定义的意图")
-                                    await hass.services.async_call('conversation', 'process', {'text': _text})
-                                    return self.json({'code': 0, 'msg': '调用自定义的意图成功'})
-                                else:
-                                    return self.json({'code': 0, 'msg': '对不起，没有开启自定义意图'})
-
-                        except intent.UnknownIntent as err:
-                            _LOGGER.warning('接收到未知的意图 %s', intent_type)
-                        except intent.InvalidSlotInfo as err:
-                            _LOGGER.error('接收到无效的插槽数据: %s', err)
-                        except intent.IntentError as err:
-                            _LOGGER.exception('处理请求时出错 %s', intent_type)
-                            return self.json({'code': 1, 'msg': '处理请求时出错，您可能没有这个设备'})
-
             else:
                 return self.json({"code": 401})
         return self.json(response)
@@ -255,8 +159,8 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
     vol.Optional("mail_qq", default=""): cv.string,
     vol.Optional("mail_code", default=""): cv.string,
     vol.Optional("base_url", default=""): cv.string,
-    # 是否在http配置里设置了允许跨域
-    vol.Optional("cors_allowed", default=False): cv.boolean,
+    # 是否开启语音文字处理程序
+    vol.Optional("ha_voice", default=True): cv.boolean,
     # 启用百度地图
     vol.Optional("map_ak", default=""): cv.string,
 })
@@ -274,7 +178,7 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
     _mail_qq = config.get("mail_qq")
     _mail_code = config.get("mail_code")
     _base_url = config.get("base_url")
-    _cors_allowed = config.get('cors_allowed')
+    _ha_voice = config.get('ha_voice')
     _map_ak = config.get("map_ak")
 
     global HASS
@@ -362,18 +266,38 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
             require_admin=True
         )
 
-    # 添加语音服务
-    if _base_url != '':
-        _log_info("添加语音服务")
-        _plaintext = json.dumps({'host': _base_url.strip('/'), 'key': API_KEY, 'cors_allowed': _cors_allowed})
-        encodestr = base64.b64encode(_plaintext.encode('utf-8'))
-        _encryption = str(encodestr,'utf-8')
-        global API_VOICE_KEY
-        API_VOICE_KEY = _encryption
-        
-        #_log_info('加密信息')
-        #_log_info(_encryption)
-        Link(hass, "云音乐语音服务", '/ha_cloud_music-api?type=voice&api_key=' + API_KEY, "mdi:microphone")
+    # 监听语音小助手的文本
+    async def ha_voice_text_event(event):
+        _text = event.data.get('text')
+        # 我想听xxx的歌
+        pattern = re.compile(r"我想听(.+)的歌")
+        singer = pattern.findall(_text)
+        if len(singer) == 1:
+            # 正在播放xxx的歌
+            singerName = singer[0]
+            # 开始搜索当前歌手的热门歌曲
+            await play_singer_hotsong(hass, singerName)
+        # 播放电台 xxxx
+        if '播放电台' in _text:
+            _name = _text.split('播放电台')[1]
+            await play_dj_hotsong(hass, _name)
+        # 播放歌单 xxxx
+        if '播放歌单' in _text:
+            _name = _text.split('播放歌单')[1]
+            await play_list_hotsong(hass, _name)
+
+        # 音乐控制解析
+        if '下一曲' in _text or '下一首' in _text:
+            await hass.services.async_call('media_player', 'media_next_track', {'entity_id': 'media_player.ha_cloud_music'})
+        elif '上一曲' in _text or '上一首' in _text:
+            await hass.services.async_call('media_player', 'media_previous_track', {'entity_id': 'media_player.ha_cloud_music'})
+        elif '播放' in _text:
+            await hass.services.async_call('media_player', 'media_play', {'entity_id': 'media_player.ha_cloud_music'})
+        elif '暂停' in _text or '停止' in _text:
+            await hass.services.async_call('media_player', 'media_pause', {'entity_id': 'media_player.ha_cloud_music'})
+
+    if _ha_voice == True:
+        hass.bus.listen('ha_voice_text_event', ha_voice_text_event)
         
     # 显示插件信息
     _LOGGER.info('''

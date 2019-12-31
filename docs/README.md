@@ -15,7 +15,7 @@
 # mail_qq: QQ号码（可选）
 # mail_code: QQ邮箱授权码（可选）
 # base_url: 当前外网的地址[http://xxx.com:8123]（在使用消息提醒，功能操作时必填）
-# cors_allowed: 是否配置跨域（默认否）
+# ha_voice: 是否启用语音文字识别（默认启用）
 # map_ak: 百度地图AK密钥（可选）
 # frpc: 内网穿透服务
 
@@ -31,7 +31,7 @@ media_player:
     mail_qq: QQ号码（会自动加上@qq.com）
     mail_code: QQ邮箱授权码
     base_url: 外网地址（在邮件里点操作时与HA通信需要使用）
-    cors_allowed: false
+    ha_voice: true
     map_ak: 百度地图AK密钥（配置后启用百度地图）
     frpc: '/home/pi/frp/'
 
