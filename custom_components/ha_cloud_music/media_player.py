@@ -269,6 +269,7 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
     # 监听语音小助手的文本
     async def ha_voice_text_event(event):
         _text = event.data.get('text')
+        _log_info('监听语音小助手的文本：' + _text)
         # 我想听xxx的歌
         pattern = re.compile(r"我想听(.+)的歌")
         singer = pattern.findall(_text)
@@ -278,22 +279,22 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
             # 开始搜索当前歌手的热门歌曲
             await play_singer_hotsong(hass, singerName)
         # 播放电台 xxxx
-        if '播放电台' in _text:
+        if _text.find('播放电台') == 0:
             _name = _text.split('播放电台')[1]
             await play_dj_hotsong(hass, _name)
         # 播放歌单 xxxx
-        if '播放歌单' in _text:
+        if _text.find('播放歌单') == 0:
             _name = _text.split('播放歌单')[1]
             await play_list_hotsong(hass, _name)
 
         # 音乐控制解析
-        if '下一曲' in _text or '下一首' in _text:
+        if '下一曲' == _text:
             await hass.services.async_call('media_player', 'media_next_track', {'entity_id': 'media_player.ha_cloud_music'})
-        elif '上一曲' in _text or '上一首' in _text:
+        elif '上一曲' == _text:
             await hass.services.async_call('media_player', 'media_previous_track', {'entity_id': 'media_player.ha_cloud_music'})
-        elif '播放' in _text:
+        elif '播放音乐' == _text:
             await hass.services.async_call('media_player', 'media_play', {'entity_id': 'media_player.ha_cloud_music'})
-        elif '暂停' in _text or '停止' in _text:
+        elif '暂停音乐' == _text:
             await hass.services.async_call('media_player', 'media_pause', {'entity_id': 'media_player.ha_cloud_music'})
 
     if _ha_voice == True:
