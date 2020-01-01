@@ -158,7 +158,7 @@ class IsHolidaySensor(BinarySensorDevice):
         ym = "{}年{}月".format(localtime.tm_year,localtime.tm_mon)
         today = "{}-{}-{}".format(localtime.tm_year,localtime.tm_mon,localtime.tm_mday)
         #today = '2019-10-1'
-        _LOGGER.info('获取当前日期： %s',today)
+        #_LOGGER.info('获取当前日期： %s',today)
         # 获取百度日历
         res = requests.get('https://sp0.baidu.com/8aQDcjqpAAV3otqbppnN2DJv/api.php?query=' + ym 
         + '&co=&resource_id=6018&t=1573873782858&ie=utf8&oe=gbk&cb=op_aladdin_callback&format=json&tn=baidu&cb=&_=1573873715796')
@@ -173,7 +173,7 @@ class IsHolidaySensor(BinarySensorDevice):
         # 判断是否在我国传统假日列表里
         _list = list(filter(lambda x: x['startday'] == today, obj['holidaylist']))
         if (len(_list) > 0):
-            self._holiday_name = _list[0].name
+            self._holiday_name = _list[0]['name']
             return True
         # 判断是否在传统假日连休列表里
         if 'holiday' in obj:
