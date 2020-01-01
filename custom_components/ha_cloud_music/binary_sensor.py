@@ -133,7 +133,6 @@ class IsHolidaySensor(BinarySensorDevice):
             self._cai = _obj['cai'].strip('"')
             self._xi = _obj['xi'].strip('"')
             self._fu = _obj['fu'].strip('"')
-            _LOGGER.info('获取当天详细信息')
         except Exception as e:
             print(e)
 
