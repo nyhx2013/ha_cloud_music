@@ -13,17 +13,6 @@ import math
 import base64
 import asyncio
 
-# ----------邮件相关---------- #
-from email import encoders
-from email.header import Header
-from email.mime.text import MIMEText
-from email.utils import parseaddr, formataddr
-import smtplib
-
-def _format_addr(s):
-    name, addr = parseaddr(s)
-    return formataddr((Header(name, 'utf-8').encode(), addr))
-# ----------邮件相关---------- #
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers import config_validation as cv, intent
 from homeassistant.helpers.event import track_time_interval, async_call_later
@@ -75,9 +64,9 @@ API_URL = ""
 API_KEY_LIST = {}
 API_KEY = str(uuid.uuid4())
 
-
-VERSION = '2.1.7.7'
 DOMAIN = 'ha_cloud_music'
+VERSION = '2.1.8'
+ROOT_PATH = '/' + DOMAIN + '-local/' + VERSION
 
 HASS = None
 
@@ -89,42 +78,18 @@ class HassGateView(HomeAssistantView):
     name = DOMAIN
     requires_auth = False
 
+'''
     async def get(self, request):    
         _raw_path = request.rel_url.raw_path
         # _log_info(request.rel_url)
-        if _raw_path == self.url:
-            # 邮箱操作
-            if 'key' in request.query:
-                _key = request.query['key']
-                # 提示地址
-                _tips_location = '/'+ DOMAIN + '/' + VERSION + '/dist/tips.html?msg='
-                global API_KEY_LIST
-                if _key in API_KEY_LIST:
-                    # 如果Key超过一天，则提示过期
-                    if (API_KEY_LIST[_key] - datetime.datetime.now()).seconds < 3600 * 60 * 24:
-                        # 这里执行删除key的操作
-                        del API_KEY_LIST[_key]
-                        # 这里解析服务
-                        _action = urllib.parse.unquote(request.query['action'])
-                        arr = _action.split('.', 1)
-                        if arr[0] == 'script':
-                            await HASS.services.async_call('script', str(arr[1]))
-                        elif arr[0] == 'automation':
-                            await HASS.services.async_call('automation', 'trigger', {'entity_id': _action})
-                        return web.HTTPFound(location= _tips_location + '执行成功&id=' + _action)
-                    else:
-                        return web.HTTPFound(location= _tips_location + '通信密钥已过期')
-                else:
-                    return web.HTTPFound(location= _tips_location + '该操作【已执行】或者【已过期】')
-            #a = urllib.parse.unquote(_api)
-
         _path = os.path.dirname(__file__) + _raw_path.replace('/'+ DOMAIN + '/' + VERSION,'')        
         return FileResponse(_path)
+'''
 
     async def post(self, request):
         """Update state of entity."""
         response = await request.json()
-        hass = request.app["hass"]
+        # hass = request.app["hass"]
         
         if 'key' in response:
             # 如果密钥不一致，则提示没有权限
@@ -155,14 +120,8 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
     # TTS相关配置
     vol.Optional("tts_before_message", default=""): cv.string,
     vol.Optional("tts_after_message", default=""): cv.string,
-    # QQ邮箱相关配置（密码为QQ邮箱授权码【不是QQ密码】）
-    vol.Optional("mail_qq", default=""): cv.string,
-    vol.Optional("mail_code", default=""): cv.string,
-    vol.Optional("base_url", default=""): cv.string,
     # 是否开启语音文字处理程序
     vol.Optional("ha_voice", default=True): cv.boolean,
-    # 启用百度地图
-    vol.Optional("map_ak", default=""): cv.string,
 })
 
 def setup_platform(hass, config, add_entities, discovery_info=None):
@@ -175,11 +134,7 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
     _api_key = config.get("api_key")
     _tts_before_message = config.get("tts_before_message")
     _tts_after_message = config.get("tts_after_message")
-    _mail_qq = config.get("mail_qq")
-    _mail_code = config.get("mail_code")
-    _base_url = config.get("base_url")
     _ha_voice = config.get('ha_voice')
-    _map_ak = config.get("map_ak")
 
     global HASS
     HASS = hass
@@ -192,18 +147,15 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
         _log_info('使用自定义api_key：' + _api_key)
         API_KEY = _api_key
     # 注册静态目录
-    local = hass.config.path("custom_components/ha_cloud_music")
+    local = hass.config.path("custom_components/ha_cloud_music/dist")
     if os.path.isdir(local):
-        hass.http.register_static_path('/'+ DOMAIN + '/' + VERSION, local, False)
+        hass.http.register_static_path(ROOT_PATH, local, False)
     
     hass.http.register_view(HassGateView)
     # 播放器实例
     mp = MediaPlayer(hass)
     mp.tts_config['before_message'] = _tts_before_message
     mp.tts_config['after_message'] = _tts_after_message
-    mp.mail['qq'] = _mail_qq
-    mp.mail['code'] = _mail_code
-    mp.base_url = _base_url
 
     # 判断是否支持VLC
     supported_vlc_tips = '不支持'
@@ -215,12 +167,6 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
     _show_mode_str = "正常模式"
     if _show_mode == 'fullscreen':
         _show_mode_str = "全屏模式"
-
-    # 注册服务【notify】
-    if _mail_qq != '' and _mail_code != '':
-        hass.services.register(DOMAIN, 'notify', mp.notify)
-    
-    # 事件循环
 
     # 添加云音乐
     if _api_url != '':
@@ -235,8 +181,7 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
             hass.services.register(DOMAIN, 'tts', mp.tts)
 
         # 添加状态卡片
-        hass.components.frontend.add_extra_js_url(hass, '/'+ DOMAIN + '/' + VERSION + '/dist/data/more-info-ha_cloud_music.js')
-        hass.components.frontend.add_extra_js_url(hass, '/'+ DOMAIN + '/' + VERSION + '/dist/data/more-info-ha_cloud_music-kodi.js')    
+        hass.components.frontend.add_extra_js_url(hass, ROOT_PATH + '/data/more-info-ha_cloud_music.js')
         
         _log_info("添加云音乐")
         hass.components.frontend.async_register_built_in_panel(
@@ -244,25 +189,11 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
             _sidebar_title,
             _sidebar_icon,
             DOMAIN,
-            {"url": "/" + DOMAIN+"/" + VERSION + "/dist/index.html?ver=" + VERSION 
+            {"url": ROOT_PATH + "/index.html?ver=" + VERSION 
             + "&show_mode=" + _show_mode
             + "&api_key=" + API_KEY
-            + "&ak=" + _map_ak
             + "&uid=" + _uid
             + "&vlc=" + _is_vlc},
-            require_admin=True
-        )
-
-    # 添加百度地图
-    if _map_ak != '':
-        _log_info("添加百度地图")
-        hass.components.frontend.add_extra_js_url(hass, '/'+ DOMAIN + '/' + VERSION + '/dist/data/ha-panel-baidu-map.js')
-        hass.components.frontend.async_register_built_in_panel(
-            "baidu-map",
-            "百度地图",
-            "mdi:map-marker-radius",
-            frontend_url_path=None,
-            config={"ak": _map_ak},
             require_admin=True
         )
 
@@ -369,18 +300,12 @@ class MediaPlayer(MediaPlayerDevice):
         self._timer_enable = True
         # 定时器
         track_time_interval(hass, self.interval, TIME_BETWEEN_UPDATES)
-        self.base_url = None
         #### TTS 相关配置 ####
         self.tts_config = {
             'vlc': None,
             'play_state': None,
             'before_message': '',
             'after_message': '',
-        }
-        #### 邮箱 相关配置 ####
-        self.mail = {
-            'qq': '',
-            'code': ''
         }
     
     def interval(self, now):
@@ -1000,47 +925,6 @@ class MediaPlayer(MediaPlayerDevice):
     
     
     ######### 服务 ##############
-    # 邮件通知
-    def notify(self, call):
-        _title = call.data['title']
-        _message = call.data['message']
-        # 执行命令
-        if 'action' in call.data:
-            _key = str(uuid.uuid4())
-            if self.base_url != '':
-                global API_KEY_LIST
-                for item in API_KEY_LIST:
-                    # 如果当前key大于24小时，则删除
-                    if (API_KEY_LIST[item] - datetime.datetime.now()).seconds > 3600 * 60 * 24:
-                        del API_KEY_LIST[item]
-                # 把这个通知的key加入到字典中
-                API_KEY_LIST.update({_key: datetime.datetime.now()})
-                _message = _message + '<br/><br/><a href="' + self.base_url.strip('/') + '/'+ DOMAIN + '-api?key=' + _key + '&action=' +  call.data['action'] + '" style="background:#03a9f4;color:white;padding:15px 0;text-decoration:none;display:block;text-align:center;">执行命令</a>' 
-            else:
-                self.notification('【' + _title + '】没有配置base_url参数','mail')
-
-        _user = self.mail['qq']
-        # 如果没有后缀，则加上
-        if '@qq.com' not in _user:
-            _user = _user + '@qq.com'
-        
-        from_addr = _user
-        password = self.mail['code']
-        to_addr = _user
-        smtp_server = 'smtp.qq.com'
-        msg = MIMEText(_message, 'html', 'utf-8')
-        msg['From'] = _format_addr('HomeAssistant <%s>' % from_addr)
-        msg['To'] = _format_addr('智能家居 <%s>' % to_addr)
-        msg['Subject'] = Header(_title, 'utf-8').encode()
-        try:
-            server = smtplib.SMTP(smtp_server, 25)
-            server.set_debuglevel(1)
-            server.login(from_addr, password)
-            server.sendmail(from_addr, [to_addr], msg.as_string())
-            server.quit()
-            self.notification('【' + _title + '】邮件通知发送成功','mail')
-        except Exception as e:
-            self.notification('【' + _title + '】邮件通知发送失败','mail')
 
     # 设置播放模式
     def play_mode(self, call):
