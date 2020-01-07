@@ -13,6 +13,7 @@
 # tts_before_message: tts服务前置消息（可选）
 # tts_after_message: tts服务后置消息（可选）
 # ha_voice: 是否启用语音文字识别（默认启用）
+# notify: 是否启用消息通知（默认启用）启用：true，禁用：false
 
 media_player:
   - platform: ha_cloud_music
@@ -24,6 +25,7 @@ media_player:
     tts_before_message: '主人：'
     tts_after_message: '。我是爱你的小喵'
     ha_voice: true
+    notify: true
 
 ```
 

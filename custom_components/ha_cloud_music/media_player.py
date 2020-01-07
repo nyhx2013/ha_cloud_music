@@ -65,7 +65,7 @@ API_KEY_LIST = {}
 API_KEY = str(uuid.uuid4())
 
 DOMAIN = 'ha_cloud_music'
-VERSION = '2.1.8'
+VERSION = '2.2'
 ROOT_PATH = '/' + DOMAIN + '-local/' + VERSION
 
 HASS = None
@@ -78,19 +78,9 @@ class HassGateView(HomeAssistantView):
     name = DOMAIN
     requires_auth = False
 
-'''
-    async def get(self, request):    
-        _raw_path = request.rel_url.raw_path
-        # _log_info(request.rel_url)
-        _path = os.path.dirname(__file__) + _raw_path.replace('/'+ DOMAIN + '/' + VERSION,'')        
-        return FileResponse(_path)
-'''
-
     async def post(self, request):
-        """Update state of entity."""
         response = await request.json()
         # hass = request.app["hass"]
-        
         if 'key' in response:
             # 如果密钥不一致，则提示没有权限
             if response['key'] == API_KEY:
@@ -122,6 +112,8 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
     vol.Optional("tts_after_message", default=""): cv.string,
     # 是否开启语音文字处理程序
     vol.Optional("ha_voice", default=True): cv.boolean,
+    # 是否启用通知（默认启用）
+    vol.Optional("notify", default=True): cv.boolean,    
 })
 
 def setup_platform(hass, config, add_entities, discovery_info=None):
@@ -135,6 +127,7 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
     _tts_before_message = config.get("tts_before_message")
     _tts_after_message = config.get("tts_after_message")
     _ha_voice = config.get('ha_voice')
+    _notify = config.get('notify')
 
     global HASS
     HASS = hass
@@ -156,6 +149,7 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
     mp = MediaPlayer(hass)
     mp.tts_config['before_message'] = _tts_before_message
     mp.tts_config['after_message'] = _tts_after_message
+    mp._notify = _notify
 
     # 判断是否支持VLC
     supported_vlc_tips = '不支持'
@@ -298,6 +292,7 @@ class MediaPlayer(MediaPlayerDevice):
         self._media = None
         # 是否启用定时器
         self._timer_enable = True
+        self._notify = True
         # 定时器
         track_time_interval(hass, self.interval, TIME_BETWEEN_UPDATES)
         #### TTS 相关配置 ####
@@ -782,8 +777,10 @@ class MediaPlayer(MediaPlayerDevice):
     def turn_off(self):
         self.clear_playlist()
     
+    # 通知
     def notification(self, message, type):
-        self._hass.services.call('persistent_notification', 'create', {"message": message, "title": "云音乐", "notification_id": "ha-cloud-music-" + type})
+        if self._notify == True:
+            self._hass.services.call('persistent_notification', 'create', {"message": message, "title": "云音乐", "notification_id": "ha-cloud-music-" + type})
     
     # 更新播放器列表
     def update_sound_mode_list(self):
