@@ -5,17 +5,8 @@
     <template v-if="!mmLoadShow">
       <div class="topList-head">电台分类</div>
       <div class="topList-content">
-        <div
-          v-for="(item,index) in hotList"
-          :key="index"
-          class="list-item"
-          :title="item.name+item.updateFrequency"
-        >
-          <router-link
-            :to="{path:`/music/fmlist/${item.id}`}"
-            tag="div"
-            class="topList-item"
-          >
+        <div v-for="(item,index) in hotList" :key="index" class="list-item" :title="item.name">
+          <router-link :to="{path:`/music/fmlist/${item.id}`}" tag="div" class="topList-item">
             <div class="topList-img">
               <img v-lazy="`${item.picUrl}?param=300y300`" class="cover-img" />
             </div>
@@ -25,12 +16,7 @@
       </div>
       <div class="topList-head">网易电台</div>
       <div class="topList-content">
-        <div
-          v-for="(item,index) in fm163List"
-          :key="index"
-          class="list-item"
-          :title="item.name+item.updateFrequency"
-        >
+        <div v-for="(item,index) in fm163List" :key="index" class="list-item" :title="item.name">
           <router-link
             :to="{path:`/music/fmlist/${item.id}?type=163`}"
             tag="div"
@@ -45,14 +31,24 @@
       </div>
       <div class="topList-head">喜马拉雅专辑</div>
       <div class="topList-content">
-        <div
-          v-for="(item,index) in xmlyList"
-          :key="index"
-          class="list-item"
-          :title="item.name+item.updateFrequency"
-        >
+        <div v-for="(item,index) in xmlyList" :key="index" class="list-item" :title="item.name">
           <router-link
             :to="{path:`/music/fmlist/${item.id}?type=xmly`}"
+            tag="div"
+            class="topList-item"
+          >
+            <div class="topList-img">
+              <img v-lazy="`${item.picUrl}`" class="cover-img" />
+            </div>
+            <h3 class="name">{{ item.name }}</h3>
+          </router-link>
+        </div>
+      </div>
+      <div class="topList-head">小爬虫</div>
+      <div class="topList-content">
+        <div v-for="(item,index) in xpcList" :key="index" class="list-item" :title="item.name">
+          <router-link
+            :to="{path:`/music/fmlist/${encodeURIComponent(item.id)}?type=xpc`}"
             tag="div"
             class="topList-item"
           >
@@ -68,7 +64,7 @@
 </template>
 
 <script>
-import { getCategories, getFM163, getXMLY } from 'api'
+import { getCategories, getFM163, getXMLY, getXPC } from 'api'
 import MmLoading from 'base/mm-loading/mm-loading'
 import { loadMixin } from '@/utils/mixin'
 
@@ -82,15 +78,17 @@ export default {
     return {
       hotList: [], // 热门歌单
       fm163List: [],
-      xmlyList: []
+      xmlyList: [],
+      xpcList: []
     }
   },
   created() {
-    Promise.all([getCategories(), getFM163(), getXMLY()]).then(
-      ([hotList, fm163List, xmlyList]) => {
+    Promise.all([getCategories(), getFM163(), getXMLY(), getXPC()]).then(
+      ([hotList, fm163List, xmlyList, xpcList]) => {
         this.hotList = hotList
         this.fm163List = fm163List
         this.xmlyList = xmlyList
+        this.xpcList = xpcList
         this._hideLoad()
       }
     )

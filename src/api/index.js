@@ -375,3 +375,25 @@ export function getFM163() {
     resolve(arr)
   })
 }
+
+/* -----------------------------小爬虫------------------------------- */
+export function getXPC() {
+  return new Promise((resolve, reject) => {
+    let arr = [
+      {
+        id: './data/ljsw.json',
+        name: '罗辑思维',
+        picUrl: 'https://piccdn.igetget.com/img/201807/19/201807191556587359037523.jpg'
+      }
+    ]
+    resolve(arr)
+  })
+}
+
+export function getXpcList(url) {
+  return new Promise((resolve, reject) => {
+    fetch(url).then(res => res.json()).then(res => {
+      resolve(res)
+    })
+  })
+}

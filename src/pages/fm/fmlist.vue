@@ -6,10 +6,7 @@
       :list="list"
       @select="selectItem"
     >
-      <div
-        slot="listBtn"
-        class="list-btn"
-      >
+      <div v-if="!isEnd" slot="listBtn" class="list-btn">
         <span @click="loadMore">加载更多</span>
       </div>
     </music-list>
@@ -18,7 +15,7 @@
 
 <script>
 import { mapActions } from 'vuex'
-import { getFmList, getDjProgram, getXMLYlist } from 'api'
+import { getFmList, getDjProgram, getXMLYlist, getXpcList } from 'api'
 import MmLoading from 'base/mm-loading/mm-loading'
 import MusicList from 'components/music-list/music-list'
 import { loadMixin } from '@/utils/mixin'
@@ -50,11 +47,16 @@ export default {
       let { type, id, page, isEnd } = this
       if (isEnd) return
       this.mmLoadShow = true
-
       if (type === '163') {
         this.loadDjProgram({ id, page })
       } else if (type === 'xmly') {
         this.loadXMLYlist({ id, page })
+      } else if (type === 'xpc') {
+        getXpcList(id).then(res => {
+          this.list = res
+          this.isEnd = true
+          this._hideLoad()
+        })
       } else {
         this.loadFmList({ id, page })
       }
