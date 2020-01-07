@@ -22,15 +22,3 @@ tts:
     message:
       description: 要播放的文字（目前只支持内置VLC）
       example: '支持时间格式占位符，%Y年%m月%d日 %H:%MM:%S天气真不错'
-notify:
-  description: QQ邮件通知提醒
-  fields:
-    title:
-      description: 【必填】邮件标题
-      example: '邮件标题'
-    message:
-      description: 【必填】要提醒的文字（可以为HTML格式）
-      example: '<b>这是一条提醒</b>'
-    action:
-      description: 【非必填】要执行的脚本或自动化实体
-      example: 'automation.gong_jiao_dao_zhan_bo_bao'
