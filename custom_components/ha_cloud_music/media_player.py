@@ -103,6 +103,37 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
     ################### 系统配置 ###################
 
 
+    
+
+
+    ################### 定义实体类 ###################
+    # 播放器实例
+    mp = MediaPlayer(hass)    
+    mp.api_media = ApiMedia(mp, {
+        # 是否通知
+        'is_notify': is_notify,
+        # 是否调试
+        'is_debug': is_debug,
+        '_LOGGER': _LOGGER
+    })
+    mp.api_tts = ApiTTS(mp,{
+        'tts_before_message': tts_before_message,
+        'tts_after_message': tts_after_message,
+    })    
+    mp.api_music = ApiMusic(mp, {
+        'api_url': api_url, 
+        'uid': uid, 
+        'user': user, 
+        'password': password
+    })
+    # 开始登录
+    mp.api_music.login()
+    hass.data[DOMAIN] = mp
+    # 添加实体
+    add_entities([mp])
+
+    ################### 定义实体类 ###################
+
     ################### 注册静态目录与接口网关 ###################    
     local = hass.config.path("custom_components/ha_cloud_music/dist")
     if os.path.isdir(local):
@@ -120,33 +151,10 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
             DOMAIN,
             {"url": ROOT_PATH + "/index.html?ver=" + VERSION 
             + "&show_mode=" + show_mode
-            + "&uid=" + uid},
+            + "&uid=" + mp.api_music.uid},
             require_admin=True
         )
     ################### 注册静态目录与接口网关 ###################
-
-
-    ################### 定义实体类 ###################
-    # 播放器实例
-    mp = MediaPlayer(hass)
-    mp.api_tts = ApiTTS(mp,{
-        'tts_before_message': tts_before_message,
-        'tts_after_message': tts_after_message,
-    })
-    mp.api_music = ApiMusic(hass, api_url, uid, user, password)
-    mp.api_media = ApiMedia({
-        # 是否通知
-        'is_notify': is_notify,
-        # 是否调试
-        'is_debug': is_debug,
-        '_LOGGER': _LOGGER
-    }, mp)
-    hass.data[DOMAIN] = mp
-    # 添加实体
-    add_entities([mp])
-
-    ################### 定义实体类 ###################
-
 
     ################### 注册服务 ################### 
     # 注册服务【加载歌单】
@@ -192,7 +200,7 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
         
         显示模式：''' + TrueOrFalse(show_mode == 'fullscreen', '全局模式', '默认模式') + '''
         
-        用户ID：''' + uid + '''
+        用户ID：''' + mp.api_music.uid + '''
 
 -------------------------------------------------------------------''')
     return True   

@@ -1,21 +1,62 @@
-import aiohttp, asyncio, json, requests, re
-
+import aiohttp, asyncio, json, requests, re, os
+import http.cookiejar as HC
+from .api_const import get_config_path, write_config_file
+session = requests.session()
+# 保存cookie
+session.cookies = HC.LWPCookieJar(filename=get_config_path('cookies.txt'))
 # 全局请求头
 HEADERS = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.87 Safari/537.36'}
 
 class ApiMusic():
 
-    def __init__(self, hass, _api_url, _uid, _user, _password):
-        self.hass = hass
-        self._api_url = _api_url
-        self._uid = _uid
-        self._user = _user
-        self._password = _password
+    def __init__(self, media, cfg):
+        self.hass = media._hass
+        self.media = media
+        self.api_url = cfg['api_url']
+        self.uid = cfg['uid']
+        self.user = cfg['user']
+        self.password = cfg['password']
 
-    async def get(self, url):
-        async with aiohttp.request('GET',self._api_url + url) as r:
-          return await r.json(encoding="utf-8")
+    def login(self):
+        try:
+            self.log('登录操作', '尝试使用cookies登录')
+            session.cookies.load(ignore_discard=True)
+            self.log('登录操作', 'cookies登录成功')
+            res = get_config_path('account.json')
+            if res != None:
+                self.log('登录操作', res)
+                self.uid = res['uid']
+            else:
+                raise Exception('没有找到配置文件')
+        except:
+            self.log('登录操作', 'cookie未能加载')
+            # 如果有用户名密码，则登录
+            if self.user != '' and self.password != '':
+                self.log('登录操作', '开始登录')
+                name = 'cellphone'
+                # 判断是否使用邮箱
+                if '@' in self.user:
+                    name = 'email'                    
+                res = self.get('/login?' + name + '=' + self.user + '&password=' + self.password)
+                if res['code'] == 200:
+                    self.uid = str(res['account']['id'])
+                    write_config_file('account.json', {
+                       'uid': self.uid,
+                       'user': self.user,
+                       'account': res['account']
+                    })
+                    session.cookies.save()
+                    self.log('登录成功')
+                else:
+                    self.log('登录失败', res)
 
+    def log(self, name, value = ''):
+        self.media.api_media.log('【ApiMusic接口】%s：%s',name,value)
+
+    def get(self, url):
+        r = session.get(self.api_url + url)
+        return r.json()
+        
     # 获取重写向后的地址
     def get_redirect_url(self, url):
         # 请求网页    
@@ -45,7 +86,7 @@ class ApiMusic():
 
     # 获取网易歌单列表
     def music_playlist(self, id):
-        res = requests.get(self._api_url + '/playlist/detail?id=' + str(id))
+        res = requests.get(self.api_url + '/playlist/detail?id=' + str(id))
         obj = res.json()
         if obj['code'] == 200:
             _list = obj['playlist']['tracks']
@@ -68,7 +109,7 @@ class ApiMusic():
 
     # 获取网易电台列表
     def djradio_playlist(self, id, offset, size):
-        res = requests.get(self._api_url + '/dj/program?rid='+str(id)+'&limit=50&offset='+str(offset * size))
+        res = requests.get(self.api_url + '/dj/program?rid='+str(id)+'&limit=50&offset='+str(offset * size))
         obj = res.json()
         if obj['code'] == 200:
             _list = obj['programs']
@@ -98,7 +139,7 @@ class ApiMusic():
     # 播放电台
     async def play_dj_hotsong(self, djName):
         hass = self.hass
-        res = requests.get(self._api_url + '/search?keywords='+ djName +'&type=1009')
+        res = requests.get(self.api_url + '/search?keywords='+ djName +'&type=1009')
         obj = res.json()
         if obj['code'] == 200:
             artists = obj['result']['djRadios']
@@ -123,14 +164,14 @@ class ApiMusic():
     # 播放歌手的热门歌曲
     async def play_singer_hotsong(self, singerName):
         hass = self.hass
-        res = requests.get(self._api_url + '/search?keywords='+ singerName +'&type=100')
+        res = requests.get(self.api_url + '/search?keywords='+ singerName +'&type=100')
         obj = res.json()
         if obj['code'] == 200:
             artists = obj['result']['artists']
             if len(artists) > 0:
                 singerId = artists[0]['id']
                 # 获取热门歌曲
-                hot_res = requests.get(self._api_url + '/artists/top/song?id='+ str(singerId))
+                hot_res = requests.get(self.api_url + '/artists/top/song?id='+ str(singerId))
                 hot_obj = hot_res.json()
                 if hot_obj['code'] == 200:
                     _list = hot_obj['hotSongs']
@@ -161,7 +202,7 @@ class ApiMusic():
     # 播放歌单
     async def play_list_hotsong(self, djName):
         hass = self.hass
-        res = requests.get(self._api_url + '/search?keywords='+ djName +'&type=1000')
+        res = requests.get(self.api_url + '/search?keywords='+ djName +'&type=1000')
         obj = res.json()
         if obj['code'] == 200:
             artists = obj['result']['playlists']
