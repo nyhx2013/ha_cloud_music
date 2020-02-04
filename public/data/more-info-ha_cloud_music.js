@@ -147,7 +147,7 @@ class MoreInfoHaCloudMusic extends HTMLElement {
             let mode = obj.value
             mode = mode >= 3 ? 0 : mode + 1
             // 设置播放模式
-            _this.call({ mode: mode }, 'play_mode', 'ha_cloud_music')
+            _this.call({ play_mode: mode }, 'config', 'ha_cloud_music')
             this.setAttribute('icon', _this.playMode[mode].icon)
             _this.toast(_this.playMode[mode].name)
         }

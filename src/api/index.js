@@ -2,23 +2,34 @@ import axios from 'axios'
 import qs from 'qs'
 import { URL, defaultLimit } from '@/config'
 
-let query = new URLSearchParams(location.search)
-const apiKey = query.get('api_key')
-// 如果没有api_key，则开启调试模式
-const isDebug = apiKey === null
+let isDebug = true
+let hass = null
+try {
+  hass = top.document.querySelector('home-assistant').hass
+  isDebug = false
+} catch {
+
+}
 axios.defaults.baseURL = isDebug ? URL : '/ha_cloud_music-api'
-function handlerGet(url, data) {
+async function handlerGet(url, data) {
   if (isDebug) {
     return axios.get(url, data)
   }
   if (data && 'params' in data && data['params']) {
     url = url + '?' + qs.stringify(data['params'])
   }
+  let { expired } = hass.auth
+  if (expired) {
+    await hass.auth.refreshAccessToken()
+  }
   return new Promise((resolve, reject) => {
     axios.post('', {
       type: 'web',
-      key: apiKey,
       url
+    }, {
+      headers: {
+        authorization: `${hass.auth.data.token_type} ${hass.auth.accessToken}`
+      }
     }).then(res => {
       resolve(res)
     }).catch(ex => {

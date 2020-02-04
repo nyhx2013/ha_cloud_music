@@ -270,8 +270,8 @@ export default class {
       Vue.prototype.$mmToast(obj[0])
       this.hass.then(({ call }) => {
         call({
-          mode
-        }, 'play_mode', 'ha_cloud_music')
+          play_mode: mode
+        }, 'config', 'ha_cloud_music')
       })
     })
   }
