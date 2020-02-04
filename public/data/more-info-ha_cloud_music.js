@@ -151,18 +151,6 @@ class MoreInfoHaCloudMusic extends HTMLElement {
             this.setAttribute('icon', _this.playMode[mode].icon)
             _this.toast(_this.playMode[mode].name)
         }
-        /*
-        div.querySelector('.list-play-mode').onclick = function(){
-            let icon = this.getAttribute('icon')           
-            let obj = _this.playMode.find(ele=>ele.icon === icon)
-            let mode = obj.value
-            mode = mode >= 3 ? 0 : mode + 1
-            // 设置播放模式
-            _this.call({mode: mode}, 'play_mode', 'ha_cloud_music')
-            this.setAttribute('icon', _this.playMode[mode].icon)
-            _this.toast(_this.playMode[mode].name)
-        }
-        */
         div.querySelector('.prev').onclick = function () {
             // 上一曲
             _this.call({ entity_id: _this.stateObj.entity_id }, 'media_previous_track')
