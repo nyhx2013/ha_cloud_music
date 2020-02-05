@@ -38,7 +38,7 @@ export default {
               return {
                 song: item.songName,
                 singer: item.artist,
-                id: simpleSong.id,
+                id: item.songId,
                 name: item.songName,
                 album: item.album,
                 image: 'https://p4.music.126.net/xL_4lYc6XKR4dO0u-9HtxQ==/109951164032601371.jpg',
