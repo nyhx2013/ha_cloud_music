@@ -43,6 +43,7 @@ export default {
                 album: item.album,
                 image: 'https://p4.music.126.net/xL_4lYc6XKR4dO0u-9HtxQ==/109951164032601371.jpg',
                 duration: simpleSong.dt / 1000,
+                src: item.songId,
                 type: 'cloud'
               }
             })
