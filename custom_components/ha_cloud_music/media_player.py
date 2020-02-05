@@ -237,6 +237,11 @@ class MediaPlayer(MediaPlayerDevice):
         self._notify = True
         # 定时器
         track_time_interval(hass, self.interval, TIME_BETWEEN_UPDATES)
+        # 读取配置文件
+        music_playlist = read_config_file('music_playlist.cfg')
+        if music_playlist != None:
+            self._media_playlist = json.dumps(music_playlist)
+            self.music_playlist = music_playlist
         
     def interval(self, now):
         # 如果当前状态是播放，则进度累加（虽然我定时的是1秒，但不知道为啥2秒执行一次）
@@ -598,13 +603,16 @@ class MediaPlayer(MediaPlayerDevice):
             # 如果是list类型，则进行操作
             if isinstance(media_id, list):            
                 self._media_playlist = json.dumps(media_id)
-                self.music_playlist = media_id                
+                self.music_playlist = media_id
             else:
                 dict = json.loads(media_id)    
                 self._media_playlist = dict['list']
                 self.music_playlist = json.loads(self._media_playlist)
                 self.music_index = dict['index']
-                
+            
+            # 保存音乐播放列表到本地
+            write_config_file('music_playlist.cfg', self.music_playlist)
+            
             music_info = self.music_playlist[self.music_index]
             url = self.get_url(music_info)
             #数据源
