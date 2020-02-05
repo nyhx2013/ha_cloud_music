@@ -102,6 +102,13 @@ export function getUserPlaylist(uid) {
   })
 }
 
+// 获取用户云盘数据
+export function getUserCloudList(uid) {
+  return handlerGet('/user/cloud', {
+    params: {}
+  })
+}
+
 // 获取歌曲详情
 export function getMusicDetail(ids) {
   return handlerGet('/song/detail', {

@@ -774,7 +774,7 @@ class MediaPlayer(MediaPlayerDevice):
             if music_info['type'] == 'url':
                 # 如果传入的是能直接播放的音频
                 return music_info['url']
-            elif music_info['type'] == 'djradio':
+            elif music_info['type'] == 'djradio' or music_info['type'] == 'cloud':
                 # 如果传入的是网易电台
                 res = requests.get(API_URL + "/song/url?id=" + str(music_info['id']))
                 obj = res.json()
