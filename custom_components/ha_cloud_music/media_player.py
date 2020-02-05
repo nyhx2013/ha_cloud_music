@@ -774,12 +774,9 @@ class MediaPlayer(MediaPlayerDevice):
             if music_info['type'] == 'url':
                 # 如果传入的是能直接播放的音频
                 return music_info['url']
-            elif music_info['type'] == 'djradio' or music_info['type'] == 'cloud':
+            elif music_info['type'] == 'djradio' or music_info['type'] == 'cloud':                
                 # 如果传入的是网易电台
-                res = requests.get(self.api_music.api_url + "/song/url?id=" + str(music_info['id']))
-                obj = res.json()
-                url = obj['data'][0]['url']
-                return url
+                return self.api_music.get_song_url(music_info['id'])
         
         url = self.api_music.get_redirect_url(music_info['url'])
         # 如果没有url，则去咪咕搜索

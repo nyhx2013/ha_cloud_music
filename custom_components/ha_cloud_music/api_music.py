@@ -2,6 +2,7 @@ import aiohttp, asyncio, json, requests, re, os
 import http.cookiejar as HC
 from .api_const import get_config_path, write_config_file
 session = requests.session()
+session.cookies.set('os', 'osx')
 # 保存cookie
 session.cookies = HC.LWPCookieJar(filename=get_config_path('cookies.txt'))
 # 全局请求头
@@ -57,6 +58,13 @@ class ApiMusic():
         r = session.get(self.api_url + url)
         return r.json()
         
+    ###################### 获取音乐播放URL ######################    
+    
+    # 获取音乐URL
+    def get_song_url(self, id):
+        obj = self.get("/song/url?id=" + str(id))
+        return obj['data'][0]['url']
+
     # 获取重写向后的地址
     def get_redirect_url(self, url):
         # 请求网页    
@@ -83,6 +91,10 @@ class ApiMusic():
         except Exception as e:
             print("在咪咕搜索时出现错误：", e)
         return None
+
+    ###################### 获取音乐播放URL ######################
+
+    ###################### 获取音乐列表 ######################
 
     # 获取网易歌单列表
     def music_playlist(self, id):
@@ -134,8 +146,43 @@ class ApiMusic():
         else:
             return []
 
+    # 喜马拉雅播放列表
+    def ximalaya_playlist(self, id, index, size):
+        res = requests.get('https://mobile.ximalaya.com/mobile/v1/album/track?albumId=' + str(id) + '&device=android&isAsc=true&pageId='\
+            + str(index) + '&pageSize=' + str(size) +'&statEvent=pageview%2Falbum%40203355&statModule=%E6%9C%80%E5%A4%9A%E6%94%B6%E8%97%8F%E6%A6%9C&statPage=ranklist%40%E6%9C%80%E5%A4%9A%E6%94%B6%E8%97%8F%E6%A6%9C&statPosition=8')
+        obj = res.json()
+        if obj['ret'] == 0:
+            _list = obj['data']['list']
+            _totalCount = obj['data']['totalCount']
+            if len(_list) > 0:
+                # 获取专辑名称
+                _res = requests.get('http://mobile.ximalaya.com/v1/track/baseInfo?device=android&trackId='+str(_list[0]['trackId']))
+                _obj = _res.json()
+                # 格式化列表
+                _newlist = map(lambda item: {
+                    "id": item['trackId'],
+                    "name": item['title'],
+                    "album": _obj['albumTitle'],
+                    "image": item['coverLarge'],
+                    "duration": item['duration'],
+                    "song": item['title'],
+                    "load":{
+                        'id': id,
+                        'type': 'ximalaya',
+                        'index': index,
+                        'total': _totalCount
+                    },
+                    "type": "url",
+                    "url": item['playUrl64'],
+                    "singer": item['nickname']
+                    }, _list)
+                return list(_newlist)
+        return []
 
+    ###################### 获取音乐列表 ######################
 
+    ###################### 播放音乐列表 ######################
+    
     # 播放电台
     async def play_dj_hotsong(self, djName):
         hass = self.hass
@@ -224,36 +271,7 @@ class ApiMusic():
                 
         else:
             return None
+    
+    ###################### 播放音乐列表 ######################
 
-    # 喜马拉雅播放列表
-    def ximalaya_playlist(self, id, index, size):
-        res = requests.get('https://mobile.ximalaya.com/mobile/v1/album/track?albumId=' + str(id) + '&device=android&isAsc=true&pageId='\
-            + str(index) + '&pageSize=' + str(size) +'&statEvent=pageview%2Falbum%40203355&statModule=%E6%9C%80%E5%A4%9A%E6%94%B6%E8%97%8F%E6%A6%9C&statPage=ranklist%40%E6%9C%80%E5%A4%9A%E6%94%B6%E8%97%8F%E6%A6%9C&statPosition=8')
-        obj = res.json()
-        if obj['ret'] == 0:
-            _list = obj['data']['list']
-            _totalCount = obj['data']['totalCount']
-            if len(_list) > 0:
-                # 获取专辑名称
-                _res = requests.get('http://mobile.ximalaya.com/v1/track/baseInfo?device=android&trackId='+str(_list[0]['trackId']))
-                _obj = _res.json()
-                # 格式化列表
-                _newlist = map(lambda item: {
-                    "id": item['trackId'],
-                    "name": item['title'],
-                    "album": _obj['albumTitle'],
-                    "image": item['coverLarge'],
-                    "duration": item['duration'],
-                    "song": item['title'],
-                    "load":{
-                        'id': id,
-                        'type': 'ximalaya',
-                        'index': index,
-                        'total': _totalCount
-                    },
-                    "type": "url",
-                    "url": item['playUrl64'],
-                    "singer": item['nickname']
-                    }, _list)
-                return list(_newlist)
-        return []
+    
