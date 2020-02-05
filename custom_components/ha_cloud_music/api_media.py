@@ -48,7 +48,16 @@ class ApiMedia():
                 "notification_id": 
                 "ha-cloud-music-" + type})
 
+    ###################### 调试日志 ######################
+
     # 日志
     def log(self, *args):
         if self.is_debug == True:
             self._LOGGER.info(*args)
+    
+    # 调试日志
+    def debug(self, *args):
+        self._LOGGER.debug(*args)
+    
+    ###################### 调试日志 ######################
+    

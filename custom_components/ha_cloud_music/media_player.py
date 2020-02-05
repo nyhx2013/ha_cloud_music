@@ -15,7 +15,7 @@ import asyncio
 
 ################### 接口定义 ###################
 # 常量
-from .api_const import DOMAIN, VERSION, ROOT_PATH, TrueOrFalse
+from .api_const import DOMAIN, VERSION, ROOT_PATH, TrueOrFalse, write_config_file, read_config_file
 # 网易云接口
 from .api_music import ApiMusic
 # 网关视图
@@ -75,17 +75,17 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
     sidebar_title = config.get("sidebar_title", "云音乐")
     sidebar_icon = config.get("sidebar_icon","mdi:music")
     # 网易云音乐用户ID
-    uid = str(config.get("uid",''))
+    uid = str(config.get("uid", ''))
     # 用户名和密码
-    user = config.get("user")
-    password = config.get("password")
+    user = str(config.get("user", ''))
+    password = str(config.get("password", ''))
     # 显示模式 全屏：fullscreen
     show_mode = config.get("show_mode", "default")
     # 网易云音乐接口地址
     api_url = config.get("api_url", '')
     # TTS相关配置
-    tts_before_message = config.get("tts_before_message")
-    tts_after_message = config.get("tts_after_message")
+    tts_before_message = config.get("tts_before_message", '')
+    tts_after_message = config.get("tts_after_message", '')
 
     #### （启用/禁用）配置 #### 
 
@@ -101,10 +101,6 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
         _LOGGER.error("检测到未配置api_url参数！")
         return
     ################### 系统配置 ###################
-
-
-    
-
 
     ################### 定义实体类 ###################
     # 播放器实例
@@ -265,8 +261,8 @@ class MediaPlayer(MediaPlayerDevice):
                 # 获取当前进度
                 self._media_position = int(self._media.attributes['media_position'])
             else:
-                self.api_media.log('当前时间：%s，当前进度：%s,总进度：%s', self._media_position_updated_at, self._media_position, self.media_duration)
-                self.api_media.log('源播放器状态 %s，云音乐状态：%s', self._media.state, self._state)
+                self.api_media.debug('当前时间：%s，当前进度：%s,总进度：%s', self._media_position_updated_at, self._media_position, self.media_duration)
+                self.api_media.debug('源播放器状态 %s，云音乐状态：%s', self._media.state, self._state)
                 
                   # 没有进度的，下一曲判断逻辑
                 if self._timer_enable == True:
@@ -314,7 +310,7 @@ class MediaPlayer(MediaPlayerDevice):
                     _media_position = self._media_position
                     _today = (now - self._media_position_updated_at)
                     _seconds = _today.seconds + _today.microseconds / 1000000.0
-                    self.api_media.log('当前相差的秒：%s', _seconds)
+                    self.api_media.debug('当前相差的秒：%s', _seconds)
                     self._media_position += _seconds
             
             # 更新当前播放进度时间
@@ -694,8 +690,8 @@ class MediaPlayer(MediaPlayerDevice):
         
     def select_sound_mode(self, sound_mode):        
         self._sound_mode = sound_mode
-        self._state = STATE_IDLE
-        self.save_sound_mode()
+        self._state = STATE_IDLE        
+        write_config_file('sound_mode.json', {'state': self._sound_mode})
         self.api_media.log('选择声音模式：%s', sound_mode)
     
     def clear_playlist(self):
@@ -725,23 +721,14 @@ class MediaPlayer(MediaPlayerDevice):
         entity_list = self._hass.states.entity_ids('media_player')
         if len(entity_list) != len(self._sound_mode_list):
             self.init_sound_mode()
-        
-    # 保存当前选择的播放器
-    def save_sound_mode(self):
-        filename = os.path.dirname(__file__) + '/sound_mode.json'
-        entity_value = {'state': self._sound_mode}
-        with open(filename, 'w') as f_obj:
-            json.dump(entity_value, f_obj)
     
     # 读取当前保存的播放器
     def init_sound_mode(self):
-        filename = os.path.dirname(__file__) + '/sound_mode.json'
         sound_mode = None
-        if os.path.exists(filename) == True:
-            with open(filename, 'r') as f_obj:
-                entity = json.load(f_obj)
-                sound_mode = entity['state']
-                
+        res =  read_config_file('sound_mode.json')
+        if res is not None:
+            sound_mode = res['state']
+
         # 过滤云音乐
         entity_list = self._hass.states.entity_ids('media_player')
         filter_list = filter(lambda x: x.count('media_player.' + DOMAIN) == 0, entity_list)
@@ -861,18 +848,12 @@ class MediaPlayer(MediaPlayerDevice):
     
     # 设置播放模式
     def set_play_mode(self, _mode):
+        mode_names = ['列表循环', '顺序播放', '随机播放', '单曲循环']
         mode_list = [0, 1, 2, 3]
         if mode_list.count(_mode) == 0:
             _mode = 0
         self._play_mode = _mode
-        _mode_name = "列表循环"
-        if self._play_mode == 1:
-            _mode_name = "顺序播放"
-        elif self._play_mode == 2:
-            _mode_name = "随机播放"
-        elif self._play_mode == 3:
-            _mode_name = "单曲循环"
-        self.api_media.log('设置播放模式：%s', _mode_name)
+        self.api_media.log('设置播放模式：%s', mode_names[_mode])
 
     ######### 服务 ##############
     def config(self, call):

@@ -2,6 +2,7 @@ import os, hashlib, asyncio, threading, time
 from mutagen.mp3 import MP3
 from urllib.request import urlopen, quote, urlretrieve
 from homeassistant.helpers import template
+from homeassistant.const import (STATE_IDLE, STATE_PAUSED, STATE_PLAYING, STATE_OFF, STATE_UNAVAILABLE)
 # md5加密
 def md5(data):
     return hashlib.md5(data.encode(encoding='UTF-8')).hexdigest()
@@ -39,7 +40,7 @@ class ApiTTS():
         else:
             # 如果没有下载，则延时1秒
             time.sleep(1)
-        local_url = 'http://localhost:8123' + ROOT_PATH + '/cache/' + f_name        
+        local_url = self.hass.config.api.base_url + ROOT_PATH + '/cache/' + f_name        
         self.log('本地URL', local_url)
         self.hass.services.call('media_player', 'play_media', {
             'entity_id': 'media_player.ha_cloud_music',

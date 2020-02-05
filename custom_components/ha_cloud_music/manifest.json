@@ -3,7 +3,7 @@
   "name": "ha_cloud_music",
   "documentation": "https://github.com/shaonianzhentan/ha_cloud_music",
   "requirements": [
-    "mutagen"
+    "mutagen==1.43.0"
   ],
   "dependencies": [],
   "codeowners": []
