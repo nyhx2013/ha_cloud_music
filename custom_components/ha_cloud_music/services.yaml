@@ -10,15 +10,12 @@ load:
     index:
       description: 要从第几首开始播放（如果超过列表总数量则从第1首开始播放）
       example: '1'
-play_mode:
-  description: 设置播放模式
-  fields:
-    mode:
-      description: 播放模式（0：列表循环，1：顺序播放，2：随机播放，3：单曲循环）
-      example: '1'
 config:
-  description: 配置修改
+  description: 配置修改（可单独设置）
   fields:
+    is_voice:
+      description: （禁用/启用）语音识别（0：禁用，1：启用）
+      example: '1'
     is_notify:
       description: （禁用/启用）通知（0：禁用，1：启用）
       example: '1'
@@ -33,4 +30,4 @@ tts:
   fields:
     message:
       description: 要播放的文字
-      example: '支持模板格式'
+      example: '支持内置模板格式'

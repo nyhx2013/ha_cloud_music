@@ -82,7 +82,7 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
     # 显示模式 全屏：fullscreen
     show_mode = config.get("show_mode", "default")
     # 网易云音乐接口地址
-    api_url = config.get("api_url", '')
+    api_url = str(config.get("api_url", '')).strip('/')
     # TTS相关配置
     tts_before_message = config.get("tts_before_message", '')
     tts_after_message = config.get("tts_after_message", '')
@@ -155,9 +155,6 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
     ################### 注册服务 ################### 
     # 注册服务【加载歌单】
     hass.services.register(DOMAIN, 'load', mp.load_songlist)
-
-    # 注册服务【设置播放模式】
-    hass.services.register(DOMAIN, 'play_mode', mp.play_mode)
 
     # 注册服务【配置】
     hass.services.register(DOMAIN, 'config', mp.config)
