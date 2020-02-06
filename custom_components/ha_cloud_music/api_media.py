@@ -32,6 +32,14 @@ class ApiMedia():
             self._supported_vlc = False
             return False
     
+    # 初始化内置VLC播放器
+    def init_vlc_player(self):
+        try:
+            if self.media._media == None or hasattr(self.media._media, 'ha_cloud_music') == False:
+                self.media._media = VlcPlayer()
+        except Exception as e:
+            print("【初始化内置VLC播放器】出现错误", e)  
+
     # 释放vlc对象
     def release_vlc_player(self):        
         if self.media._media != None and hasattr(self.media._media, 'ha_cloud_music') == True:

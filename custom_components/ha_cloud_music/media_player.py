@@ -26,8 +26,6 @@ from .api_media import ApiMedia
 from .api_voice import ApiVoice
 # TTS接口
 from .api_tts import ApiTTS
-# vlc播放器
-from .api_vlc import VlcPlayer
 ################### 接口定义 ###################
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers import config_validation as cv, intent
@@ -247,13 +245,13 @@ class MediaPlayer(MediaPlayerDevice):
         # 如果当前状态是播放，则进度累加（虽然我定时的是1秒，但不知道为啥2秒执行一次）
         if self._media != None:
             # 走内置播放器的逻辑
-            if self._sound_mode == "内置VLC播放器":
-                
+            if self._sound_mode == "内置VLC播放器":                
                 if self._timer_enable == True:
                     # 如果内置播放器状态为off，说明播放结束了
                     if (self._source_list != None and len(self._source_list) > 0 
                         and self._media.state == STATE_OFF
                         and self.next_count > 0):
+                        self.next_count = -15
                         self.media_end_next()
                     # 计数器累加
                     self.next_count += 1
@@ -328,7 +326,7 @@ class MediaPlayer(MediaPlayerDevice):
         
         # 使用内置VLC
         if self._sound_mode == "内置VLC播放器":
-            self.init_vlc_player()            
+            self.api_media.init_vlc_player()            
         else:
             self.api_media.release_vlc_player()
             # 获取源播放器
@@ -543,7 +541,7 @@ class MediaPlayer(MediaPlayerDevice):
 
     def media_seek(self, position):
         """将媒体设置到特定位置."""
-        self.api_media.log('设置播放位置：%s', position)
+        self.api_media.log('【设置播放位置】：%s', position)
         self.call('media_seek', {"position": position})        
 
     def mute_volume(self, mute):
@@ -551,8 +549,8 @@ class MediaPlayer(MediaPlayerDevice):
         self.call('volume_mute', {"is_volume_muted": mute})
 
     def set_volume_level(self, volume):
-        """Set volume level, range 0..1."""        
-        self.api_media.log('设置音量：%s', volume)
+        """Set volume level, range 0..1."""
+        self.api_media.log('【设置音量】：%s', volume)
         self.call('volume_set', {"volume": volume})
 
     def media_play(self):
@@ -571,8 +569,8 @@ class MediaPlayer(MediaPlayerDevice):
         self._state = STATE_IDLE
 		
     def play_media(self, media_type, media_id, **kwargs):
-        """Play media from a URL or file."""        
-        #self.api_media.log('类型：%s', media_type)                
+        """Play media from a URL or file."""
+        self.api_media.log('【播放列表类型】：%s', media_type)
         if media_type == MEDIA_TYPE_MUSIC:
             self._timer_enable = False
             url = media_id
@@ -630,7 +628,7 @@ class MediaPlayer(MediaPlayerDevice):
             _LOGGER.error(
                 "不受支持的媒体类型 %s",media_type)
             return
-        self.api_media.log('title：%s ，play url：%s' , self._media_name, url)
+        self.api_media.log('【当前播放音乐】【%s】:【%s】' , self._media_name, url)
         
         # 默认为music类型，如果指定视频，则替换
         play_type = "music"
@@ -658,7 +656,6 @@ class MediaPlayer(MediaPlayerDevice):
         self._media_url = url
         self.call('play_media', {"url": url,"type": play_type})
 
-
     # 音乐结束自动下一曲
     def media_end_next(self):        
         playlist_count = len(self.music_playlist) - 1
@@ -677,17 +674,17 @@ class MediaPlayer(MediaPlayerDevice):
 
     def media_next_track(self):
         self.music_index = self.music_index + 1
-        self.api_media.log('下一曲：%s', self.music_index)
-        self.next_count = -15        
+        self.api_media.log('【下一曲】：%s', self.music_index)
+        self.next_count = -15
         self.music_load()
 
     def media_previous_track(self):
         self.music_index = self.music_index - 1
-        self.api_media.log('上一曲：%s', self.music_index)
+        self.api_media.log('【上一曲】：%s', self.music_index)
         self.music_load()
     
     def select_source(self, source):
-        self.api_media.log('选择源：%s', source)
+        self.api_media.log('【选择音乐】：%s', source)
         #选择播放
         self._state = STATE_IDLE
         self.music_index = self._source_list.index(source)
@@ -697,10 +694,10 @@ class MediaPlayer(MediaPlayerDevice):
         self._sound_mode = sound_mode
         self._state = STATE_IDLE        
         write_config_file('sound_mode.json', {'state': self._sound_mode})
-        self.api_media.log('选择声音模式：%s', sound_mode)
+        self.api_media.log('【选择源播放器】：%s', sound_mode)
     
     def clear_playlist(self):
-        self.api_media.log('清除播放列表')
+        self.api_media.log('【重置播放器】')
         self.music_playlist = None
         self.music_index = 0
         self._media_title = None
@@ -746,7 +743,7 @@ class MediaPlayer(MediaPlayerDevice):
         # 如果保存的是【内置VLC播放器】，则直接加载
         if sound_mode == "内置VLC播放器":
            self._sound_mode = "内置VLC播放器"
-           self.init_vlc_player()
+           self.api_media.init_vlc_player()
            return        
         
         if len(self._sound_mode_list) > 0:
@@ -755,12 +752,12 @@ class MediaPlayer(MediaPlayerDevice):
                 self._sound_mode = sound_mode
             elif self.api_media.supported_vlc == True:
                 self._sound_mode = "内置VLC播放器"
-                self.init_vlc_player()
+                self.api_media.init_vlc_player()
             else:
                 self._sound_mode = self._sound_mode_list[0]
         elif self.api_media.supported_vlc == True:
             self._sound_mode = "内置VLC播放器"
-            self.init_vlc_player()
+            self.api_media.init_vlc_player()
         #self.api_media.log(self._sound_mode_list)
        
     def get_url(self, music_info):
@@ -793,25 +790,24 @@ class MediaPlayer(MediaPlayerDevice):
         return url
     
     def call(self, action, info = None):
-        dict = {"entity_id": self._sound_mode}
+        _dict = {"entity_id": self._sound_mode}
         if info != None:
             if 'url' in info:
-                dict['media_content_id'] = info['url']
+                _dict['media_content_id'] = info['url']
             if 'type' in info:
-                dict['media_content_type'] = info['type']
+                _dict['media_content_type'] = info['type']
             if 'volume' in info:
-                dict['volume_level'] = info['volume']
+                _dict['volume_level'] = info['volume']
             if 'position' in info:
-                dict['seek_position'] = info['position']
+                _dict['seek_position'] = info['position']
                 # 如果是MPD，则直接赋值
                 if self.player_type == "mpd":
                     self._media_position = info['position']
             if 'is_volume_muted' in info:
-                dict['is_volume_muted'] = info['is_volume_muted']
+                _dict['is_volume_muted'] = info['is_volume_muted']
                 
         #调用服务
-        self.api_media.log('调用服务：%s', action)
-        self.api_media.log(dict)
+        self.api_media.log('【调用服务[' + str(self._sound_mode) + ']】%s：%s', action, _dict)
                 
         if self._sound_mode == "内置VLC播放器":
             if action == "play_media":
@@ -831,13 +827,13 @@ class MediaPlayer(MediaPlayerDevice):
             if action != "play_media":
                 self._hass.services.call('homeassistant', 'update_entity', {"entity_id": 'media_player.'+DOMAIN})
         else:
-            self._hass.services.call('media_player', action, dict)
+            self._hass.services.call('media_player', action, _dict)
             self._hass.services.call('homeassistant', 'update_entity', {"entity_id": self._sound_mode})
             self._hass.services.call('homeassistant', 'update_entity', {"entity_id": 'media_player.'+DOMAIN})
                     
     def music_load(self):
         if self.music_playlist == None:
-           self.api_media.log('结束播放，没有播放列表')
+           self.api_media.log('【结束播放，没有播放列表】')
            return
         self._timer_enable = True
         playlist_count = len(self.music_playlist)
@@ -855,7 +851,7 @@ class MediaPlayer(MediaPlayerDevice):
         if mode_list.count(_mode) == 0:
             _mode = 0
         self._play_mode = _mode
-        self.api_media.log('设置播放模式：%s', mode_names[_mode])
+        self.api_media.log('【设置播放模式】：%s', mode_names[_mode])
 
     ######### 服务 ##############
     def config(self, call):
@@ -869,11 +865,6 @@ class MediaPlayer(MediaPlayerDevice):
         # （禁用/启用）日志
         if 'is_debug' in _obj:
             self.api_media.is_debug = bool(_obj['is_debug'])
-
-    # 设置播放模式
-    def play_mode(self, call):
-        _mode = call.data['mode']
-        self.set_play_mode(_mode)
 
     # 加载播放列表
     def load_songlist(self, call): 
@@ -910,7 +901,7 @@ class MediaPlayer(MediaPlayerDevice):
 
         try:
             if _type == "playlist":
-                self.api_media.log("加载歌单列表，ID：%s", _id)
+                self.api_media.log("【加载歌单列表】，ID：%s", _id)
                 # 获取播放列表
                 obj = self.api_music.music_playlist(_id)      
                 if obj != None and len(obj['list']) > 0:
@@ -924,7 +915,7 @@ class MediaPlayer(MediaPlayerDevice):
                     # 这里弹出提示
                     self.api_media.notification("没有找到id为【"+_id+"】的歌单信息", "load_songlist")
             elif _type == "djradio":
-                self.api_media.log("加载电台列表，ID：%s", _id)
+                self.api_media.log("【加载电台列表】，ID：%s", _id)
                 # 获取播放列表
                 offset = 0
                 if list_index >= 50:
@@ -939,7 +930,7 @@ class MediaPlayer(MediaPlayerDevice):
                 else:
                     self.api_media.notification("没有找到id为【"+_id+"】的电台信息", "load_songlist")
             elif _type == 'ximalaya':
-                self.api_media.log("加载喜马拉雅专辑列表，ID：%s", _id)
+                self.api_media.log("【加载喜马拉雅专辑列表】，ID：%s", _id)
                 # 播放第几条音乐
                 music_index = list_index % 50
                 # 获取第几页
@@ -958,15 +949,5 @@ class MediaPlayer(MediaPlayerDevice):
         finally:
             # 这里重置    
             self.loading = False
-    
-    ######################内置VLC播放器相关方法################################  
-
-    # 初始化内置VLC播放器
-    def init_vlc_player(self):
-        try:
-            if self._media == None or hasattr(self._media, 'ha_cloud_music') == False:
-                self._media = VlcPlayer()
-        except Exception as e:
-            print("【初始化内置VLC播放器】出现错误", e)            
-                
+                    
 ###################媒体播放器##########################

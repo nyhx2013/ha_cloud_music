@@ -1,6 +1,6 @@
 import aiohttp, asyncio, json, requests, re, os
 import http.cookiejar as HC
-from .api_const import get_config_path, write_config_file
+from .api_const import get_config_path, read_config_file, write_config_file
 session = requests.session()
 session.cookies.set('os', 'osx')
 # 保存cookie
@@ -23,7 +23,7 @@ class ApiMusic():
             self.log('登录操作', '尝试使用cookies登录')
             session.cookies.load(ignore_discard=True)
             self.log('登录操作', 'cookies登录成功')
-            res = get_config_path('account.json')
+            res = read_config_file('account.json')
             if res != None:
                 self.log('登录操作', res)
                 self.uid = res['uid']
