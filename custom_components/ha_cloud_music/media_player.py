@@ -158,8 +158,7 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
     hass.services.register(DOMAIN, 'config', mp.config)
 
     # 注册服务【tts】
-    if mp.api_media.supported_vlc == True:
-        hass.services.register(DOMAIN, 'tts', mp.api_tts.speak)
+    hass.services.register(DOMAIN, 'tts', mp.api_tts.speak)
 
     # 监听语音小助手的文本
     if is_voice == True:
