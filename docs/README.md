@@ -20,7 +20,7 @@
 
 media_player:
   - platform: ha_cloud_music
-    api_url: 'http://localhost:3000',
+    api_url: 'http://localhost:3000'
     sidebar_title: 云音乐
     sidebar_icon: mdi:music
     show_mode: fullscreen
