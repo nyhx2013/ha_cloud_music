@@ -363,7 +363,7 @@ export function getFM163() {
         id: 339906053,
         name: '小北电台',
         updateFrequency: '',
-        picUrl: 'http://p1.music.126.net/Jbno74p63uXXIgtafwMZcw==/109951163620386920.jpg'
+        picUrl: 'https://p1.music.126.net/Jbno74p63uXXIgtafwMZcw==/109951163620386920.jpg'
       },
       {
         id: 101009,

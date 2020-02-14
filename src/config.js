@@ -39,8 +39,8 @@ export const defaultLimit = 30
 
 // 默认背景图（需自行引入网络图或本地静态图）
 const BG_ARR = [
-  'http://cdn.mtnhao.com/music/bg.jpg',
-  'http://cdn.mtnhao.com/music/bg-02.jpg'
+  './data/bg.jpg',
+  './data/bg-02.jpg'
 ]
 export const defaultBG = BG_ARR[Math.floor(Math.random() * BG_ARR.length)]
 

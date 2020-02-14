@@ -47,8 +47,8 @@
           1、
           <a
             target="_blank"
-            href="http://music.163.com"
-          >点我(http://music.163.com)</a>打开网易云音乐官网
+            href="https://music.163.com"
+          >点我(https://music.163.com)</a>打开网易云音乐官网
         </p>
         <p>2、点击页面右上角的“登录”</p>
         <p>3、点击您的头像，进入我的主页</p>
