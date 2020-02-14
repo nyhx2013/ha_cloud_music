@@ -128,7 +128,9 @@ export default {
             return
           }
           this.setUid(uid)
-          this.user = res.data.playlist[0].creator
+          let obj = res.data.playlist[0].creator
+          obj.avatarUrl = obj.avatarUrl.replace('http://', 'https://')
+          this.user = obj
           setTimeout(() => {
             this.$mmToast(`${this.user.nickname} 欢迎使用 mmPlayer`)
           }, 200)
