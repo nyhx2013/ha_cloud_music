@@ -13,7 +13,7 @@ export class Song {
     this.singer = singer
     this.album = album
     // 这里将http转为https
-    if (image && image.indexOf('http://') == 0) {
+    if (image && image.indexOf('http://') === 0) {
       image = image.replace('http://', 'https://')
     }
     // console.log(image)
