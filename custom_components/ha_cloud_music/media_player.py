@@ -84,6 +84,7 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
     # TTS相关配置
     tts_before_message = config.get("tts_before_message", '')
     tts_after_message = config.get("tts_after_message", '')
+    tts_mode = config.get("tts_mode", 4)
 
     #### （启用/禁用）配置 #### 
 
@@ -113,6 +114,7 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
     mp.api_tts = ApiTTS(mp,{
         'tts_before_message': tts_before_message,
         'tts_after_message': tts_after_message,
+        'tts_mode': tts_mode
     })    
     mp.api_music = ApiMusic(mp, {
         'api_url': api_url, 
@@ -159,6 +161,7 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
 
     # 注册服务【tts】
     hass.services.register(DOMAIN, 'tts', mp.api_tts.speak)
+    hass.services.register(DOMAIN, 'tts_clear', mp.api_tts.clear)
 
     # 监听语音小助手的文本
     if is_voice == True:
