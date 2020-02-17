@@ -861,6 +861,13 @@ class MediaPlayer(MediaPlayerDevice):
         # 设置播放模式
         if 'play_mode' in _obj:
             self.set_play_mode(_obj['play_mode'])
+        # 设置TTS声音模式
+        if 'tts_mode' in _obj:
+            mode_list = [1, 2, 3, 4]
+            _mode = _obj['tts_mode']
+            if mode_list.count(_mode) == 0:
+                _mode = 4
+            self.api_tts.tts_mode = _mode
         # （禁用/启用）通知
         if 'is_notify' in _obj:
             self.api_media.is_notify = bool(_obj['is_notify'])
