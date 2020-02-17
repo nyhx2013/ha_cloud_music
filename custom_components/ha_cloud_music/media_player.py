@@ -858,6 +858,7 @@ class MediaPlayer(MediaPlayerDevice):
     ######### 服务 ##############
     def config(self, call):
         _obj = call.data
+        self.api_media.log('【调用内置服务】 %s', _obj)
         # 设置播放模式
         if 'play_mode' in _obj:
             self.set_play_mode(_obj['play_mode'])
@@ -868,12 +869,20 @@ class MediaPlayer(MediaPlayerDevice):
             if mode_list.count(_mode) == 0:
                 _mode = 4
             self.api_tts.tts_mode = _mode
+            self.api_media.notification('设置TTS声音模式：' + str(_mode), 'config')
         # （禁用/启用）通知
         if 'is_notify' in _obj:
-            self.api_media.is_notify = bool(_obj['is_notify'])
+            is_notify = bool(_obj['is_notify'])
+            _str = TrueOrFalse(is_notify, '启用通知', '禁用通知')
+            # 如果没有启用通知，则现在启用
+            if self.api_media.is_notify == False:
+                self.api_media.is_notify = True
+            self.api_media.notification(_str, 'config')
+            self.api_media.is_notify = is_notify
         # （禁用/启用）日志
         if 'is_debug' in _obj:
             self.api_media.is_debug = bool(_obj['is_debug'])
+            self.api_media.notification(TrueOrFalse(self.api_media.is_debug, '启用日志', '禁用日志'), 'config')
 
     # 加载播放列表
     def load_songlist(self, call): 
