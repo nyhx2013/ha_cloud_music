@@ -38,7 +38,7 @@ class ApiTTS():
         self.play_url(text)
         # 恢复当前播放到保存的进度
         if self.media_url != None:
-            self.log('恢复当前播放URL', self.media_position)
+            self.log('恢复当前播放URL', self.media_url)
             self.hass.services.call('media_player', 'play_media', {
                 'entity_id': 'media_player.ha_cloud_music',
                 'media_content_id': self.media_url,

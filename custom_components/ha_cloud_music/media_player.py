@@ -289,7 +289,7 @@ class MediaPlayer(MediaPlayerDevice):
                             # 如果进度结束，则下一曲
                             if _isEnd == True:
                                 self.next_count = -15
-                                self.api_media.log('播放器更新 下一曲')
+                                self.api_media.log('【播放器更新-下一曲】总时长：%s，当前进度：%s', self.media_duration, self.media_position)
                                 self.media_end_next()
                     # 计数器累加
                     self.next_count += 1
