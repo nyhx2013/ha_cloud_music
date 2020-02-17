@@ -93,7 +93,7 @@ class ApiTTS():
         # 计算当前文件时长，设置超时播放时间
         audio = MP3(ob_name)
         self.log('音频时长', audio.info.length)
-        time.sleep(audio.info.length + 3)
+        time.sleep(audio.info.length + 4)
 
     async def speak(self, call):
         try:
