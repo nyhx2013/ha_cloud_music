@@ -64,8 +64,8 @@ export default class {
       o.isPlaying = state == 'playing'
       o.state = state
       o.call = async (service_data, service = 'play_media', domain = 'media_player') => {
-       
-        let auth = res.auth
+        let hass = top.document.querySelector('home-assistant').hass
+        let auth = hass.auth
         let authorization = ''
         if (auth._saveTokens) {
           // 过期
@@ -76,20 +76,19 @@ export default class {
         } else {
           authorization = `Bearer ${auth.data.access_token}`
         }
-
-        axios.post(`/api/services/${domain}/${service}`, service_data, {
-          headers: {
-            authorization
-          }
-        }).then(res => {
-          let arr = res.data
+        fetch(`/api/services/${domain}/${service}`, {
+            method: 'post',
+            headers: {
+                authorization
+            },
+            body: JSON.stringify(service_data)
+        }).then(res => res.json()).then(arr => {
           if (Array.isArray(arr) && arr.length === 1) {
             let { attributes } = arr[0]
             if (service === 'media_seek') {
               audio.currentTime = attributes.media_position
             }
           }
-          // this.log()
         })
       }
       resolve(o)
