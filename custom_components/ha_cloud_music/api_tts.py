@@ -57,7 +57,7 @@ class ApiTTS():
     # 获取语音URL
     def play_url(self, text):
         # 生成文件名
-        f_name = self.api_config.md5(text) + ".mp3"
+        f_name = self.api_config.md5(text + str(self.tts_mode)) + ".mp3"
         # 创建目录名称
         _dir =  self.api_config.get_path('tts')
         self.api_config.mkdir(_dir)
