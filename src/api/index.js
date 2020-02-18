@@ -18,17 +18,26 @@ async function handlerGet(url, data) {
   if (data && 'params' in data && data['params']) {
     url = url + '?' + qs.stringify(data['params'])
   }
-  let { expired } = hass.auth
-  if (expired) {
-    await hass.auth.refreshAccessToken()
+
+  let auth = hass.auth
+  let authorization = ''
+  if (auth._saveTokens) {
+    // 过期
+    if (auth.expired) {
+      await auth.refreshAccessToken()
+    }
+    authorization = `${auth.data.token_type} ${auth.accessToken}`
+  } else {
+    authorization = `Bearer ${auth.data.access_token}`
   }
+
   return new Promise((resolve, reject) => {
     axios.post('', {
       type: 'web',
       url
     }, {
       headers: {
-        authorization: `${hass.auth.data.token_type} ${hass.auth.accessToken}`
+        authorization
       }
     }).then(res => {
       resolve(res)
