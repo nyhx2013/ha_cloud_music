@@ -63,12 +63,23 @@ export default class {
       o.isReady = ['playing', 'paused'].includes(state)
       o.isPlaying = state == 'playing'
       o.state = state
-      o.call = (service_data, service = 'play_media', domain = 'media_player') => {
-        let { hassUrl, token_type } = res.auth.data
-        let accessToken = res.auth.accessToken
-        axios.post(`${hassUrl}/api/services/${domain}/${service}`, service_data, {
+      o.call = async (service_data, service = 'play_media', domain = 'media_player') => {
+       
+        let auth = res.auth
+        let authorization = ''
+        if (auth._saveTokens) {
+          // 过期
+          if (auth.expired) {
+            await auth.refreshAccessToken()
+          }
+          authorization = `${auth.data.token_type} ${auth.accessToken}`
+        } else {
+          authorization = `Bearer ${auth.data.access_token}`
+        }
+
+        axios.post(`/api/services/${domain}/${service}`, service_data, {
           headers: {
-            Authorization: `${token_type} ${accessToken}`
+            authorization
           }
         }).then(res => {
           let arr = res.data
