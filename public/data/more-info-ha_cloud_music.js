@@ -346,15 +346,22 @@ class MoreInfoHaCloudMusic extends HTMLElement {
         this.showLoading()
         // 开始执行加载中。。。
         let auth = this.hass.auth
-        if (auth.expired) {
-            auth.refreshAccessToken()
+        let authorization = ''
+        if (auth._saveTokens) {
+          // 过期
+          if (auth.expired) {
+            await auth.refreshAccessToken()
+          }
+          authorization = `${auth.data.token_type} ${auth.accessToken}`
+        } else {
+          authorization = `Bearer ${auth.data.access_token}`
         }
         // 发送查询请求
         fetch(`/api/services/${domain}/${service}`, {
             method: 'post',
             body: JSON.stringify(data),
             headers: {
-                'Authorization': `${auth.data.token_type} ${auth.accessToken}`
+                authorization
             }
         }).then(res => res.json()).then(res => {
             // console.log(res)
