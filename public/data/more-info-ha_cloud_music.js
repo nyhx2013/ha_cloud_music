@@ -342,7 +342,7 @@ class MoreInfoHaCloudMusic extends HTMLElement {
     }
 
     // 调用接口
-    call(data, service, domain = 'media_player') {
+    async call(data, service, domain = 'media_player') {
         this.showLoading()
         // 开始执行加载中。。。
         let auth = this.hass.auth
