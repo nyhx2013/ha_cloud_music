@@ -259,11 +259,11 @@ class ApiMusic():
                     "id": int(item['id']),
                     "name": item['name'],
                     "album": item['album']['name'],
-                    "image": item['album']['img1v1Url'],
+                    "image": item['album']['artist']['img1v1Url'],
                     "duration": int(item['duration']) / 1000,
                     "url": "https://music.163.com/song/media/outer/url?id=" + str(item['id']),
                     "song": item['name'],
-                    "singer": len(item['artist']) > 0 and item['artist'][0]['name'] or '未知'
+                    "singer": len(item['artists']) > 0 and item['artists'][0]['name'] or '未知'
                     }, _list)
                 # 调用服务，执行播放
                 _dict = {
