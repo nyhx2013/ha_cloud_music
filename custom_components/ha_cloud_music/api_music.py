@@ -246,6 +246,40 @@ class ApiMusic():
         else:
             return None
 
+    # 播放歌手的热门歌曲
+    async def play_song(self, name):
+        hass = self.hass
+        res = requests.get(self.api_url + '/search?keywords='+ name)
+        obj = res.json()
+        if obj['code'] == 200:
+            songs = obj['result']['songs']
+            if len(songs) > 0:
+                _list = songs
+                _newlist = map(lambda item: {
+                    "id": int(item['id']),
+                    "name": item['name'],
+                    "album": item['album']['name'],
+                    "image": item['album']['img1v1Url'],
+                    "duration": int(item['duration']) / 1000,
+                    "url": "https://music.163.com/song/media/outer/url?id=" + str(item['id']),
+                    "song": item['name'],
+                    "singer": len(item['artist']) > 0 and item['artist'][0]['name'] or '未知'
+                    }, _list)
+                # 调用服务，执行播放
+                _dict = {
+                    'index': 0,
+                    'list': json.dumps(list(_newlist), ensure_ascii=False)
+                }
+                await hass.services.async_call('media_player', 'play_media', {
+                                    'entity_id': 'media_player.ha_cloud_music',
+                                    'media_content_id': json.dumps(_dict, ensure_ascii=False),
+                                    'media_content_type': 'music_playlist'
+                                }, blocking=True)
+                
+        else:
+            return None
+            
+
     # 播放歌单
     async def play_list_hotsong(self, djName):
         hass = self.hass
