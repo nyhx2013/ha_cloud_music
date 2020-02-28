@@ -151,7 +151,8 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
             require_admin=True
         )
         try:
-            coroutine.send(None)
+            if coroutine is not None:
+                coroutine.send(None)
         except StopIteration:
             pass
     ################### 注册静态目录与接口网关 ###################
