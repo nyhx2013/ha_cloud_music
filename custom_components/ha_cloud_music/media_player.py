@@ -140,7 +140,7 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
         # 添加状态卡片
         hass.components.frontend.add_extra_js_url(hass, ROOT_PATH + '/data/more-info-ha_cloud_music.js')
         # 注册菜单栏
-        coroutine = hass.components.frontend.async_register_built_in_panel(
+        hass.components.frontend.async_register_built_in_panel(
             "iframe",
             sidebar_title,
             sidebar_icon,
@@ -150,11 +150,6 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
             + "&uid=" + mp.api_music.uid},
             require_admin=True
         )
-        try:
-            if coroutine is not None:
-                coroutine.send(None)
-        except StopIteration:
-            pass
     ################### 注册静态目录与接口网关 ###################
 
     ################### 注册服务 ################### 
