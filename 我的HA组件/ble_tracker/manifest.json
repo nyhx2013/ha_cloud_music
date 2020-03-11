@@ -1,8 +1,0 @@
-{
-  "domain": "ble_tracker",
-  "name": "ble_tracker",
-  "documentation": "https://github.com/shaonianzhentan/ha_cloud_music",
-  "requirements": [],
-  "dependencies": [],
-  "codeowners": []
-}
