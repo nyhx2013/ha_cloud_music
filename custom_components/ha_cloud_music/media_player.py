@@ -30,7 +30,6 @@ from .api_tts import ApiTTS
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers import config_validation as cv, intent
 from homeassistant.helpers.event import track_time_interval, async_call_later
-from homeassistant.components.weblink import Link
 from homeassistant.components.http import HomeAssistantView
 import aiohttp
 from aiohttp import web
