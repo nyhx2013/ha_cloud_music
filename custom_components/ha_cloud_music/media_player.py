@@ -246,7 +246,7 @@ class MediaPlayer(MediaPlayerDevice):
         # 如果当前状态是播放，则进度累加（虽然我定时的是1秒，但不知道为啥2秒执行一次）
         if self._media != None:
             # 走内置播放器的逻辑
-            if self._sound_mode == "内置VLC播放器":                
+            if self._sound_mode == "内置VLC播放器":
                 if self._timer_enable == True:
                     # 如果内置播放器状态为off，说明播放结束了
                     if (self._source_list != None and len(self._source_list) > 0 
@@ -305,6 +305,12 @@ class MediaPlayer(MediaPlayerDevice):
                         if 'media_position' in self._media.attributes:
                             self._media_position = int(self._media.attributes['media_position']) + 5
                     else:
+                        # 判断是否mpd
+                        _media_position = self._media.attributes['media_position']
+                        if ':' in _media_position:
+                            arr = _media_position.split(':')
+                            self._media.attributes['media_position'] = int(arr[0])
+                            self._media.attributes['media_duration'] = int(arr[1])
                         self._media_position = int(self._media.attributes['media_position'])
                 # 如果当前是播放状态，则进行进度累加。。。
                 elif self._state == STATE_PLAYING and self._media_position_updated_at != None:
