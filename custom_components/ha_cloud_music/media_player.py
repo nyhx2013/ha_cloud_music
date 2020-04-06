@@ -305,13 +305,13 @@ class MediaPlayer(MediaPlayerDevice):
                         if 'media_position' in self._media.attributes:
                             self._media_position = int(self._media.attributes['media_position']) + 5
                     else:
-                        # 判断是否mpd
+                        # 兼容mpd的奇葩格式，真6
                         _media_position = self._media.attributes['media_position']
                         if ':' in _media_position:
                             arr = _media_position.split(':')
-                            self._media.attributes['media_position'] = int(arr[0])
-                            self._media.attributes['media_duration'] = int(arr[1])
-                        self._media_position = int(self._media.attributes['media_position'])
+                            self._media_position = int(arr[0]) + 11
+                        else:
+                            self._media_position = int(self._media.attributes['media_position'])
                 # 如果当前是播放状态，则进行进度累加。。。
                 elif self._state == STATE_PLAYING and self._media_position_updated_at != None:
                     _media_position = self._media_position
@@ -517,7 +517,9 @@ class MediaPlayer(MediaPlayerDevice):
             and self.music_playlist != None and len(self.music_playlist) > 0 and self.music_index >= 0):
             music_info = self.music_playlist[self.music_index]
             return int(music_info['duration'])
-        
+        # 判断mpd的奇葩格式
+        if ':' in attr['media_position']:
+            return int(attr['media_position'].split(':')[1])
         return 0
 
     @property
