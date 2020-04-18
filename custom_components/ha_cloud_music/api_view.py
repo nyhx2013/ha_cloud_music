@@ -19,5 +19,9 @@ class ApiView(HomeAssistantView):
                 mp = hass.data[DOMAIN]
                 _result = mp.api_music.get(response['url'])
                 return self.json(_result)
+            elif _type == 'proxy':
+                mp = hass.data[DOMAIN]
+                _result = mp.api_music.proxy_get(response['url'])
+                return self.json(_result)
                 
         return self.json(response)

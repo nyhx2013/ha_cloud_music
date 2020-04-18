@@ -57,7 +57,11 @@ class ApiMusic():
     def get(self, url):
         r = session.get(self.api_url + url)
         return r.json()
-        
+    
+    def proxy_get(self, url):
+        res = requests.get(url, headers=HEADERS)
+        return res.json()
+
     ###################### 获取音乐播放URL ######################    
     
     # 获取音乐URL
