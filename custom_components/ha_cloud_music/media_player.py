@@ -307,7 +307,8 @@ class MediaPlayer(MediaPlayerDevice):
                     else:
                         # 兼容mpd的奇葩格式，真6
                         _media_position = self._media.attributes['media_position']
-                        if ':' in _media_position:
+                        # 如果进度是字符串，并且包含冒号
+                        if isinstance(_media_position, str) and ':' in _media_position:
                             arr = _media_position.split(':')
                             self._media_position = int(arr[0]) + 11
                         else:
