@@ -21,12 +21,13 @@ class ApiMusic():
         # 如果有用户名密码，则登录
         if self.user != '' and self.password != '':
             self.log('登录操作', '开始登录')
-            name = 'cellphone'
             # 判断是否使用邮箱
             if '@' in self.user:
-                name = 'email'
-            # 开始登录            
-            res = await self.get('/login?' + name + '=' + self.user + '&password=' + self.password)
+                # 邮箱登录
+                res = await self.get('/login?email=' + self.user + '&password=' + self.password)
+            else:               
+                # 手机号码登录
+                res = await self.get('/login/cellphone?phone=' + self.user + '&password=' + self.password)
             # 登录成功
             if res['code'] == 200:
                 self.uid = str(res['account']['id'])
