@@ -1,12 +1,11 @@
 import aiohttp, asyncio, json, requests, re, os
 import http.cookiejar as HC
 from .api_const import get_config_path, read_config_file, write_config_file
-session = requests.session()
-session.cookies.set('os', 'osx')
-# 保存cookie
-session.cookies = HC.LWPCookieJar(filename=get_config_path('cookies.txt'))
+
 # 全局请求头
 HEADERS = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.87 Safari/537.36'}
+# 模拟MAC环境
+COOKIES = {'os': 'osx'}
 
 class ApiMusic():
 
@@ -18,49 +17,68 @@ class ApiMusic():
         self.user = cfg['user']
         self.password = cfg['password']
 
-    def login(self):
-        try:
-            self.log('登录操作', '尝试使用cookies登录')
-            session.cookies.load(ignore_discard=True)
-            self.log('登录操作', 'cookies登录成功')
-            res = read_config_file('account.json')
-            if res != None:
-                self.log('登录操作', res)
-                self.uid = res['uid']
+    async def login(self):
+        # 如果有用户名密码，则登录
+        if self.user != '' and self.password != '':
+            self.log('登录操作', '开始登录')
+            name = 'cellphone'
+            # 判断是否使用邮箱
+            if '@' in self.user:
+                name = 'email'
+            # 开始登录            
+            res = await self.get('/login?' + name + '=' + self.user + '&password=' + self.password)
+            # 登录成功
+            if res['code'] == 200:
+                self.uid = str(res['account']['id'])
+                write_config_file('account.json', {
+                    'uid': self.uid,
+                    'user': self.user,
+                    'account': res['account']
+                })
+                self.log('登录成功')
             else:
-                raise Exception('没有找到配置文件')
-        except:
-            self.log('登录操作', 'cookie未能加载')
-            # 如果有用户名密码，则登录
-            if self.user != '' and self.password != '':
-                self.log('登录操作', '开始登录')
-                name = 'cellphone'
-                # 判断是否使用邮箱
-                if '@' in self.user:
-                    name = 'email'                    
-                res = self.get('/login?' + name + '=' + self.user + '&password=' + self.password)
-                if res['code'] == 200:
-                    self.uid = str(res['account']['id'])
-                    write_config_file('account.json', {
-                       'uid': self.uid,
-                       'user': self.user,
-                       'account': res['account']
-                    })
-                    session.cookies.save()
-                    self.log('登录成功')
-                else:
-                    self.log('登录失败', res)
+                self.log('登录失败', res)
 
     def log(self, name, value = ''):
         self.media.api_media.log('【ApiMusic接口】%s：%s',name,value)
 
-    def get(self, url):
-        r = session.get(self.api_url + url)
-        return r.json()
+    async def get(self, url):
+        link = self.api_url + url
+        # print(link)
+        result = None
+        try:
+            global COOKIES
+            async with aiohttp.ClientSession(headers=HEADERS, cookies=COOKIES) as session:
+                async with session.get(link) as resp:
+                    # 如果是登录，则将登录状态保存起来
+                    if '/login?' in url:
+                        _dict = {}
+                        cookies = session.cookie_jar.filter_cookies(self.api_url)
+                        for key, cookie in cookies.items():
+                            _dict[key] = cookie.value
+                            # print(key)
+                            # print(cookie.value)
+                        # 设置全局cookies值
+                        COOKIES = _dict
+
+                    result = await resp.json()
+        except Exception as e:
+            self.log('【接口出现异常】' + link, e)
+        return result
     
-    def proxy_get(self, url):
-        res = requests.get(url, headers=HEADERS)
-        return res.json()
+    async def proxy_get(self, url):
+        result = None
+        try:
+            async with aiohttp.ClientSession(headers=HEADERS) as session:
+                async with session.get(url) as resp:
+                    # 喜马拉雅返回的是文本内容
+                    if 'https://mobile.ximalaya.com/mobile/' in url:
+                        result = json.loads(await resp.text())
+                    else:    
+                        result = await resp.json()
+        except Exception as e:
+            self.log('【接口出现异常】' + url, e)
+        return result
 
     ###################### 获取音乐播放URL ######################    
     

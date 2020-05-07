@@ -61,9 +61,6 @@ SUPPORT_VLC = SUPPORT_PAUSE | SUPPORT_VOLUME_SET | SUPPORT_VOLUME_MUTE | SUPPORT
 TIME_BETWEEN_UPDATES = datetime.timedelta(seconds=1)
 ###################媒体播放器##########################
 
-
-
-
 def setup_platform(hass, config, add_entities, discovery_info=None):
 
     ################### 系统配置 ###################
@@ -122,7 +119,11 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
         'password': password
     })
     # 开始登录
-    mp.api_music.login()
+    new_loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(new_loop)
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(mp.api_music.login())
+    
     hass.data[DOMAIN] = mp
     # 添加实体
     add_entities([mp])
