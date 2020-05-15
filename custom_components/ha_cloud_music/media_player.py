@@ -156,6 +156,9 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
     # 注册服务【加载歌单】
     hass.services.register(DOMAIN, 'load', mp.load_songlist)
 
+    # 注册服务【点歌】
+    hass.services.register(DOMAIN, 'pick', mp.pick_song)
+
     # 注册服务【配置】
     hass.services.register(DOMAIN, 'config', mp.config)
 
@@ -976,5 +979,11 @@ class MediaPlayer(MediaPlayerDevice):
         finally:
             # 这里重置    
             self.loading = False
+    # 单曲点歌
+    async def pick_song(self, call): 
+        if 'name' in call.data:
+            _name = call.data['name']
+            self.api_media.log("【单曲点歌】，歌名：%s", _name)
+            await self.api_music.play_song(_name)
                     
 ###################媒体播放器##########################

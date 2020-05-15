@@ -10,6 +10,12 @@ load:
     index:
       description: 要从第几首开始播放（如果超过列表总数量则从第1首开始播放）
       example: '1'
+pick:
+  description: 通过歌名点歌
+  fields:
+    name:
+      description: 歌曲名称
+      example: '一路向北'
 config:
   description: 配置修改（可单独设置）
   fields:
