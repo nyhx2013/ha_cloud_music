@@ -71,12 +71,24 @@ export function getPersonalized() {
 }
 
 // 歌单详情
-export function getPlaylistDetail(id) {
-  return handlerGet('/playlist/detail', {
+export async function getPlaylistDetail(id) {
+
+  let res = await handlerGet('/playlist/detail', {
     params: {
       id
     }
   })
+
+  let ids = res.data.playlist.trackIds.map(ele => ele.id)
+  // console.log(ids)
+  let res2 = await handlerGet('/song/detail', {
+    params: {
+      ids: ids.join(',')
+    }
+  })
+  // console.log(res2.data)
+  res.data.playlist.tracks = res2.data.songs
+  return res
 }
 
 // 电台 - 节目
@@ -322,30 +334,30 @@ export function getXMLYlist({ id, page, size }) {
       type: 'proxy',
       url: `https://mobile.ximalaya.com/mobile/v1/album/track?albumId=${id}&device=android&isAsc=true&pageId=${page}&pageSize=${size}&statEvent=pageview%2Falbum%40203355&statModule=%E6%9C%80%E5%A4%9A%E6%94%B6%E8%97%8F%E6%A6%9C&statPage=ranklist%40%E6%9C%80%E5%A4%9A%E6%94%B6%E8%97%8F%E6%A6%9C&statPosition=8`
     }).then(({ data }) => {
-        if (data.ret === 0) {
-          let res = data.data
-          let list = res.list
+      if (data.ret === 0) {
+        let res = data.data
+        let list = res.list
 
-          let arr = []
-          list.forEach(ele => {
-            arr.push({
-              album: '喜马拉雅',
-              duration: ele.duration,
-              id: ele.trackId,
-              image: ele.coverLarge,
-              name: ele.title,
-              singer: ele.nickname,
-              type: 'url',
-              url: ele.playUrl64
-            })
+        let arr = []
+        list.forEach(ele => {
+          arr.push({
+            album: '喜马拉雅',
+            duration: ele.duration,
+            id: ele.trackId,
+            image: ele.coverLarge,
+            name: ele.title,
+            singer: ele.nickname,
+            type: 'url',
+            url: ele.playUrl64
           })
+        })
 
-          resolve({
-            list: arr,
-            total: res.totalCount
-          })
-        }
-      })
+        resolve({
+          list: arr,
+          total: res.totalCount
+        })
+      }
+    })
   })
 }
 

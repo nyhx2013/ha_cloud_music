@@ -1,5 +1,5 @@
 // 网络请求地址
-export const URL = 'https://www.jiluxinqing.club/163'
+export const URL = 'https://1.1-00.xyz/163'
 
 // 版本号
 export const VERSION = '1.6.1'
