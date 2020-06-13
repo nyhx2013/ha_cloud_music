@@ -123,8 +123,13 @@ class ApiMusic():
     def music_playlist(self, id):
         res = requests.get(self.api_url + '/playlist/detail?id=' + str(id))
         obj = res.json()
-        if obj['code'] == 200:
-            _list = obj['playlist']['tracks']
+        if obj['code'] == 200:            
+            trackIds = obj['playlist']['trackIds']
+            _trackIds = map(lambda item: str(item['id']), trackIds)
+            _res = requests.get(self.api_url + '/song/detail?ids=' + ','.join(_trackIds))
+            _obj = _res.json()
+
+            _list = _obj['songs']
             _newlist = map(lambda item: {
                 "id": int(item['id']),
                 "name": item['name'],
