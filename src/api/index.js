@@ -385,10 +385,10 @@ export function getFM163() {
         picUrl: 'https://p1.music.126.net/Hmikf7lu9uc6YwhseOIL2A==/109951163304402567.jpg'
       },
       {
-        id: 618058,
-        name: '蕊希电台',
+        id: 350159057,
+        name: '新华社夜读',
         updateFrequency: '',
-        picUrl: 'https://p2.music.126.net/JpGpHfy_DUAWeuIQHrjYbg==/1418370012865049.jpg'
+        picUrl: 'http://p2.music.126.net/jEV4SxchW0YlgiD8DcMsVw==/18958878997991998.jpg'
       },
       {
         id: 339906053,
@@ -397,10 +397,10 @@ export function getFM163() {
         picUrl: 'https://p1.music.126.net/Jbno74p63uXXIgtafwMZcw==/109951163620386920.jpg'
       },
       {
-        id: 101009,
-        name: '程一电台',
+        id: 526835598,
+        name: '解忧大白',
         updateFrequency: '',
-        picUrl: 'https://p2.music.126.net/YfsRFHpQZv2FyXK7RRHnQw==/109951163894320715.jpg'
+        picUrl: 'http://p2.music.126.net/CqY_3i2xrLJxcY1knWJ-ZQ==/109951164134175221.jpg'
       },
       {
         id: 349437249,
