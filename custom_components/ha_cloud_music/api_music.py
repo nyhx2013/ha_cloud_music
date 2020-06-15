@@ -248,7 +248,7 @@ class ApiMusic():
                         "id": int(item['id']),
                         "name": item['name'],
                         "album": item['al']['name'],
-                        "image": item['al']['picUrl'],
+                        "image": ('picUrl' in item['al']) and item['al']['picUrl'] or hot_obj['artist']['picUrl'],
                         "duration": int(item['dt']) / 1000,
                         "url": "https://music.163.com/song/media/outer/url?id=" + str(item['id']),
                         "song": item['name'],
