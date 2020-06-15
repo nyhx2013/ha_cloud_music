@@ -40,7 +40,7 @@ class ApiVoice():
             await hass.services.async_call('media_player', 'media_play', {'entity_id': 'media_player.ha_cloud_music'})
         elif '暂停音乐' == _text:
             await hass.services.async_call('media_player', 'media_pause', {'entity_id': 'media_player.ha_cloud_music'})
-        elif '声音小点' == _text and '小点声音' == _text and '小一点声音' == _text and '声音小一点' == _text:
+        elif '声音小点' == _text or '小点声音' == _text or '小一点声音' == _text or '声音小一点' == _text:
             await hass.services.async_call('media_player', 'volume_down', {'entity_id': 'media_player.ha_cloud_music'})
-        elif '声音大点' == _text and '大点声音' == _text and '大一点声音' == _text and '声音大一点' == _text:
+        elif '声音大点' == _text or '大点声音' == _text or '大一点声音' == _text or '声音大一点' == _text:
             await hass.services.async_call('media_player', 'volume_up', {'entity_id': 'media_player.ha_cloud_music'})
