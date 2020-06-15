@@ -210,9 +210,9 @@ class ApiMusic():
     ###################### 播放音乐列表 ######################
     
     # 播放电台
-    async def play_dj_hotsong(self, djName):
+    async def play_dj_hotsong(self, name):
         hass = self.hass
-        obj = await self.get('/search?keywords='+ djName +'&type=1009')
+        obj = await self.get('/search?keywords='+ name +'&type=1009')
         if obj['code'] == 200:
             artists = obj['result']['djRadios']
             if len(artists) > 0:
@@ -233,9 +233,9 @@ class ApiMusic():
             return None
     
     # 播放歌手的热门歌曲
-    async def play_singer_hotsong(self, singerName):
+    async def play_singer_hotsong(self, name):
         hass = self.hass
-        obj = await self.get('/search?keywords='+ djName +'&type=100')
+        obj = await self.get('/search?keywords='+ name +'&type=100')
         if obj['code'] == 200:
             artists = obj['result']['artists']
             if len(artists) > 0:
@@ -301,9 +301,9 @@ class ApiMusic():
             
 
     # 播放歌单
-    async def play_list_hotsong(self, djName):
+    async def play_list_hotsong(self, name):
         hass = self.hass
-        obj = await self.get('/search?keywords='+ djName +'&type=1000')
+        obj = await self.get('/search?keywords='+ name +'&type=1000')
         if obj['code'] == 200:
             artists = obj['result']['playlists']
             if len(artists) > 0:
