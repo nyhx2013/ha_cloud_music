@@ -278,7 +278,7 @@ class MediaPlayer(MediaPlayerEntity):
                             if _isEnd == True:
                                 self.next_count = -15
                                 # 先停止再播放
-                                self.api_media.call_service('media_player', 'media_stop', {"entity_id": self._sound_mode}, True)
+                                self.api_media.call_service('media_player', 'media_stop', {"entity_id": self._sound_mode})
                                 self.api_media.log('MPD播放器更新 下一曲')
                                 self.media_end_next()
                         else:
