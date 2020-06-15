@@ -57,8 +57,8 @@ class ApiMusic():
                         cookies = session.cookie_jar.filter_cookies(self.api_url)
                         for key, cookie in cookies.items():
                             _dict[key] = cookie.value
-                            print(key)
-                            print(cookie.value)
+                            # print(key)
+                            # print(cookie.value)
                         # 设置全局cookies值
                         COOKIES = _dict
 
