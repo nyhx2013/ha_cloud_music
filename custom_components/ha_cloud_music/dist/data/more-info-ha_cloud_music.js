@@ -41,7 +41,7 @@ class MoreInfoHaCloudMusic extends HTMLElement {
                <!-- 音量控制 -->
                <div class="volume">
                 <div>
-                  <iron-icon class="volume-off" icon="mdi:volume-high"></iron-icon>
+                  <ha-icon class="volume-off" icon="mdi:volume-high"></ha-icon>
                 </div>
                 <div>
                     <ha-paper-slider min="0" max="100" />
@@ -74,19 +74,19 @@ class MoreInfoHaCloudMusic extends HTMLElement {
                <!-- 音乐控制 -->
                <div class="controls">
                    <div>
-                    <iron-icon class="play_mode" icon="mdi:repeat"></iron-icon>
+                    <ha-icon class="play_mode" icon="mdi:repeat"></ha-icon>
                    </div>
                    <div>
-                   <iron-icon class="prev" icon="mdi:skip-previous-outline"></iron-icon>
+                   <ha-icon class="prev" icon="mdi:skip-previous-outline"></ha-icon>
                    </div>
                    <div>
-                   <iron-icon class="action" icon="mdi:play-circle-outline"></iron-icon>
+                   <ha-icon class="action" icon="mdi:play-circle-outline"></ha-icon>
                    </div>
                    <div>
-                   <iron-icon class="next" icon="mdi:skip-next-outline"></iron-icon>
+                   <ha-icon class="next" icon="mdi:skip-next-outline"></ha-icon>
                    </div>
                    <div>
-                   <iron-icon class="controls-list" icon="mdi:playlist-music-outline"></iron-icon>
+                   <ha-icon class="controls-list" icon="mdi:playlist-music-outline"></ha-icon>
                    </div>
                </div>
                
@@ -98,7 +98,7 @@ class MoreInfoHaCloudMusic extends HTMLElement {
                     <div class="list-play-mode">
                     </div>
                     <div>
-                        <iron-icon class="close-panel" icon="mdi:close"></iron-icon>
+                        <ha-icon class="close-panel" icon="mdi:close"></ha-icon>
                     </div>
                  </div>
                  <ul>
@@ -247,7 +247,7 @@ class MoreInfoHaCloudMusic extends HTMLElement {
             
          .controls{display:flex;text-align:center;align-items: center;}
          .controls div{width:100%;}
-         .controls div:nth-child(3) iron-icon{width:40px;height:40px;}
+         .controls div:nth-child(3) ha-icon{width:40px;height:40px;}
          
          .music-panel{background-size:cover; overflow:auto;}
          .music-panel .music-lyric{width:100%;height:100%;background:rgba(0,0,0,.7);color:white;overflow:auto;text-align:center;padding:20px 10px;
@@ -262,7 +262,7 @@ class MoreInfoHaCloudMusic extends HTMLElement {
          }
          .music-list-panel ul li{padding:10px;display:flex;    align-items: center;}
          .music-list-panel ul li span{width:100%;display:block;}
-         .music-list-panel ul li iron-icon{width:30px;}
+         .music-list-panel ul li ha-icon{width:30px;}
          .music-list-panel ul li.active{color: var(--primary-color);}
          .music-list-panel ul li:last-child{display:flex;}
          .music-list-panel ul li:last-child button{flex:1;padding:10px 0;border:none;}
@@ -416,7 +416,7 @@ class MoreInfoHaCloudMusic extends HTMLElement {
             }
             // 显示模式与数量
             this.shadow.querySelector('.list-play-mode').innerHTML = `
-                <iron-icon icon="${playMode.icon}"></iron-icon>
+                <ha-icon icon="${playMode.icon}"></ha-icon>
                 ${attr.media_season} (${attr.source_list.length})
             `
                 ; (() => {
@@ -427,12 +427,12 @@ class MoreInfoHaCloudMusic extends HTMLElement {
                         let li = document.createElement('li')
                         if (ele === attr.source) {
                             li.className = 'active'
-                            li.innerHTML = `<span>${ele}</span> <iron-icon icon="mdi:music"></iron-icon>`
+                            li.innerHTML = `<span>${ele}</span> <ha-icon icon="mdi:music"></ha-icon>`
                         } else {
                             let span = document.createElement('span')
                             span.textContent = ele
                             li.appendChild(span)
-                            let ironIcon = document.createElement('iron-icon')
+                            let ironIcon = document.createElement('ha-icon')
                             ironIcon.setAttribute('icon', 'mdi:play-circle-outline')
                             ironIcon.onclick = () => {
                                 // 这里播放音乐
