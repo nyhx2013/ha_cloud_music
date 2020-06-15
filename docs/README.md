@@ -36,12 +36,3 @@ media_player:
     is_debug: true
 
 ```
-
-## 节假日
-
-```
-
-binary_sensor:
-  - platform: ha_cloud_music
-
-```
