@@ -4,8 +4,6 @@ from .api_const import DOMAIN_API,DOMAIN
 
 ##### 网关控制
 class ApiView(HomeAssistantView):
-    """View to handle Configuration requests."""
-
     url = DOMAIN_API
     name = DOMAIN
     requires_auth = True
@@ -14,7 +12,7 @@ class ApiView(HomeAssistantView):
         response = await request.json()
         hass = request.app["hass"]
         if 'type' in response:
-            _type = response['type'] 
+            _type = response['type']
             if _type == 'web':
                 mp = hass.data[DOMAIN]
                 _result = await mp.api_music.get(response['url'])

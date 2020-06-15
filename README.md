@@ -39,8 +39,6 @@ media_player:
 
 ## 测试环境
 
-注意：因为MPD播放器拿不到播放进度属性，可能无法自动下一曲，所以不推荐使用
-
 ### 树莓派3B+
 - 使用了HAChina的镜像安装，[镜像地址](https://www.hachina.io/docs/8536.html "镜像地址")
 - 系统安装了vlc播放器

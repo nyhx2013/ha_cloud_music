@@ -15,7 +15,7 @@ pick:
   fields:
     name:
       description: 歌曲名称
-      example: '一路向北'
+      example: '万有引力'
 config:
   description: 配置修改（可单独设置）
   fields:

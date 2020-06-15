@@ -1,4 +1,4 @@
-import aiohttp, asyncio, json, requests, re, os
+import aiohttp, asyncio, json, re, os
 import http.cookiejar as HC
 from .api_const import get_config_path, read_config_file, write_config_file
 
@@ -84,21 +84,23 @@ class ApiMusic():
     ###################### 获取音乐播放URL ######################    
     
     # 获取音乐URL
-    def get_song_url(self, id):
-        obj = self.get("/song/url?id=" + str(id))
+    async def get_song_url(self, id):
+        obj = await self.get("/song/url?id=" + str(id))
         return obj['data'][0]['url']
 
     # 获取重写向后的地址
-    def get_redirect_url(self, url):
-        # 请求网页    
-        response = requests.get(url, headers=HEADERS)
-        result_url = response.url
-        if result_url == 'https://music.163.com/404':
-            return None
-        return result_url
+    async def get_redirect_url(self, url):
+        # 请求网页
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url) as response:
+                result_url = str(response.url)
+                if result_url == 'https://music.163.com/404':
+                    return None
+                return result_url
+        return None
 
     # 进行咪咕搜索，可以播放周杰伦的歌歌
-    def migu_search(self, songName, singerName):
+    async def migu_search(self, songName, singerName):
         try:
             # 如果含有特殊字符，则直接使用名称搜索
             searchObj = re.search(r'\(|（|：|:《', songName, re.M|re.I)
@@ -106,8 +108,8 @@ class ApiMusic():
                 keywords = songName
             else:    
                 keywords = songName + ' - '+ singerName
-            response = requests.get("http://m.music.migu.cn/migu/remoting/scr_search_tag?rows=10&type=2&keyword=" + keywords + "&pgc=1", headers=HEADERS)
-            res = response.json()
+            
+            res = await self.proxy_get("http://m.music.migu.cn/migu/remoting/scr_search_tag?rows=10&type=2&keyword=" + keywords + "&pgc=1")
             
             if 'musics' in res and len(res['musics']) > 0 and (songName in res['musics'][0]['songName'] or searchObj):
                 return res['musics'][0]['mp3']
@@ -120,15 +122,12 @@ class ApiMusic():
     ###################### 获取音乐列表 ######################
 
     # 获取网易歌单列表
-    def music_playlist(self, id):
-        res = requests.get(self.api_url + '/playlist/detail?id=' + str(id))
-        obj = res.json()
+    async def music_playlist(self, id):
+        obj = await self.get('/playlist/detail?id=' + str(id))
         if obj['code'] == 200:            
             trackIds = obj['playlist']['trackIds']
             _trackIds = map(lambda item: str(item['id']), trackIds)
-            _res = requests.get(self.api_url + '/song/detail?ids=' + ','.join(_trackIds))
-            _obj = _res.json()
-
+            _obj = await self.get('/song/detail?ids=' + ','.join(_trackIds))
             _list = _obj['songs']
             _newlist = map(lambda item: {
                 "id": int(item['id']),
@@ -148,9 +147,8 @@ class ApiMusic():
             return None
 
     # 获取网易电台列表
-    def djradio_playlist(self, id, offset, size):
-        res = requests.get(self.api_url + '/dj/program?rid='+str(id)+'&limit=50&offset='+str(offset * size))
-        obj = res.json()
+    async def djradio_playlist(self, id, offset, size):
+        obj = await self.get('/dj/program?rid='+str(id)+'&limit=50&offset='+str(offset * size))
         if obj['code'] == 200:
             _list = obj['programs']
             _totalCount = obj['count']
@@ -175,17 +173,17 @@ class ApiMusic():
             return []
 
     # 喜马拉雅播放列表
-    def ximalaya_playlist(self, id, index, size):
-        res = requests.get('https://mobile.ximalaya.com/mobile/v1/album/track?albumId=' + str(id) + '&device=android&isAsc=true&pageId='\
+    async def ximalaya_playlist(self, id, index, size):
+        obj = await self.proxy_get('https://mobile.ximalaya.com/mobile/v1/album/track?albumId=' + str(id) + '&device=android&isAsc=true&pageId='\
             + str(index) + '&pageSize=' + str(size) +'&statEvent=pageview%2Falbum%40203355&statModule=%E6%9C%80%E5%A4%9A%E6%94%B6%E8%97%8F%E6%A6%9C&statPage=ranklist%40%E6%9C%80%E5%A4%9A%E6%94%B6%E8%97%8F%E6%A6%9C&statPosition=8')
-        obj = res.json()
+
         if obj['ret'] == 0:
             _list = obj['data']['list']
             _totalCount = obj['data']['totalCount']
             if len(_list) > 0:
                 # 获取专辑名称
-                _res = requests.get('http://mobile.ximalaya.com/v1/track/baseInfo?device=android&trackId='+str(_list[0]['trackId']))
-                _obj = _res.json()
+                _obj = await self.proxy_get('http://mobile.ximalaya.com/v1/track/baseInfo?device=android&trackId='+str(_list[0]['trackId']))
+                
                 # 格式化列表
                 _newlist = map(lambda item: {
                     "id": item['trackId'],
@@ -214,13 +212,12 @@ class ApiMusic():
     # 播放电台
     async def play_dj_hotsong(self, djName):
         hass = self.hass
-        res = requests.get(self.api_url + '/search?keywords='+ djName +'&type=1009')
-        obj = res.json()
+        obj = await self.get('/search?keywords='+ djName +'&type=1009')
         if obj['code'] == 200:
             artists = obj['result']['djRadios']
             if len(artists) > 0:
                 singerId = artists[0]['id']
-                _newlist = self.djradio_playlist(singerId, 0, 50)
+                _newlist = await self.djradio_playlist(singerId, 0, 50)
                 if len(_newlist) > 0:
                     # 调用服务，执行播放
                     _dict = {
@@ -232,22 +229,19 @@ class ApiMusic():
                                         'media_content_id': json.dumps(_dict, ensure_ascii=False),
                                         'media_content_type': 'music_playlist'
                                     }, blocking=True)
-                
         else:
             return None
     
     # 播放歌手的热门歌曲
     async def play_singer_hotsong(self, singerName):
         hass = self.hass
-        res = requests.get(self.api_url + '/search?keywords='+ singerName +'&type=100')
-        obj = res.json()
+        obj = await self.get('/search?keywords='+ djName +'&type=100')
         if obj['code'] == 200:
             artists = obj['result']['artists']
             if len(artists) > 0:
                 singerId = artists[0]['id']
                 # 获取热门歌曲
-                hot_res = requests.get(self.api_url + '/artists/top/song?id='+ str(singerId))
-                hot_obj = hot_res.json()
+                hot_obj = await self.get('/artists/top/song?id='+ str(singerId))
                 if hot_obj['code'] == 200:
                     _list = hot_obj['hotSongs']
                     _newlist = map(lambda item: {
@@ -270,15 +264,13 @@ class ApiMusic():
                                         'media_content_id': json.dumps(_dict, ensure_ascii=False),
                                         'media_content_type': 'music_playlist'
                                     }, blocking=True)
-                
         else:
             return None
 
     # 播放歌手的热门歌曲
     async def play_song(self, name):
         hass = self.hass
-        res = requests.get(self.api_url + '/search?keywords='+ name)
-        obj = res.json()
+        obj = await self.get('/search?keywords='+ name)
         if obj['code'] == 200:
             songs = obj['result']['songs']
             if len(songs) > 0:
@@ -311,13 +303,12 @@ class ApiMusic():
     # 播放歌单
     async def play_list_hotsong(self, djName):
         hass = self.hass
-        res = requests.get(self.api_url + '/search?keywords='+ djName +'&type=1000')
-        obj = res.json()
+        obj = await self.get('/search?keywords='+ djName +'&type=1000')
         if obj['code'] == 200:
             artists = obj['result']['playlists']
             if len(artists) > 0:
                 singerId = artists[0]['id']
-                obj = self.music_playlist(singerId)
+                obj = await self.music_playlist(singerId)
                 if obj != None and len(obj['list']) > 0:
                     _newlist = obj['list']
                     # 调用服务，执行播放
@@ -329,8 +320,7 @@ class ApiMusic():
                                         'entity_id': 'media_player.ha_cloud_music',
                                         'media_content_id': json.dumps(_dict, ensure_ascii=False),
                                         'media_content_type': 'music_playlist'
-                                    }, blocking=True)
-                
+                                    }, blocking=True)                
         else:
             return None
     

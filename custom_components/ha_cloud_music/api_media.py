@@ -50,11 +50,15 @@ class ApiMedia():
     # 通知
     def notification(self, message, type):
         if self.is_notify == True:
-            self.hass.services.call('persistent_notification', 'create', 
+            self.hass.async_create_task(self.hass.services.async_call('persistent_notification', 'create', 
                 {"message": message, 
                 "title": "云音乐", 
                 "notification_id": 
-                "ha-cloud-music-" + type})
+                "ha-cloud-music-" + type}))
+
+    # 调用服务
+    def call_service(self, domain, service, data):
+        self.hass.async_create_task(self.hass.services.async_call(domain, service, data))
 
     ###################### 调试日志 ######################
 
