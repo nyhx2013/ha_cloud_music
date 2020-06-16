@@ -245,7 +245,7 @@ class MediaPlayer(MediaPlayerEntity):
         # 如果当前状态是播放，则进度累加（虽然我定时的是1秒，但不知道为啥2秒执行一次）
         if self._media != None:
             # 走内置播放器的逻辑
-            if self._sound_mode == "内置VLC播放器":
+            if self._sound_mode == "内置VLC播放器" or self._sound_mode == "网页播放器":
                 if self._timer_enable == True:
                     # 如果内置播放器状态为off，说明播放结束了
                     if (self._source_list != None and len(self._source_list) > 0 
@@ -333,9 +333,11 @@ class MediaPlayer(MediaPlayerEntity):
         
         # 使用内置VLC
         if self._sound_mode == "内置VLC播放器":
-            self.api_media.init_vlc_player()            
+            self.api_media.init_vlc_player()
+        elif self._sound_mode == "网页播放器":
+            self.api_media.init_audio_player()
         else:
-            self.api_media.release_vlc_player()
+            self.api_media.release_player()
             # 获取源播放器
             self._media = self._hass.states.get(self._sound_mode)
             # 如果状态不一样，则更新源播放器
@@ -743,16 +745,21 @@ class MediaPlayer(MediaPlayerEntity):
         entity_list = self._hass.states.entity_ids('media_player')
         filter_list = filter(lambda x: x.count('media_player.' + DOMAIN) == 0, entity_list)
         _list = list(filter_list)
+        _list.insert(0, "网页播放器")        
         if self.api_media.supported_vlc == True:
             _list.insert(0, "内置VLC播放器")
-        
+            
         self._sound_mode_list = _list
         
         # 如果保存的是【内置VLC播放器】，则直接加载
         if sound_mode == "内置VLC播放器":
            self._sound_mode = "内置VLC播放器"
            self.api_media.init_vlc_player()
-           return        
+           return
+        elif sound_mode == "网页播放器":
+           self._sound_mode = "网页播放器"
+           self.api_media.init_audio_player()
+           return
         
         if len(self._sound_mode_list) > 0:
             # 判断存储的值是否为空
@@ -821,7 +828,7 @@ class MediaPlayer(MediaPlayerEntity):
         #调用服务
         self.api_media.log('【调用服务[' + str(self._sound_mode) + ']】%s：%s', action, _dict)
                 
-        if self._sound_mode == "内置VLC播放器":
+        if self._sound_mode == "内置VLC播放器" or self._sound_mode == "网页播放器":
             if action == "play_media":
                 self._media.load(info['url'])
             elif action == "media_pause":

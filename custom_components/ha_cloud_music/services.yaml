@@ -42,3 +42,5 @@ tts:
       example: '支持内置模板格式'
 tts_clear:
   description: 清除文字转语音的缓存
+web_media_player_updated:
+  description: 和网页播放器通信时使用，请勿手动调用
