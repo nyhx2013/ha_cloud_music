@@ -495,6 +495,13 @@ class MoreInfoHaCloudMusic extends HTMLElement {
         if (attr.sound_mode_list) {
             let sound_mode_list = []
             let sound_mode = attr.sound_mode_list.indexOf(attr.sound_mode)
+            // 获取当前节点数据
+            let items = this.shadow.querySelectorAll('.source paper-item')
+            if(items && items.length == attr.sound_mode_list.length){                
+                // console.log(items)
+                return
+            }
+
             attr.sound_mode_list.forEach((ele) => {
                 sound_mode_list.push(`<paper-item>${ele}</paper-item>`)
             })
