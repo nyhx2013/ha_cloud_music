@@ -339,7 +339,7 @@ class ApiMusic():
                 r = await res.json()
                 token = r['data']['token']
                 leting_headers = {"uid":UID, "logid": LOG_ID, "token": token}
-                async with session.get('https://app.leting.io/app/url/channel?catalog_id=f3f5a6d2-5557-4555-be8e-1da281f97c22&size=50&distinct=1&v=v8&channel=xiaomi', headers=leting_headers) as res:
+                async with session.get('https://app.leting.io/app/url/channel?catalog_id=f3f5a6d2-5557-4555-be8e-1da281f97c22&size=20&distinct=1&v=v8&channel=xiaomi', headers=leting_headers) as res:
                     r = await res.json()
                     _list = r['data']['data']
                     _newlist = map(lambda item: {
