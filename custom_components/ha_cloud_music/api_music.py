@@ -1,4 +1,4 @@
-import aiohttp, asyncio, json, re, os
+import aiohttp, asyncio, json, re, os, uuid
 import http.cookiejar as HC
 from .api_const import get_config_path, read_config_file, write_config_file
 
@@ -6,6 +6,10 @@ from .api_const import get_config_path, read_config_file, write_config_file
 HEADERS = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.87 Safari/537.36'}
 # 模拟MAC环境
 COOKIES = {'os': 'osx'}
+
+# 乐听头条配置
+UID = str(uuid.uuid4()).replace('-','')
+LOG_ID = '1234'
 
 class ApiMusic():
 
@@ -326,4 +330,39 @@ class ApiMusic():
     
     ###################### 播放音乐列表 ######################
 
+    ###################### 播放新闻 ######################
+
+    async def play_news(self, name):
+        hass = self.hass
+        async with aiohttp.ClientSession() as session:
+            async with session.get('https://app.leting.io/auth?uid=' + UID + '&appid=f03268abb256885da72e046b556a588c&app_secret=a595a43547ed414e2e96378a338f2f21&logid=' + LOG_ID) as res:
+                r = await res.json()
+                token = r['data']['token']
+                leting_headers = {"uid":UID, "logid": LOG_ID, "token": token}
+                async with session.get('https://app.leting.io/app/url/channel?catalog_id=f3f5a6d2-5557-4555-be8e-1da281f97c22&size=50&distinct=1&v=v8&channel=xiaomi', headers=leting_headers) as res:
+                    r = await res.json()
+                    _list = r['data']['data']
+                    _newlist = map(lambda item: {
+                        "id": item['sid'],
+                        "name": item['title'],
+                        "album": item['catalog_name'],
+                        "image": item['source_icon'],
+                        "duration": item['duration'],
+                        "url": item['audio'],
+                        "song": item['title'],
+                        "singer": item['source']
+                        }, _list)
+                    # 调用服务，执行播放
+                    _dict = {
+                        'index': 0,
+                        'list': json.dumps(list(_newlist), ensure_ascii=False)
+                    }
+                    await hass.services.async_call('media_player', 'play_media', {
+                                        'entity_id': 'media_player.ha_cloud_music',
+                                        'media_content_id': json.dumps(_dict, ensure_ascii=False),
+                                        'media_content_type': 'music_playlist'
+                                    })
+                    
+
+    ###################### 播放新闻 ######################
     

@@ -30,6 +30,10 @@ class ApiVoice():
         if _text.find('播放歌曲') == 0:
             _name = _text.split('播放歌曲')[1]
             await self.api_music.play_song(_name)
+        # 播放新闻
+        if _text.find('播放新闻') == 0:
+            _name = _text.split('播放新闻')[1]
+            await self.api_music.play_news(_name)
 
         # 音乐控制解析
         if '下一曲' == _text:
