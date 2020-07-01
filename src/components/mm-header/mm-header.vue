@@ -86,21 +86,24 @@ export default {
   methods: {
     // 打开对话框
     openDialog(key) {
-      switch (key) {
-        case 0:
-          this.$refs.loginDialog.show()
-          break
-        case 1:
-          this.$refs.loginDialog.hide()
-          this.$refs.helpDialog.show()
-          break
-        case 2:
-          this.$refs.outDialog.show()
-          break
-        case 3:
-          this.$refs.loginDialog.hide()
-          break
-      }
+
+      this.$mmToast('不支持操作，请在组件中配置')
+
+      // switch (key) {
+      //   case 0:
+      //     this.$refs.loginDialog.show()
+      //     break
+      //   case 1:
+      //     this.$refs.loginDialog.hide()
+      //     this.$refs.helpDialog.show()
+      //     break
+      //   case 2:
+      //     this.$refs.outDialog.show()
+      //     break
+      //   case 3:
+      //     this.$refs.loginDialog.hide()
+      //     break
+      // }
     },
     // 退出登录
     out() {
