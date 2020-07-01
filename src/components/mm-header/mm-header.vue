@@ -10,9 +10,13 @@
           <img class="avatar" :src="`${user.avatarUrl}?param=50y50`" />
           <span>{{ user.nickname }}</span>
         </router-link>
+<!--
         <dd class="user-btn" @click="openDialog(2)">退出</dd>
+-->
       </template>
+<!--
       <dd v-else class="user-btn" @click="openDialog(0)">登录</dd>
+-->
     </dl>
     <!--登录-->
     <mm-dialog
@@ -87,7 +91,7 @@ export default {
     // 打开对话框
     openDialog(key) {
 
-      this.$mmToast('不支持操作，请在组件中配置')
+      this.$mmToast('不支持操作')
 
       // switch (key) {
       //   case 0:
