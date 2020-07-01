@@ -1,7 +1,7 @@
 import os, json
 
 DOMAIN = 'ha_cloud_music'
-VERSION = '3.2.1'
+VERSION = '3.3'
 DOMAIN_API = '/' + DOMAIN + '-api'
 ROOT_PATH = '/' + DOMAIN + '-local/' + VERSION
 
