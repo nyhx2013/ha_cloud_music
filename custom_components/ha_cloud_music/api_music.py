@@ -215,7 +215,7 @@ class ApiMusic():
         obj = await self.proxy_get('https://m.ximalaya.com/revision/suggest?kw=' + name + '&paidFilter=false&scope=all')
         if obj['ret'] == 200:
             result = obj['data']['result']
-            #print('验证成功')
+            print(result)
             if result['albumResultNum'] > 0:
                 id = result['albumResultList'][0]['id']
                 print('获取ID：' + str(id))
