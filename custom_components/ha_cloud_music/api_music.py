@@ -209,6 +209,30 @@ class ApiMusic():
                 return list(_newlist)
         return []
 
+    # 播放专辑
+    async def play_ximalaya(self, name):
+        hass = self.hass
+        obj = await self.proxy_get('https://m.ximalaya.com/revision/suggest?kw=' + name + '&paidFilter=false&scope=all')
+        if obj['ret'] == 200:
+            result = obj['data']['result']
+            #print('验证成功')
+            if result['albumResultNum'] > 0:
+                id = result['albumResultList'][0]['id']
+                print('获取ID：' + str(id))
+                _newlist = await self.ximalaya_playlist(id, 1, 50)
+                if len(_newlist) > 0:
+                    # 调用服务，执行播放
+                    _dict = {
+                        'index': 0,
+                        'list': json.dumps(list(_newlist), ensure_ascii=False)
+                    }
+                    await hass.services.async_call('media_player', 'play_media', {
+                                        'entity_id': 'media_player.ha_cloud_music',
+                                        'media_content_id': json.dumps(_dict, ensure_ascii=False),
+                                        'media_content_type': 'music_playlist'
+                                    })
+        return None
+
     ###################### 获取音乐列表 ######################
 
     ###################### 播放音乐列表 ######################

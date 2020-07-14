@@ -34,6 +34,10 @@ class ApiVoice():
         if _text.find('播放新闻') == 0:
             _name = _text.split('播放新闻')[1]
             await self.api_music.play_news(_name)
+        # 播放专辑
+        if _text.find('播放专辑') == 0:
+            _name = _text.split('播放专辑')[1]
+            await self.api_music.play_ximalaya(_name)
 
         # 音乐控制解析
         if '下一曲' == _text:
