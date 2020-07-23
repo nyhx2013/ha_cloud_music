@@ -510,8 +510,7 @@ class MoreInfoHaCloudMusic extends HTMLElement {
                     <paper-listbox slot="dropdown-content" selected="${sound_mode}">
                         ${sound_mode_list.join('')}
                     </paper-listbox>
-                  </ha-paper-dropdown-menu>
-                </div>
+                </ha-paper-dropdown-menu>
             `
             // 读取源播放器
             this.shadow.querySelector('.source paper-listbox').addEventListener('selected-changed', function () {
