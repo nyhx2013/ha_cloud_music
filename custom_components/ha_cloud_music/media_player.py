@@ -660,7 +660,7 @@ class MediaPlayer(MediaPlayerEntity):
     ###################  系统服务  ##########################
     # 调用服务
     def call_service(self, domain, service, data):
-        self.hass.async_create_task(self.hass.services.async_call(domain, service, data))
+        self._hass.async_create_task(self._hass.services.async_call(domain, service, data))
 
     # 日志
     def log(self, *args):
