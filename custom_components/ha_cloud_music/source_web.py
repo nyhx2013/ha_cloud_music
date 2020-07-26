@@ -16,36 +16,39 @@ class MediaPlayerWEB():
         # 不同字段
         self.volume_level = 1
         self.is_support = True
-
-        def handle_event(event):
-            state = event.data.get('state')
-            if state == "playing":
-                self.state = "playing"
-            elif state == "paused":
-                self.state = "paused"
-            
-            self.volume_level = event.data.get('volume_level')
-            self._muted = event.data.get('is_volume_muted')
-            self.media_duration = event.data.get('media_duration')
-            self.media_position = event.data.get('media_position')
-            self.media_position_updated_at = datetime.datetime.now()
-
         # 监听web播放器的更新
         if media is not None:
-            self.hass = media.hass
-            media.hass.services.register("ha_cloud_music", 'web_media_player_updated', handle_event)
+            media._hass.services.register("ha_cloud_music", 'web_media_player_updated', self.update)
+            self.hass = media._hass
+
+    def update(self, event):
+        '''
+        state = event.data.get('state')
+        if state == "playing":
+            self.state = "playing"
+        elif state == "paused":
+            self.state = "paused"
+        '''
+        self.volume_level = event.data.get('volume_level')
+        self._muted = event.data.get('is_volume_muted')
+        self.media_duration = int(event.data.get('media_duration'))
+        self.media_position = int(event.data.get('media_position'))
+        self.media_position_updated_at = datetime.datetime.now()
 
     def load(self, url):
         # 加载URL
         self.hass.bus.fire("web_media_player_changed", {"type": "load", "data": url})
+        self.state = "playing"
 
     def play(self):
         # 播放
         self.hass.bus.fire("web_media_player_changed", {"type": "play"})
+        self.state = "playing"
     
     def pause(self):
         # 暂停
         self.hass.bus.fire("web_media_player_changed", {"type": "pause"})
+        self.state = "paused"
     
     def seek(self, position):
         # 设置进度
