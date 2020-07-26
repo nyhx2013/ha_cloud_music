@@ -12,6 +12,7 @@ class MediaPlayerWEB():
         self.media_position = 0
         self.media_duration = 0
         self.media_position_updated_at = datetime.datetime.now()
+        self.state = 'idle'
         # 不同字段
         self.volume_level = 1
         self.is_support = True

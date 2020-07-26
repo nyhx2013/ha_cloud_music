@@ -12,6 +12,7 @@ class MediaPlayerVLC():
         self.media_position = 0
         self.media_duration = 0
         self.media_position_updated_at = datetime.datetime.now()
+        self.state = 'idle'
         
         try:
             import vlc
@@ -39,7 +40,7 @@ class MediaPlayerVLC():
         # 更新
         media_duration = int(self._client.get_length() / 1000)
         media_position = int(self._client.get_position() * media_duration)
-        print("当前进度：%s，总时长：%s"%(media_position, media_duration))
+        # print("当前进度：%s，总时长：%s"%(media_position, media_duration))
         self.media_position = media_position
         self.media_duration = media_duration
         self.media_position_updated_at = datetime.datetime.now()
@@ -49,16 +50,19 @@ class MediaPlayerVLC():
         # 加载URL
         self._client.set_media(self._instance.media_new(url))
         self._client.play()
+        self.state = 'playing'
 
     def play(self):
         # 播放
         if self._client.is_playing() == False:
             self._client.play()
+        self.state = 'playing'
     
     def pause(self):
         # 暂停
         if self._client.is_playing() == True:
             self._client.pause()
+        self.state = 'paused'
     
     def seek(self, position):
         # 设置进度

@@ -1,12 +1,10 @@
 
+# 4.0系列正在测试中（不支持自定义播放器，请勿使用）
+
 
 [完整配置文档](https://github.com/shaonianzhentan/ha_cloud_music/tree/master/docs "完整配置文档")
 
 ## 更新说明
-
-### V3.4
-- 支持语音播放专辑
-- 播放新闻默认加载100条新闻
 
 ### V3.3
 - 支持语音播放新闻

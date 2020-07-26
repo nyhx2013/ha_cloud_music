@@ -3,6 +3,7 @@
 python3 -m pip install python-mpd2
 '''
 import time, datetime
+import threading
 
 class MediaPlayerMPD():
 
@@ -15,66 +16,116 @@ class MediaPlayerMPD():
         self.media_position = 0
         self.media_duration = 0
         self.media_position_updated_at = datetime.datetime.now()
+        self.state = 'idle'
         # 不同字段
-        self._status = None
+        self._status = None        
         self._muted_volume = 0
+        self._is_connected = False
         try:
             import mpd
             self._client = mpd.MPDClient()
             self._client.timeout = 30
             self._client.idletimeout = None
-            # 连接MPD服务
-            self._client.connect(config['host'], config.get('port', '6600'))
-            if 'password' in config:
-                self._client.password(config['password'])
+            self._connect()
             self.is_support = True
+            # 定时更新
+            self.timer = threading.Timer(1, self.update)
+            self.timer.start()
         except Exception as e:
             print(e)
             self.is_support = False
 
+    def _connect(self):
+        """Connect to MPD."""
+        try:
+            config = self.config
+            # 连接MPD服务
+            self._client.connect(config['mpd_host'], config.get('mpd_port', '6600'))
+            if 'mpd_password' in config:
+                self._client.password(config['mpd_password'])            
+            print('MPD服务连接成功')
+        except Exception as ex:
+            print(ex)
+            return
+
+        self._is_connected = True
+
+    def _disconnect(self):
+        """Disconnect from MPD."""
+        try:
+            self._client.disconnect()
+        except Exception as ex:
+            pass
+        self._is_connected = False
+        self._status = None
+
     @property
     def volume_level(self):
         # 获取音量
-        if "volume" in self._status:
+        if self._status is not None and "volume" in self._status:
             return int(self._status["volume"]) / 100
         return None
 
     def update(self):
         # 更新
-        self._status = self._client.status()
-        position = self._status.get("time")
-        media_position = 0
-        media_duration = 0
-        # 读取音乐时长和进度
-        if isinstance(position, str) and ':' in position:
-            arr = position.split(':')
-            media_position = int(arr[0])
-            media_duration = int(arr[1])
-            # 判断是否下一曲
-            if media_duration > 0:
-                print('当前进度：%s，总时长：%s', media_position, media_duration)
-                if media_duration - media_position <= 1:
-                    print('执行下一曲方法')
-                    if self._media is not None:
-                        self._media.media_end_next()
+        try:
+            if not self._is_connected:
+                self._connect()
 
-        self.media_position = media_position
-        self.media_duration = media_duration
-        self.media_position_updated_at = datetime.datetime.now()
+            self._status = self._client.status()
+            # currentsong = self._client.currentsong()
+            position = self._status.get("time")
+            media_position = 0
+            media_duration = 0
+            # 读取音乐时长和进度
+            if isinstance(position, str) and ':' in position:
+                arr = position.split(':')
+                media_position = int(arr[0])
+                media_duration = int(arr[1])
+                # 判断是否下一曲
+                if media_duration > 0:
+                    # print("当前进度：%s，总时长：%s"%(media_position, media_duration))
+                    if media_duration - media_position <= 3:
+                        print('执行下一曲方法')
+                        if self._media is not None and self.state == 'playing':
+                            self.state = 'idle'
+                            self._media.media_end_next()
+            # print("当前进度：%s，总时长：%s"%(media_position, media_duration))
+            self.media_position = media_position
+            self.media_duration = media_duration
+            self.media_position_updated_at = datetime.datetime.now()
+        except Exception as e:
+            print('出现异常', e)
+            self._disconnect()
+        
+        # 递归调用自己
+        self.timer = threading.Timer(2, self.update)
+        self.timer.start()  
 
     def load(self, url):
         # 加载URL
-        self._client.clear()
-        self._client.add(url)
-        self._client.play()
+        try:
+            self._client.clear()
+            self._client.add(url)
+            self._client.play()
+        except Exception as ex:
+            print('加载URL出现异常：', ex)
+            self._connect()            
+            self._client.clear()
+            self._client.add(url)
+            self._client.play()
 
+        self.state = 'playing'
+        
     def play(self):
         # 播放
         self._client.pause(0)
+        self.state = 'playing'
     
     def pause(self):
         # 暂停
         self._client.pause(1)
+        self.state = 'paused'
     
     def seek(self, position):
         # 设置进度
@@ -82,7 +133,7 @@ class MediaPlayerMPD():
 
     def mute_volume(self, mute):
         # 静音
-        if "volume" in self._status:
+        if self._status is not None and "volume" in self._status:
             if mute:
                 self._muted_volume = self.volume_level
                 self.set_volume_level(0)
@@ -92,12 +143,12 @@ class MediaPlayerMPD():
 
     def set_volume_level(self, volume):
         # 设置音量
-        if "volume" in self._status:
+        if self._status is not None and "volume" in self._status:
             self._client.setvol(int(volume * 100))
 
     def volume_up(self):
         # 增加音量
-        if "volume" in self._status:
+        if self._status is not None and "volume" in self._status:
             current_volume = int(self._status["volume"])
 
             if current_volume <= 100:
@@ -105,7 +156,7 @@ class MediaPlayerMPD():
 
     def volume_down(self):
         # 减少音量
-        if "volume" in self._status:
+        if self._status is not None and "volume" in self._status:
             current_volume = int(self._status["volume"])
 
             if current_volume >= 0:
@@ -113,16 +164,12 @@ class MediaPlayerMPD():
 
     def stop(self):
         # 停止
+        self.timer.cancel()
         self._client.stop()
         self._client.disconnect()
 
 '''
-mm = MediaPlayerMPD({'host': '192.168.1.113'})
+mm = MediaPlayerMPD({'mpd_host': '192.168.1.113'})
 if mm.is_support:
-    mm.load('http://music.jiluxinqing.com/mp3/20200328182257900.mp3')
-
-while True:
-    time.sleep(1)
-    mm.update()
-    pass
+    mm.load('http://m10.music.126.net/20200726124850/bab67e3b8b368f2e029f8c918e20307f/ymusic/obj/w5zDlMODwrDDiGjCn8Ky/3253345932/a82c/c8f1/c240/74c34f5ed76bbb99c3022948717e56e4.mp3')
 '''
