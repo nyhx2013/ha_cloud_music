@@ -427,7 +427,10 @@ class MediaPlayer(MediaPlayerEntity):
             print('这是一个正常的错误：', e)
 
         # 加载音乐
-        self._media_player.load(url)
+        if self._media_player is None:
+            self.notify("请重新选择源播放器", "play_media")
+        else:
+            self._media_player.load(url)
 
     # 音乐结束自动下一曲
     def media_end_next(self):        

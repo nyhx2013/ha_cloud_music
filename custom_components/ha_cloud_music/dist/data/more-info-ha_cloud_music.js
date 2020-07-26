@@ -189,7 +189,7 @@ class MoreInfoHaCloudMusic extends HTMLElement {
                 authorization
             }
         }).then(res => res.json()).then(res => {
-            
+
         }).finally(() => {
             //加载结束。。。
             this.hideLoading()
@@ -279,10 +279,7 @@ class MoreInfoHaCloudMusic extends HTMLElement {
 
                 ul.appendChild(fragment)
             })();
-        } else {
-            this.shadow.querySelector('.music-panel').style.display = 'none'
         }
-
         /************************ 源播放器 ***************************************/
         if (attr.sound_mode_list) {
             let sound_mode_list = []
