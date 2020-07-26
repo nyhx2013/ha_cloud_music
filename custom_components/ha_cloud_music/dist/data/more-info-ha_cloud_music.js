@@ -391,7 +391,7 @@ class MoreInfoHaCloudMusic extends HTMLElement {
 
         this.shadow.querySelector('.controls .action').setAttribute('icon', state === 'playing' ? this.icon.pause : this.icon.play)
         let playMode = this.playMode.find(ele => ele.name === attr.play_mode)
-        this.shadow.querySelector('.controls .play_mode').setAttribute('icon', playMode.icon)
+        if(playMode) this.shadow.querySelector('.controls .play_mode').setAttribute('icon', playMode.icon)
 
 
         this.shadow.querySelector('.volume .volume-off').setAttribute('icon', attr.is_volume_muted ? this.icon.volume_off : this.icon.volume_high)
