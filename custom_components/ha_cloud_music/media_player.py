@@ -474,10 +474,14 @@ class MediaPlayer(MediaPlayerEntity):
             self._media_player = MediaPlayerMPD(self._config, self)
             if self._media_player.is_support == False:
                 self.notify("不支持MPD播放器，请确定是否正确配置", "select_sound_mode")
+                self._media_player = None
+                return
         elif sound_mode == 'VLC播放器':
             self._media_player = MediaPlayerVLC(self._config, self)
             if self._media_player.is_support == False:
                 self.notify("当前系统不支持VLC播放器", "select_sound_mode")
+                self._media_player = None
+                return
         else:
             self._media_player = None
 
