@@ -2,42 +2,12 @@ class MoreInfoHaCloudMusic extends HTMLElement {
     constructor() {
         super()
         this.icon = {
-            play: 'mdi:play-circle-outline',
-            pause: 'mdi:pause-circle-outline',
-            shuffle_disabled: 'mdi:shuffle-disabled', //列表播放
-            repeat: 'mdi:repeat', //列表循环
-            repeat_once: 'mdi:repeat-once', //单曲循环
-            shuffle: 'mdi:shuffle', //随机播放
             volume_high: 'mdi:volume-high',
             volume_off: 'mdi:volume-off',
         }
-        // 播放模式
-        this.playMode = [
-            {
-                name: '列表循环',
-                value: 0,
-                icon: this.icon.repeat
-            },
-            {
-                name: '顺序播放',
-                value: 1,
-                icon: this.icon.shuffle_disabled
-            },
-            {
-                name: '随机播放',
-                value: 2,
-                icon: this.icon.shuffle
-            },
-            {
-                name: '单曲循环',
-                value: 3,
-                icon: this.icon.repeat_once
-            }
-        ]
         const shadow = this.attachShadow({ mode: 'open' });
         const div = document.createElement('div', { 'class': 'root' });
-        div.innerHTML = `
-               
+        div.innerHTML = `               
                <!-- 音量控制 -->
                <div class="volume">
                 <div>
@@ -52,55 +22,11 @@ class MoreInfoHaCloudMusic extends HTMLElement {
                <div class="source">
                  
                </div>
-               
-               <!-- 音乐面板 -->
-               <div class="music-panel">
-                 <div class="music-lyric">
-                    暂无歌词
-                    <br/>
-                    这个不重要，有时间再开发
-                 </div>
-               </div>
-               
-               <!-- 音乐进度 -->
-               <div class="progress">
-                 <div>00:00</div>
-                 <div>
-                    <ha-paper-slider min="0" max="100" value="50" />
-                 </div>                 
-                 <div>00:00</div>
-               </div>
-               
-               <!-- 音乐控制 -->
-               <div class="controls">
-                   <div>
-                    <ha-icon class="play_mode" icon="mdi:repeat"></ha-icon>
-                   </div>
-                   <div>
-                   <ha-icon class="prev" icon="mdi:skip-previous-outline"></ha-icon>
-                   </div>
-                   <div>
-                   <ha-icon class="action" icon="mdi:play-circle-outline"></ha-icon>
-                   </div>
-                   <div>
-                   <ha-icon class="next" icon="mdi:skip-next-outline"></ha-icon>
-                   </div>
-                   <div>
-                   <ha-icon class="controls-list" icon="mdi:playlist-music-outline"></ha-icon>
-                   </div>
-               </div>
-               
+                                             
                <div class="mask"></div>              
                               
                <!-- 音乐列表 -->
                <div class="music-list-panel">
-                 <div class="music-list-panel-title">
-                    <div class="list-play-mode">
-                    </div>
-                    <div>
-                        <ha-icon class="close-panel" icon="mdi:close"></ha-icon>
-                    </div>
-                 </div>
                  <ul>
                  </ul>
                </div>
@@ -126,41 +52,6 @@ class MoreInfoHaCloudMusic extends HTMLElement {
         shadow.appendChild(div);
         // 绑定事件
         const _this = this
-        div.querySelector('.action').onclick = function () {
-            let icon = this.getAttribute('icon')
-            if (icon === _this.icon.play) {
-                this.setAttribute('icon', _this.icon.pause)
-                // 调用播放服务
-                _this.call({ entity_id: _this.stateObj.entity_id }, 'media_play')
-                _this.toast("播放音乐")
-            } else {
-                this.setAttribute('icon', _this.icon.play)
-                // 调用暂停服务
-                _this.call({ entity_id: _this.stateObj.entity_id }, 'media_pause')
-                _this.toast("暂停音乐")
-            }
-        }
-        // 设置播放模式
-        div.querySelector('.play_mode').onclick = function () {
-            let icon = this.getAttribute('icon')
-            let obj = _this.playMode.find(ele => ele.icon === icon)
-            let mode = obj.value
-            mode = mode >= 3 ? 0 : mode + 1
-            // 设置播放模式
-            _this.call({ play_mode: mode }, 'config', 'ha_cloud_music')
-            this.setAttribute('icon', _this.playMode[mode].icon)
-            _this.toast(_this.playMode[mode].name)
-        }
-        div.querySelector('.prev').onclick = function () {
-            // 上一曲
-            _this.call({ entity_id: _this.stateObj.entity_id }, 'media_previous_track')
-            _this.toast("播放上一首")
-        }
-        div.querySelector('.next').onclick = function () {
-            // 下一曲
-            _this.call({ entity_id: _this.stateObj.entity_id }, 'media_next_track')
-            _this.toast("播放下一首")
-        }
         // 静音
         div.querySelector('.volume-off').onclick = function () {
             let icon = this.getAttribute('icon')
@@ -187,28 +78,6 @@ class MoreInfoHaCloudMusic extends HTMLElement {
                 volume_level: volume_level
             }, 'volume_set')
             _this.toast(`调整音量到${this.value}`)
-        }
-        // 调整进度
-        div.querySelector('.progress ha-paper-slider').onchange = function () {
-            let attr = _this.stateObj.attributes
-            let seek_position = this.value / 100 * attr.media_duration
-
-            _this.call({
-                entity_id: _this.stateObj.entity_id,
-                seek_position: seek_position
-            }, 'media_seek')
-
-            _this.toast(`调整音乐进度到${seek_position}秒`)
-        }
-        // 显示音乐列表
-        div.querySelector('.controls-list').onclick = () => {
-            this.showMask()
-            div.querySelector('.music-list-panel').style.display = 'block'
-        }
-        // 隐藏音乐列表
-        div.querySelector('.close-panel').onclick = () => {
-            div.querySelector('.music-list-panel').style.display = 'none'
-            this.hideMask()
         }
 
         // 设置样式
@@ -240,58 +109,14 @@ class MoreInfoHaCloudMusic extends HTMLElement {
          .volume div:nth-child(2){width:100%;}
          .volume ha-paper-slider{width:100%;}
          
-         .progress{display:flex;align-items: center;}
-         .progress div{width:40px;}
-         .progress div:nth-child(2){width:100%;}
-         .progress ha-paper-slider{width:100%;}
-            
-         .controls{display:flex;text-align:center;align-items: center;}
-         .controls div{width:100%;}
-         .controls div:nth-child(3) ha-icon{width:40px;height:40px;}
-         
-         .music-panel{background-size:cover; overflow:auto;}
-         .music-panel .music-lyric{width:100%;height:100%;background:rgba(0,0,0,.7);color:white;overflow:auto;text-align:center;padding:20px 10px;
-            line-height:30px;    
-            box-sizing: border-box;}
-            
-         .music-list-panel{background:#fafafa;display:none;}
-         .music-list-panel .music-list-panel-title{display:flex;border-bottom:1px solid #eee;padding:10px;align-items: flex-end;}
-         .music-list-panel ul{margin:0;padding:10px 0;list-style:none;
-            overflow: auto;
-            height: calc(100% - 70px);
-         }
-         .music-list-panel ul li{padding:10px;display:flex;    align-items: center;}
+         .music-list-panel{}
+         .music-list-panel ul{margin:0;padding:10px 0;list-style:none;}
+         .music-list-panel ul li{padding:10px 0;display:flex;    align-items: center;}
          .music-list-panel ul li span{width:100%;display:block;}
-         .music-list-panel ul li ha-icon{width:30px;}
          .music-list-panel ul li.active{color: var(--primary-color);}
          .music-list-panel ul li:last-child{display:flex;}
          .music-list-panel ul li:last-child button{flex:1;padding:10px 0;border:none;}
-         .music-list-panel-title div{width:100%;}
-         .music-list-panel-title div:nth-child(2){text-align:right;}
          
-         @media (min-width: 451px){
-            .music-panel{height:300px;}
-            .music-list-panel{
-                height:420px;
-                position: absolute;
-                margin-top: -424px;
-                width: 320px;
-            }
-         }
-         @media (max-width: 450px){
-             .mask{width: 100%;height: 100vh;position: fixed;background: rgba(0,0,0,.5);top: 0;left: 0;display:none;}             
-            .music-panel{
-                height:calc(100vh - 400px);
-            }
-            .music-list-panel{
-                position: fixed;
-                width: 100%;
-                bottom: 0;
-                left:0;
-                height: 50vh;
-                border-radius: 10px 10px 0 0;
-            }
-         }
         `;
         shadow.appendChild(style);
         this.shadow = shadow
@@ -348,13 +173,13 @@ class MoreInfoHaCloudMusic extends HTMLElement {
         let auth = this.hass.auth
         let authorization = ''
         if (auth._saveTokens) {
-          // 过期
-          if (auth.expired) {
-            await auth.refreshAccessToken()
-          }
-          authorization = `${auth.data.token_type} ${auth.accessToken}`
+            // 过期
+            if (auth.expired) {
+                await auth.refreshAccessToken()
+            }
+            authorization = `${auth.data.token_type} ${auth.accessToken}`
         } else {
-          authorization = `Bearer ${auth.data.access_token}`
+            authorization = `Bearer ${auth.data.access_token}`
         }
         // 发送查询请求
         fetch(`/api/services/${domain}/${service}`, {
@@ -364,11 +189,7 @@ class MoreInfoHaCloudMusic extends HTMLElement {
                 authorization
             }
         }).then(res => res.json()).then(res => {
-            // console.log(res)
-            if (service === 'media_seek') {
-                let attr = res[0].attributes
-                this.shadow.querySelector('.progress ha-paper-slider').value = data.seek_position / attr.media_duration * 100
-            }
+            
         }).finally(() => {
             //加载结束。。。
             this.hideLoading()
@@ -385,110 +206,81 @@ class MoreInfoHaCloudMusic extends HTMLElement {
         const _this = this
         let attr = this.stateObj.attributes
         let state = this.stateObj.state
-		let entity_id = this.stateObj.entity_id
+        let entity_id = this.stateObj.entity_id
         // console.log(attr)
         // console.log(this.stateObj.entity_id)
-
-        this.shadow.querySelector('.controls .action').setAttribute('icon', state === 'playing' ? this.icon.pause : this.icon.play)
-        let playMode = this.playMode.find(ele => ele.name === attr.play_mode)
-        if(playMode) this.shadow.querySelector('.controls .play_mode').setAttribute('icon', playMode.icon)
-
 
         this.shadow.querySelector('.volume .volume-off').setAttribute('icon', attr.is_volume_muted ? this.icon.volume_off : this.icon.volume_high)
         this.shadow.querySelector('.volume ha-paper-slider').value = attr.volume_level * 100
 
-
-
-        if (attr['entity_picture']) {
-            this.shadow.querySelector('.music-panel').style.backgroundImage = `url(${attr.entity_picture})`
-        }
-
         /************************ 音乐列表 ***************************************/
         if (attr.source_list && attr.source_list.length > 0) {
-            // 设置进度
-            this.shadow.querySelector('.music-panel').style.display = 'block'
-            this.shadow.querySelector('.controls').style.display = 'flex'
-            this.shadow.querySelector('.progress').style.display = 'flex'
-            this.shadow.querySelector('.progress div:nth-child(1)').textContent = `${this.timeForamt(Math.floor(attr.media_position / 60))}:${this.timeForamt(attr.media_position % 60)}`
-            this.shadow.querySelector('.progress div:nth-child(3)').textContent = `${this.timeForamt(Math.floor(attr.media_duration / 60))}:${this.timeForamt(attr.media_duration % 60)}`
-            if (attr.media_position <= attr.media_duration) {
-                this.shadow.querySelector('.progress ha-paper-slider').value = attr.media_position / attr.media_duration * 100
-            }
-            // 显示模式与数量
-            this.shadow.querySelector('.list-play-mode').innerHTML = `
-                <ha-icon icon="${playMode.icon}"></ha-icon>
-                ${attr.play_mode} (${attr.source_list.length})
-            `
-                ; (() => {
-                    let ul = this.shadow.querySelector('.music-list-panel ul')
-                    ul.innerHTML = ''
-                    let fragment = document.createDocumentFragment();
-                    attr.source_list.forEach((ele, index) => {
-                        let li = document.createElement('li')
-                        if (ele === attr.source) {
-                            li.className = 'active'
-                            li.innerHTML = `<span>${ele}</span> <ha-icon icon="mdi:music"></ha-icon>`
-                        } else {
-                            let span = document.createElement('span')
-                            span.textContent = ele
-                            li.appendChild(span)
-                            let ironIcon = document.createElement('ha-icon')
-                            ironIcon.setAttribute('icon', 'mdi:play-circle-outline')
-                            ironIcon.onclick = () => {
-                                // 这里播放音乐
-                                // console.log(index,ele)
-                                this.call({
-                                    entity_id,
-                                    source: ele
-                                }, 'select_source')
-                                this.toast(`开始播放： ${ele}`)
-                            }
-                            li.appendChild(ironIcon)
+            ; (() => {
+                let ul = this.shadow.querySelector('.music-list-panel ul')
+                ul.innerHTML = ''
+                let fragment = document.createDocumentFragment();
+                attr.source_list.forEach((ele, index) => {
+                    let li = document.createElement('li')
+                    if (ele === attr.source) {
+                        li.className = 'active'
+                        li.innerHTML = `<span>${ele}</span> <ha-icon icon="mdi:music"></ha-icon>`
+                    } else {
+                        let span = document.createElement('span')
+                        span.textContent = ele
+                        li.appendChild(span)
+                        let ironIcon = document.createElement('ha-icon')
+                        ironIcon.setAttribute('icon', 'mdi:play-circle-outline')
+                        ironIcon.onclick = () => {
+                            // 这里播放音乐
+                            // console.log(index,ele)
+                            this.call({
+                                entity_id,
+                                source: ele
+                            }, 'select_source')
+                            this.toast(`开始播放： ${ele}`)
                         }
-                        fragment.appendChild(li)
-                    })
-                    // 如果有下一页，则显示播放下一页
-					let media_playlist = JSON.parse(attr.media_playlist)
-					let obj = media_playlist[0]['load']
-					if(obj){
-						// 获取相关信息
-						let {id, type, index, total} = obj
-						// 当前所有页数的数据
-						let count = index * 50
-						
-						let li = document.createElement('li')
-						let btn1 = document.createElement('button')
-						btn1.innerHTML = '播放上一页'
-						btn1.onclick = () => {
-							// console.log('上一页', media_playlist)
-							this.call({
-								id,
-								type,
-								index: count - 100 + 1
-							}, 'load', 'ha_cloud_music')
-						}
-						let btn2 = document.createElement('button')
-						btn2.innerHTML = '播放下一页'
-						btn2.onclick = () => {
-							// console.log('上一页', media_playlist)
-							this.call({
-								id,
-								type,
-								index: count + 1
-							}, 'load', 'ha_cloud_music')
-						}
-						
-						if(count > 50) li.appendChild(btn1)
-						if(count < total - 50) li.appendChild(btn2)
-						fragment.appendChild(li)	
-					}
-                   
-                    ul.appendChild(fragment)
-                })();
+                        li.appendChild(ironIcon)
+                    }
+                    fragment.appendChild(li)
+                })
+                // 如果有下一页，则显示播放下一页
+                let media_playlist = attr.media_playlist
+                let obj = media_playlist[0]['load']
+                if (obj) {
+                    // 获取相关信息
+                    let { id, type, index, total } = obj
+                    // 当前所有页数的数据
+                    let count = index * 50
+
+                    let li = document.createElement('li')
+                    let btn1 = document.createElement('button')
+                    btn1.innerHTML = '播放上一页'
+                    btn1.onclick = () => {
+                        this.call({
+                            id,
+                            type,
+                            index: count - 100 + 1
+                        }, 'load', 'ha_cloud_music')
+                    }
+                    let btn2 = document.createElement('button')
+                    btn2.innerHTML = '播放下一页'
+                    btn2.onclick = () => {
+                        this.call({
+                            id,
+                            type,
+                            index: count + 1
+                        }, 'load', 'ha_cloud_music')
+                    }
+
+                    if (count > 50) li.appendChild(btn1)
+                    if (count < total - 50) li.appendChild(btn2)
+                    fragment.appendChild(li)
+                }
+
+                ul.appendChild(fragment)
+            })();
         } else {
             this.shadow.querySelector('.music-panel').style.display = 'none'
-            this.shadow.querySelector('.controls').style.display = 'none'
-            this.shadow.querySelector('.progress').style.display = 'none'
         }
 
         /************************ 源播放器 ***************************************/
@@ -497,7 +289,7 @@ class MoreInfoHaCloudMusic extends HTMLElement {
             let sound_mode = attr.sound_mode_list.indexOf(attr.sound_mode)
             // 获取当前节点数据
             let items = this.shadow.querySelectorAll('.source paper-item')
-            if(items && items.length == attr.sound_mode_list.length){                
+            if (items && items.length == attr.sound_mode_list.length) {
                 // console.log(items)
                 return
             }
@@ -515,8 +307,8 @@ class MoreInfoHaCloudMusic extends HTMLElement {
             // 读取源播放器
             this.shadow.querySelector('.source paper-listbox').addEventListener('selected-changed', function () {
                 if (sound_mode != this.selected) {
-                    console.log(this.selected)
-                    console.log('%O', this)
+                    // console.log(this.selected)
+                    // console.log('%O', this)
                     sound_mode = this.selected
                     let sound_mode_name = attr.sound_mode_list[this.selected]
                     // 选择源播放器
@@ -530,23 +322,6 @@ class MoreInfoHaCloudMusic extends HTMLElement {
         }
     }
 
-    /* --------------------生命周期回调函数-------------------------------- */
-
-    // 当 custom element首次被插入文档DOM时，被调用。
-    connectedCallback() {
-
-    }
-
-    // 当 custom element从文档DOM中删除时，被调用。
-    disconnectedCallback() {
-        // console.log('当 custom element从文档DOM中删除时，被调用。')
-    }
-
-    // 当 custom element被移动到新的文档时，被调用。
-    adoptedCallback() {
-        console.log('当 custom element被移动到新的文档时，被调用。')
-    }
-
     get stateObj() {
         return this._stateObj
     }
@@ -558,3 +333,225 @@ class MoreInfoHaCloudMusic extends HTMLElement {
 }
 
 customElements.define('more-info-ha_cloud_music', MoreInfoHaCloudMusic);
+
+// 状态卡
+class MoreInfoStateHaCloudMusic extends HTMLElement {
+
+    constructor() {
+        super()
+        // 播放模式
+        this.playMode = [
+            {
+                name: '列表循环',
+                value: 0,
+                icon: 'mdi:repeat'
+            },
+            {
+                name: '顺序播放',
+                value: 1,
+                icon: 'mdi:shuffle-disabled'
+            },
+            {
+                name: '随机播放',
+                value: 2,
+                icon: 'mdi:shuffle'
+            },
+            {
+                name: '单曲循环',
+                value: 3,
+                icon: 'mdi:repeat-once'
+            }
+        ]
+    }
+
+    /*
+     * 触发事件
+     * type: 事件名称
+     * data: 事件参数
+     */
+    fire(type, data) {
+        const event = new Event(type, {
+            bubbles: true,
+            cancelable: false,
+            composed: true
+        });
+        event.detail = data;
+        this.dispatchEvent(event);
+    }
+
+    /*
+     * 调用服务
+     * service: 服务名称(例：light.toggle)
+     * service_data：服务数据(例：{ entity_id: "light.xiao_mi_deng_pao" } )
+     */
+    callService(service_name, service_data = {}) {
+        let arr = service_name.split('.')
+        let domain = arr[0]
+        let service = arr[1]
+        this._hass.callService(domain, service, service_data)
+    }
+
+    // 通知
+    toast(message) {
+        this.fire("hass-notification", { message })
+    }
+
+    /*
+     * 接收HA核心对象
+     */
+    set hass(hass) {
+        this._hass = hass
+        if (!this.isCreated) {
+            this.created(hass)
+        }
+    }
+
+    get stateObj() {
+        return this._stateObj
+    }
+
+    // 接收当前状态对象
+    set stateObj(value) {
+        this._stateObj = value
+        // console.log(value)
+        if (this.isCreated) this.updated()
+    }
+
+    // 创建界面
+    created(hass) {
+        /* ***************** 基础代码 ***************** */
+        const shadow = this.attachShadow({ mode: 'open' });
+        // 创建面板
+        const ha_card = document.createElement('div');
+        ha_card.className = 'more-info-state-ha_cloud_music'
+        ha_card.innerHTML = `
+        <div class="controls">
+            <div>
+                <ha-icon class="play_mode" icon="mdi:repeat"></ha-icon>
+            </div>
+            <div>
+                <ha-icon class="prev" icon="mdi:skip-previous"></ha-icon>
+            </div>
+            <div>
+                <img class="action" style="height:80px;width:80px;border:1px solid silver;border-radius:50%;" />
+            </div>
+            <div>
+                <ha-icon class="next" icon="mdi:skip-next"></ha-icon>
+            </div>
+            <div>
+                <ha-icon class="controls-list" icon="mdi:refresh"></ha-icon>
+            </div>
+        </div>
+        <!-- 音乐进度 -->
+        <div class="progress">
+          <div>00:00</div>
+          <div>
+             <ha-paper-slider min="0" max="100" value="50" />
+          </div>                 
+          <div>00:00</div>
+        </div>
+        `
+        shadow.appendChild(ha_card)
+        // 创建样式
+        const style = document.createElement('style')
+        style.textContent = `
+            .controls,
+            .progress{ display:flex; text-align: center; align-items: center;}
+            .controls>div,
+            .progress>div{width:100%;}
+            .controls ha-icon{--mdc-icon-size: 30px;cursor:pointer;}
+            .action{cursor:pointer;}
+
+            @keyframes rotate{
+                from{ transform: rotate(0deg) }
+                to{ transform: rotate(359deg) }
+            }
+            .rotate{
+                animation: rotate 5s linear infinite;
+            }
+        `
+        shadow.appendChild(style);
+        // 保存核心DOM对象
+        this.shadow = shadow
+        this.$ = this.shadow.querySelector.bind(this.shadow)
+        // 创建成功
+        this.isCreated = true
+        /* ***************** 附加代码 ***************** */
+        let { $ } = this
+        $('.prev').onclick = () => {
+            this.toast("上一曲")
+            this.callService("media_player.media_previous_track", { entity_id: "media_player.ha_cloud_music" })
+        }
+        $('.next').onclick = () => {
+            this.toast("下一曲")
+            this.callService("media_player.media_next_track", { entity_id: "media_player.ha_cloud_music" })
+        }
+        $('.action').onclick = () => {
+            this.toast(this._stateObj.state == "playing" ? '暂停音乐' : '播放音乐')
+            this.callService("media_player.media_play_pause", { entity_id: "media_player.ha_cloud_music" })
+        }
+        $('.controls-list').onclick = () => {
+            this.toast("重新开始播放")
+            let { source } = this.stateObj.attributes
+            if (source) this.callService("media_player.select_source", { entity_id: "media_player.ha_cloud_music", source })
+        }
+        $('.play_mode').onclick = () => {
+            let icon = $('.play_mode').getAttribute('icon')
+            let obj = this.playMode.find(ele => ele.icon === icon)
+            let mode = obj.value
+            mode = mode >= 3 ? 0 : mode + 1
+            // 设置播放模式
+            this.callService("ha_cloud_music.config", { play_mode: mode })
+
+            let newMode = this.playMode[mode]
+            this.toast(newMode.name)
+            $('.play_mode').setAttribute('icon', newMode.icon)
+
+        }
+
+        $('.progress ha-paper-slider').onchange = () => {
+            let attr = this.stateObj.attributes
+            let seek_position = $('.progress ha-paper-slider').value / 100 * attr.media_duration
+            this.callService("media_player.media_seek", {
+                entity_id: "media_player.ha_cloud_music",
+                seek_position
+            })
+            this.toast(`调整音乐进度到${seek_position}秒`)
+        }
+    }
+
+    // 更新界面数据
+    updated(hass) {
+        let { $, _stateObj } = this
+        // console.log(_stateObj)
+        let action = $('.action')
+        let attrs = _stateObj.attributes
+        if ('entity_picture' in attrs) {
+            action.src = attrs.entity_picture
+        }
+        // 如果是在播放中，则转圈圈
+        if (_stateObj.state == "playing") {
+            if (!action.classList.contains('rotate')) action.classList.add('rotate')
+        } else {
+            action.classList.remove('rotate')
+        }
+        // 设备模式
+        let mode = this.playMode.find(ele => ele.name == attrs.play_mode)
+        if (mode) {
+            $('.play_mode').setAttribute('icon', mode.icon)
+        }
+
+        $('.progress div:nth-child(1)').textContent = `${this.timeForamt(Math.floor(attrs.media_position / 60))}:${this.timeForamt(attrs.media_position % 60)}`
+        $('.progress div:nth-child(3)').textContent = `${this.timeForamt(Math.floor(attrs.media_duration / 60))}:${this.timeForamt(attrs.media_duration % 60)}`
+        if (attrs.media_position <= attrs.media_duration) {
+            $('.progress ha-paper-slider').value = attrs.media_position / attrs.media_duration * 100
+        }
+    }
+
+    timeForamt(num) {
+        if (num < 10) return '0' + String(num)
+        return String(num)
+    }
+}
+// 定义DOM对象元素
+customElements.define('more-info-state-ha_cloud_music', MoreInfoStateHaCloudMusic);
