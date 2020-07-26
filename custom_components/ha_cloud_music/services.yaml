@@ -38,8 +38,8 @@ tts:
   description: 文字转语音
   fields:
     message:
-      description: 要播放的文字
-      example: '支持内置模板格式'
+      description: 要播放的文字(支持内置模板格式)
+      example: '现在的时间是{{now().hour}}:{{now().minute}}'
 tts_clear:
   description: 清除文字转语音的缓存
 web_media_player_updated:

@@ -94,33 +94,24 @@ class ApiTTS():
         self.api_config = ApiConfig(os.path.join(os.path.dirname(__file__), 'dist/cache'))
     
     def log(self, name,value):
-        self.media.api_media.log('【文本转语音】%s：%s',name,value)
+        self.media.log('【文本转语音】%s：%s',name,value)
 
     # 异步进行TTS逻辑
     def async_tts(self, text):
         # 如果当前正在播放，则暂停当前播放，保存当前播放进度
-        if self.media._media != None and self.media._state == STATE_PLAYING:
+        if self.media._media_player != None and self.media.state == STATE_PLAYING:
            self.media.media_pause()
-           self.media_position = self.media._media_position
-           self.media_url = self.media._media_url        
+           self.media_position = self.media.media_position
+           self.media_url = self.media.media_url        
         # 播放当前文字内容
         self.play_url(text)
         # 恢复当前播放到保存的进度
         if self.media_url != None:
             self.log('恢复当前播放URL', self.media_url)
-            self.hass.services.call('media_player', 'play_media', {
-                'entity_id': 'media_player.ha_cloud_music',
-                'media_content_id': self.media_url,
-                'media_content_type': 'music'
-            })
+            self.media._media_player.load(self.media_url)
             time.sleep(2)
-            self.log('恢复当前进度', self.media_position)
-            self.hass.services.call('media_player', 'media_seek', {
-                'entity_id': 'media_player.ha_cloud_music',
-                'seek_position': self.media_position
-            })
-            # 启用自动下一曲
-            self.media._timer_enable = True
+            self.log('恢复当前进度', self.media_position)            
+            self.media._media_player.seek(self.media_position)
             self.media_url = None
 
     # 获取语音URL
@@ -149,15 +140,17 @@ class ApiTTS():
         # 生成播放地址
         local_url = self.hass.config.api.deprecated_base_url + ROOT_PATH + '/cache/tts/' + f_name        
         self.log('本地URL', local_url)
-        self.hass.services.call('media_player', 'play_media', {
-            'entity_id': 'media_player.ha_cloud_music',
-            'media_content_id': local_url,
-            'media_content_type': 'music'
-        })
-        # 计算当前文件时长，设置超时播放时间
-        audio = MP3(ob_name)
-        self.log('音频时长', audio.info.length)
-        time.sleep(audio.info.length + 4)
+
+        if self.media._media_player != None:
+            self.media._media_player.is_tss = True
+            self.media._media_player.load(local_url)
+            # 计算当前文件时长，设置超时播放时间
+            audio = MP3(ob_name)
+            self.log('音频时长', audio.info.length)
+            time.sleep(audio.info.length + 2)
+            self.media._media_player.is_tss = False
+
+
 
     async def speak(self, call):
         try:

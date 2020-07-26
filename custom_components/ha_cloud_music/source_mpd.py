@@ -17,6 +17,7 @@ class MediaPlayerMPD():
         self.media_duration = 0
         self.media_position_updated_at = datetime.datetime.now()
         self.state = 'idle'
+        self.is_tts = False
         # 不同字段
         self._status = None        
         self._muted_volume = 0
@@ -87,7 +88,7 @@ class MediaPlayerMPD():
                     # print("当前进度：%s，总时长：%s"%(media_position, media_duration))
                     if media_duration - media_position <= 3:
                         print('执行下一曲方法')
-                        if self._media is not None and self.state == 'playing':
+                        if self._media is not None and self.state == 'playing' and self.is_tts == False:
                             self.state = 'idle'
                             self._media.media_end_next()
             # print("当前进度：%s，总时长：%s"%(media_position, media_duration))

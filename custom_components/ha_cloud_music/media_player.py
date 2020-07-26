@@ -170,7 +170,7 @@ class MediaPlayer(MediaPlayerEntity):
         self._hass = hass
         self.music_playlist = None
         self.music_index = 0
-        self._name = DOMAIN
+        self.media_url = None
         self._media_image_url = None
         self._media_title = None
         self._media_name = None
@@ -430,6 +430,7 @@ class MediaPlayer(MediaPlayerEntity):
         if self._media_player is None:
             self.notify("请重新选择源播放器", "play_media")
         else:
+            self.media_url = url
             self._media_player.load(url)
 
     # 音乐结束自动下一曲
