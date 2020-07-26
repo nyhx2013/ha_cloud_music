@@ -33,8 +33,8 @@ class MediaPlayerVLC():
     
     def end(self, event):
         # 音乐结束
-        print('执行下一曲')
         if self._media is not None and self.is_tts == False:
+            print('执行下一曲')
             self._media.media_end_next()
 
     def update(self, event):

@@ -142,15 +142,13 @@ class ApiTTS():
         self.log('本地URL', local_url)
 
         if self.media._media_player != None:
-            self.media._media_player.is_tss = True
+            self.media._media_player.is_tts = True
             self.media._media_player.load(local_url)
             # 计算当前文件时长，设置超时播放时间
             audio = MP3(ob_name)
             self.log('音频时长', audio.info.length)
             time.sleep(audio.info.length + 2)
-            self.media._media_player.is_tss = False
-
-
+            self.media._media_player.is_tts = False
 
     async def speak(self, call):
         try:
