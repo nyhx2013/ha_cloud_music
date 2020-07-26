@@ -1,6 +1,4 @@
 # 内置VLC播放器
-from .api_vlc import VlcPlayer
-from .api_audio import AudioPlayer
 
 class ApiMedia():
 
@@ -10,55 +8,7 @@ class ApiMedia():
         self.is_notify = bool(cfg['is_notify'])
         self.is_debug = bool(cfg['is_debug'])
         self._LOGGER = cfg['_LOGGER']
-        # 网页播放器
-        self.audio_player = AudioPlayer(self.hass)
-        # 判断是否支持VLC
-        self._supported_vlc = None
-    
-    ###################### 内置VLC播放器相关方法 ######################
-    # 判断是否支持VLC
-    @property
-    def supported_vlc(self):
-        """判断是否支持vlc模块."""
-        if self._supported_vlc != None:
-            return self._supported_vlc
-
-        try:
-            # 执行引入vlc操作，如果报错，则不支持vlc
-            import vlc
-            instance = vlc.Instance()
-            instance.media_player_new()
-            instance.release()
-            self._supported_vlc = True
-            return True
-        except Exception as e:
-            self._supported_vlc = False
-            return False
-    
-    # 初始化内置VLC播放器
-    def init_vlc_player(self):
-        try:
-            if self.media._media == None or hasattr(self.media._media, 'ha_cloud_music') == False:
-                self.media._media = VlcPlayer()
-        except Exception as e:
-            print("【初始化内置VLC播放器】出现错误", e)  
-
-    # 释放媒体对象
-    def release_player(self):
-        if self.media._media != None and (hasattr(self.media._media, 'ha_cloud_music') == True or hasattr(self.media._media, 'ha_web_music') == True):
-            self.media._media.release()
-
-    # 初始化网页播放器
-    def init_audio_player(self):
-        try:
-            if self.media._media == None or hasattr(self.media._media, 'ha_web_music') == False:
-                self.media._media = self.audio_player
-                self.audio_player.is_active = True
-        except Exception as e:
-            print("【初始化网页播放器】出现错误", e)
-
-    ###################### 内置VLC播放器相关方法 ######################
-
+   
     # 通知
     def notification(self, message, type):
         if self.is_notify == True:

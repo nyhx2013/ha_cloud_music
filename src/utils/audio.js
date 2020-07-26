@@ -1,7 +1,6 @@
 /* eslint-disable */
 
 import Vue from 'vue'
-import axios from 'axios'
 import store from '../store/index'
 import { setVolume } from '@/utils/storage'
 
@@ -36,12 +35,12 @@ export default class {
       }
       let conn = res.conn
       // 检测是否有除本身之外的播放器
-      let mp = Object.keys(conn._ent.state).filter(key => key.indexOf('media_player') == 0 && key != 'media_player.ha_cloud_music')
-      if (mp.length === 0) {
-        Vue.prototype.$mmToast("检测到当前HomeAssistant没有安装媒体播放器，本功能无法使用")
-        reject("检测到当前HomeAssistant没有安装媒体播放器，本功能无法使用")
-        return;
-      }
+      // let mp = Object.keys(conn._ent.state).filter(key => key.indexOf('media_player') == 0 && key != 'media_player.ha_cloud_music')
+      // if (mp.length === 0) {
+      //   Vue.prototype.$mmToast("检测到当前HomeAssistant没有安装媒体播放器，本功能无法使用")
+      //   reject("检测到当前HomeAssistant没有安装媒体播放器，本功能无法使用")
+      //   return;
+      // }
       // 查找自定义播放器
       let entity_id = Object.keys(conn._ent.state).find(key => key.indexOf('media_player.ha_cloud_music') === 0)
       // 获取当前播放器对象
@@ -107,7 +106,7 @@ export default class {
       store.commit('SET_CURRENTINDEX', index)
       store.commit('SET_PLAYING', isReady)
       // 根据HA播放器，设置对应的播放模式（0、1、2、3）
-      store.commit('SET_PLAYMODE', this.playMode[attr.media_season] || 0)
+      store.commit('SET_PLAYMODE', this.playMode[attr.play_mode] || 0)
       // 设置列表
       store.dispatch('setPlaylist', { list: playlist })
       // 设置全屏模式
@@ -310,7 +309,7 @@ export default class {
         // 操作中的时候，不执行更新操作
         if (this.loading === false) {
           let { attr, isPlaying } = await this.hass
-          let { media_position, media_season, media_title, media_artist, index, volume_level } = attr
+          let { media_position, play_mode, media_title, media_artist, index, volume_level } = attr
 
           audio.volume = volume_level
 
@@ -323,7 +322,7 @@ export default class {
             }
           }
           if (this.isEqual({ media_title, media_artist, index }) === false) {
-            store.commit('SET_PLAYMODE', this.playMode[media_season] || 0)
+            store.commit('SET_PLAYMODE', this.playMode[play_mode] || 0)
             store.commit('SET_CURRENTINDEX', index)
           }
         }

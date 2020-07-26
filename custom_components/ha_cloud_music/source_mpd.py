@@ -2,17 +2,22 @@
 '''
 python3 -m pip install python-mpd2
 '''
-import time
+import time, datetime
 
 class MediaPlayerMPD():
 
     # 初始化
     def __init__(self, config, media=None):
+        # 播放器相同字段
         self.config = config
-        self._status = None
-        self._muted = False
-        self._muted_volume = 0
         self._media = media
+        self._muted = False
+        self.media_position = 0
+        self.media_duration = 0
+        self.media_position_updated_at = datetime.datetime.now()
+        # 不同字段
+        self._status = None
+        self._muted_volume = 0
         try:
             import mpd
             self._client = mpd.MPDClient()
@@ -55,6 +60,7 @@ class MediaPlayerMPD():
 
         self.media_position = media_position
         self.media_duration = media_duration
+        self.media_position_updated_at = datetime.datetime.now()
 
     def load(self, url):
         # 加载URL
@@ -110,6 +116,7 @@ class MediaPlayerMPD():
         self._client.stop()
         self._client.disconnect()
 
+'''
 mm = MediaPlayerMPD({'host': '192.168.1.113'})
 if mm.is_support:
     mm.load('http://music.jiluxinqing.com/mp3/20200328182257900.mp3')
@@ -118,3 +125,4 @@ while True:
     time.sleep(1)
     mm.update()
     pass
+'''

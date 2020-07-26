@@ -390,8 +390,8 @@ class MoreInfoHaCloudMusic extends HTMLElement {
         // console.log(this.stateObj.entity_id)
 
         this.shadow.querySelector('.controls .action').setAttribute('icon', state === 'playing' ? this.icon.pause : this.icon.play)
-        let playMode = this.playMode.find(ele => ele.name === attr.media_season)
-        this.shadow.querySelector('.controls .play_mode').setAttribute('icon', playMode.icon)
+        let playMode = this.playMode.find(ele => ele.name === attr.play_mode)
+        if(playMode) this.shadow.querySelector('.controls .play_mode').setAttribute('icon', playMode.icon)
 
 
         this.shadow.querySelector('.volume .volume-off').setAttribute('icon', attr.is_volume_muted ? this.icon.volume_off : this.icon.volume_high)
@@ -417,7 +417,7 @@ class MoreInfoHaCloudMusic extends HTMLElement {
             // 显示模式与数量
             this.shadow.querySelector('.list-play-mode').innerHTML = `
                 <ha-icon icon="${playMode.icon}"></ha-icon>
-                ${attr.media_season} (${attr.source_list.length})
+                ${attr.play_mode} (${attr.source_list.length})
             `
                 ; (() => {
                     let ul = this.shadow.querySelector('.music-list-panel ul')

@@ -1,21 +1,14 @@
-# 网页播放器
-import time, datetime
+# 其他播放器
 
-class MediaPlayerWEB():
+class MediaPlayerOther():
 
     # 初始化
     def __init__(self, config, media=None):
-        # 播放器相同字段
         self.config = config
-        self._media = media
         self._muted = False
-        self.media_position = 0
-        self.media_duration = 0
-        self.media_position_updated_at = datetime.datetime.now()
-        # 不同字段
-        self.volume_level = 1
+        self._media = media
+        self.volume_level = 0
         self.is_support = True
-
         def handle_event(event):
             state = event.data.get('state')
             if state == "playing":

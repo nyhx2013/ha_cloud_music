@@ -1,12 +1,18 @@
 # VLC播放器
+import time, datetime
 
 class MediaPlayerVLC():
 
     # 初始化
     def __init__(self, config, media=None):
+        # 播放器相同字段
         self.config = config
-        self._muted = False
         self._media = media
+        self._muted = False
+        self.media_position = 0
+        self.media_duration = 0
+        self.media_position_updated_at = datetime.datetime.now()
+        
         try:
             import vlc
             self._instance = vlc.Instance()
@@ -36,6 +42,7 @@ class MediaPlayerVLC():
         print("当前进度：%s，总时长：%s"%(media_position, media_duration))
         self.media_position = media_position
         self.media_duration = media_duration
+        self.media_position_updated_at = datetime.datetime.now()
         self._muted = (self._client.audio_get_mute() == 1)
 
     def load(self, url):
@@ -85,9 +92,11 @@ class MediaPlayerVLC():
         self._client.release()
         self._instance.release()
 
+'''
 mm = MediaPlayerVLC({})
 if mm.is_support:
     mm.load('http://music.jiluxinqing.com/mp3/2014122718214050.mp3')
 
 while True:
     pass
+'''
