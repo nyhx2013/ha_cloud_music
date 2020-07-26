@@ -31,7 +31,7 @@ class MediaPlayerWEB():
             self.media_position_updated_at = datetime.datetime.now()
 
         # 监听web播放器的更新
-        if 'hass' in media:
+        if media is not None:
             self.hass = media.hass
             media.hass.services.register("ha_cloud_music", 'web_media_player_updated', handle_event)
 
