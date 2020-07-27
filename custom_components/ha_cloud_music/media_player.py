@@ -467,14 +467,29 @@ class MediaPlayer(MediaPlayerEntity):
         self.music_index = self._source_list.index(source)
         self.music_load()
         
-    def select_sound_mode(self, sound_mode):        
+    def select_sound_mode(self, sound_mode):
+        
+        # 相同不做处理
+        if self._sound_mode == sound_mode:
+            return None
+        
         # 选择播放器
         if self._media_player is not None:
-            self._media_player.stop()
+            try:
+                self._media_player.stop()
+                time.sleep(1)
+            except Exception as ex:
+                print(ex)
+                self._media_player = None
+                self.notify(self._sound_mode + "连接异常", "select_sound_mode")
 
         if sound_mode == '网页播放器':
             self._media_player = MediaPlayerWEB(self._config, self)
         elif sound_mode == 'MPD播放器':
+            # 判断是否配置mpd_host
+            if 'mpd_host' not in self._config:
+                self.notify("MPD播放器需要配置mpd_host", "select_sound_mode")
+                self._media_player = None
             self._media_player = MediaPlayerMPD(self._config, self)
             if self._media_player.is_support == False:
                 self.notify("不支持MPD播放器，请确定是否正确配置", "select_sound_mode")
