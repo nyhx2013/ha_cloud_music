@@ -1,6 +1,6 @@
 import aiohttp, asyncio, json, re, os, uuid
 import http.cookiejar as HC
-from .api_const import get_config_path, read_config_file, write_config_file
+from .api_config import get_config_path, read_config_file, write_config_file
 
 # 全局请求头
 HEADERS = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.87 Safari/537.36'}

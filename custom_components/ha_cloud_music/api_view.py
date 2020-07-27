@@ -1,6 +1,6 @@
 from homeassistant.components.http import HomeAssistantView
 
-from .api_const import DOMAIN_API,DOMAIN
+from .api_config import DOMAIN_API,DOMAIN
 
 ##### 网关控制
 class ApiView(HomeAssistantView):

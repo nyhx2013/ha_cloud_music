@@ -14,7 +14,7 @@ SUPPORT_FEATURES = SUPPORT_PAUSE | SUPPORT_VOLUME_SET | SUPPORT_VOLUME_MUTE | SU
 _LOGGER = logging.getLogger(__name__)
 ################### 接口定义 ###################
 # 常量
-from .api_const import DOMAIN, VERSION, ROOT_PATH, TrueOrFalse, write_config_file, read_config_file
+from .api_config import DOMAIN, VERSION, ROOT_PATH, TrueOrFalse, write_config_file, read_config_file
 # 网易云接口
 from .api_music import ApiMusic
 # 网关视图
@@ -194,6 +194,11 @@ class MediaPlayer(MediaPlayerEntity):
         music_playlist = read_config_file('music_playlist.json')
         if music_playlist != None:
             self.music_playlist = music_playlist
+            source_list = []
+            for index in range(len(self.music_playlist)):
+                music_info = self.music_playlist[index]
+                source_list.append(str(index + 1) + '.' + music_info['song'] + ' - ' + music_info['singer'])
+            self._source_list = source_list
 
     def update(self):
         # 数据更新
@@ -458,7 +463,7 @@ class MediaPlayer(MediaPlayerEntity):
         self.music_load()
         
     def select_sound_mode(self, sound_mode):
-        
+        print(sound_mode)
         # 相同不做处理
         if self._sound_mode == sound_mode:
             return None

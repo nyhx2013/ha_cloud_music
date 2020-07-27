@@ -3,8 +3,7 @@ from mutagen.mp3 import MP3
 from homeassistant.helpers import template
 from homeassistant.const import (STATE_IDLE, STATE_PAUSED, STATE_PLAYING, STATE_OFF, STATE_UNAVAILABLE)
 
-from .api_const import ROOT_PATH
-from .api_config import ApiConfig
+from .api_config import ROOT_PATH, ApiConfig
 
 # 百度TTS
 IS_PY3 = True
