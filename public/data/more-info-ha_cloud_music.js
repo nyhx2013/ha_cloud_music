@@ -186,8 +186,7 @@ class MoreInfoHaCloudMusic extends HTMLElement {
          .music-list-panel ul li span{width:100%;display:block;}
          .music-list-panel ul li.active{color: var(--primary-color);}
          .music-list-panel ul li:last-child{display:flex;}
-         .music-list-panel ul li:last-child button{flex:1;padding:10px 0;border:none;}
-
+         .music-list-panel ul li:last-child button{flex:1;padding:10px 0;border:none;color:white;background-color:var(--primary-color);}
         
          #inputPanel{display:flex;align-items: center;text-align:center;}
          #txtInput {
@@ -365,7 +364,6 @@ class MoreInfoHaCloudMusic extends HTMLElement {
     // 更新界面数据
     updated(hass) {
         let { $, _stateObj } = this
-        let _this = this
         let attr = _stateObj.attributes
         let entity_id = _stateObj.entity_id
         let sound_mode_list = attr.sound_mode_list
@@ -373,21 +371,22 @@ class MoreInfoHaCloudMusic extends HTMLElement {
         // 音量
         $('.volume .volume-off').setAttribute('icon', attr.is_volume_muted ? this.icon.volume_off : this.icon.volume_high)
         $('.volume ha-paper-slider').value = attr.volume_level * 100
-        // 源播放器
-        if (sound_mode_list) {
-            // 判断当前是否需要更新DOM
-            let items = $('.source').querySelectorAll('paper-item')
-            if (items && items.length == sound_mode_list.length) return;
-            // 生成节点
-            let listbox = $('.source paper-listbox')
-            listbox.innerHTML = sound_mode_list.map((ele) => {
-                return `<paper-item>${ele}</paper-item>`
-            }).join('')
-            // 选择当前默认项
-            let sound_mode_index = sound_mode_list.indexOf(attr.sound_mode)
-            listbox.selected = sound_mode_index
-
-        }
+            // 源播放器
+            ; (() => {
+                if (sound_mode_list) {
+                    // 判断当前是否需要更新DOM
+                    let items = $('.source').querySelectorAll('paper-item')
+                    if (items && items.length == sound_mode_list.length) return;
+                    // 生成节点
+                    let listbox = $('.source paper-listbox')
+                    listbox.innerHTML = sound_mode_list.map((ele) => {
+                        return `<paper-item>${ele}</paper-item>`
+                    }).join('')
+                    // 选择当前默认项
+                    let sound_mode_index = sound_mode_list.indexOf(attr.sound_mode)
+                    listbox.selected = sound_mode_index
+                }
+            })();
         // 音乐列表
         if (source_list && source_list.length > 0) {
             let ul = $('.music-list-panel ul')
@@ -428,18 +427,18 @@ class MoreInfoHaCloudMusic extends HTMLElement {
                 let btn1 = document.createElement('button')
                 btn1.innerHTML = '播放上一页'
                 btn1.onclick = () => {
-                    this.callService('ha_cloud_music.load', {
-                        id, type, index: count - 100 + 1
-                    })
+                    let playIndex = count - 50 + 1
+                    this.toast(`播放第${playIndex}项音乐`)
+                    this.callService('ha_cloud_music.load', {id, type, index: playIndex})
                 }
                 let btn2 = document.createElement('button')
                 btn2.innerHTML = '播放下一页'
                 btn2.onclick = () => {
-                    this.callService('ha_cloud_music.load', {
-                        id, type, index: count + 1
-                    })
+                    let playIndex = count + 50 + 1
+                    this.toast(`播放第${playIndex}项音乐`)
+                    this.callService('ha_cloud_music.load', {id, type, index: playIndex})
                 }
-                if (count > 50) li.appendChild(btn1)
+                if (index > 0) li.appendChild(btn1)
                 if (count < total - 50) li.appendChild(btn2)
                 fragment.appendChild(li)
             }
