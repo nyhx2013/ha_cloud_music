@@ -183,7 +183,11 @@ class MediaPlayer(MediaPlayerEntity):
         # 是否启用定时器
         self._timer_enable = True
         self._notify = True
-        self._sound_mode_list = ['VLC播放器', 'MPD播放器', '网页播放器']
+        # 如果是Docker环境，则不显示VLC播放器
+        if os.path.isfile("/.dockerenv") == True:
+            self._sound_mode_list = ['MPD播放器', '网页播放器']
+        else:
+            self._sound_mode_list = ['VLC播放器', 'MPD播放器', '网页播放器']
         self._sound_mode = None
         # 读取播放器配置
         res =  read_config_file('sound_mode.json')
