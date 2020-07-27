@@ -8,7 +8,7 @@ class ApiVoice():
 
     async def text_event(self,event):
         hass = self.hass
-        _text = event.data.get('text')
+        _text = event.data.get('text', '').strip(' 。，、＇：∶；?‘’“”〝〞ˆˇ﹕︰﹔﹖﹑·¨….¸;！´？！～—ˉ｜‖＂〃｀@﹫¡¿﹏﹋﹌︴々﹟#﹩$﹠&﹪%*﹡﹢﹦﹤‐￣¯―﹨ˆ˜﹍﹎+=<­­＿_-\ˇ~﹉﹊（）〈〉‹›﹛﹜『』〖〗［］《》〔〕{}「」【】︵︷︿︹︽_﹁﹃︻︶︸﹀︺︾ˉ﹂﹄︼')
         #_log_info('监听语音小助手的文本：' + _text)
         # 我想听xxx的歌
         pattern = re.compile(r"我想听(.+)的歌")
