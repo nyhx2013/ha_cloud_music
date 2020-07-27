@@ -1,113 +1,184 @@
 class MoreInfoHaCloudMusic extends HTMLElement {
-    constructor() {
-        super()
-        this.icon = {
-            volume_high: 'mdi:volume-high',
-            volume_off: 'mdi:volume-off',
+
+    /*
+    * 触发事件
+    * type: 事件名称
+    * data: 事件参数
+    */
+    fire(type, data) {
+        const event = new Event(type, {
+            bubbles: true,
+            cancelable: false,
+            composed: true
+        });
+        event.detail = data;
+        this.dispatchEvent(event);
+    }
+
+    /*
+     * 调用服务
+     * service: 服务名称(例：light.toggle)
+     * service_data：服务数据(例：{ entity_id: "light.xiao_mi_deng_pao" } )
+     */
+    callService(service_name, service_data = {}) {
+        let arr = service_name.split('.')
+        let domain = arr[0]
+        let service = arr[1]
+        this._hass.callService(domain, service, service_data)
+    }
+
+    // 通知
+    toast(message) {
+        this.fire("hass-notification", { message })
+    }
+
+    /*
+     * 接收HA核心对象
+     */
+    set hass(hass) {
+        this._hass = hass
+        if (!this.isCreated) {
+            this.created(hass)
         }
+    }
+
+    get stateObj() {
+        return this._stateObj
+    }
+
+    // 接收当前状态对象
+    set stateObj(value) {
+        this._stateObj = value
+        // console.log(value)
+        if (this.isCreated) this.updated()
+    }
+
+    throttle(callback, time) {
+        let timer = null
+        return () => {
+            if (timer) clearTimeout(timer)
+            timer = setTimeout(() => {
+                callback()
+                timer = null
+            }, time)
+        }
+    }
+
+    // 创建界面
+    created(hass) {
+        /* ***************** 基础代码 ***************** */
         const shadow = this.attachShadow({ mode: 'open' });
-        const div = document.createElement('div', { 'class': 'root' });
-        div.innerHTML = `               
-               <!-- 音量控制 -->
-               <div class="volume">
+        // 创建面板
+        const ha_card = document.createElement('div');
+        ha_card.className = 'more-info-ha_cloud_music'
+        ha_card.innerHTML = `
+        <div class="voice-panel">      
+            <div id="inputPanel">
+                <ha-icon class="input-mode" icon="mdi:microphone"></ha-icon>
+                <input type="text" placeholder="请使用手机语音输入法" autofocus id="txtInput" />
+                <ha-icon class="menu-open" icon="mdi:menu-open"></ha-icon>
+            </div>
+            <div class="list">
+                <div class="left content">
+                    <button>😁</button>
+                    <div><span>
+                    播放音乐、暂停音乐、下一曲、<br/>
+                    上一曲、小点声音、大点声音
+                    </span></div>
+                </div>
+                <div class="right content">
+                    <div><span>播放新闻</span></div>
+                    <button data-cmd="播放新闻">😘</button>
+                </div>
+                <div class="left content">
+                    <button>😁</button>
+                    <div><span>新闻音频资源来自😋乐听头条</span></div>
+                </div>
+                <div class="right content">
+                    <div><span>我想听林俊杰的歌</span></div>
+                    <button data-cmd="我想听林俊杰的歌">😘</button>
+                </div>
+                <div class="left content">
+                    <button>😁</button>
+                    <div><span>林俊杰👌歌手都来自网易云音乐</span></div>
+                </div>
+                <div class="right content">
+                    <div><span>播放歌曲明天你好</span></div>
+                    <button data-cmd="播放歌曲明天你好">😘</button>
+                </div>
+                <div class="left content">
+                    <button>😁</button>
+                    <div><span>明天你好😍歌曲来自网易云音乐</span></div>
+                </div>
+                <div class="right content">
+                    <div><span>播放专辑段子来了</span></div>
+                    <button data-cmd="播放专辑段子来了">😘</button>
+                </div>
+                <div class="left content">
+                    <button>😁</button>
+                    <div><span>段子来了😄来自喜马拉雅哦</span></div>
+                </div>
+                <div class="right content">
+                    <div><span>播放电台宋宇的报刊选读</span></div>
+                    <button data-cmd="播放电台宋宇的报刊选读">😘</button>
+                </div>                
+                <div class="left content">
+                    <button>😁</button>
+                    <div><span>宋宇的报刊选读😜来自网易云音乐哦</span></div>
+                </div>
+                <div class="right content">
+                    <div><span>播放歌单私人雷达</span></div>
+                    <button data-cmd="播放歌单私人雷达">😘</button>
+                </div>     
+                <div class="left content">
+                    <button>😁</button>
+                    <div><span>私人雷达😊来自网易云音乐哦</span></div>
+                </div>
+            </div>
+        </div>
+        <div class="music-panel hide">
+            <!-- 音量控制 -->
+            <div class="volume">
                 <div>
-                  <ha-icon class="volume-off" icon="mdi:volume-high"></ha-icon>
+                    <ha-icon class="volume-off" icon="mdi:volume-high"></ha-icon>
                 </div>
                 <div>
                     <ha-paper-slider min="0" max="100" />
+                </div>                
+                <div>
+                    <ha-icon class="menu" icon="mdi:menu"></ha-icon>
                 </div>
-               </div>
-                              
-               <!-- 源播放器 -->
-               <div class="source">
-                 
-               </div>
-                                             
-               <div class="mask"></div>              
-                              
-               <!-- 音乐列表 -->
-               <div class="music-list-panel">
-                 <ul>
-                 </ul>
-               </div>
-               
-               <div class="loading">
-                   <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" style="margin: auto;transform: translateY(100%); display: block;" width="200px" height="200px" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid">
-                    <circle cx="28" cy="75" r="11" fill="#85a2b6">
-                      <animate attributeName="fill-opacity" repeatCount="indefinite" dur="1s" values="0;1;1" keyTimes="0;0.2;1" begin="0s"></animate>
-                    </circle>
-
-                    <path d="M28 47A28 28 0 0 1 56 75" fill="none" stroke="#bbcedd" stroke-width="10">
-                      <animate attributeName="stroke-opacity" repeatCount="indefinite" dur="1s" values="0;1;1" keyTimes="0;0.2;1" begin="0.1s"></animate>
-                    </path>
-                    <path d="M28 25A50 50 0 0 1 78 75" fill="none" stroke="#dce4eb" stroke-width="10">
-                      <animate attributeName="stroke-opacity" repeatCount="indefinite" dur="1s" values="0;1;1" keyTimes="0;0.2;1" begin="0.2s"></animate>
-                    </path>
-                    </svg>
-               </div>
-               <div class="toast">
-                弹窗提示
-               </div>
+            </div>
+                        
+            <!-- 源播放器 -->
+            <div class="source">
+                <ha-paper-dropdown-menu label-float="" label="源播放器">
+                    <paper-listbox slot="dropdown-content">
+                    </paper-listbox>
+                </ha-paper-dropdown-menu>
+            </div>
+            <!-- 音乐列表 -->
+            <div class="music-list-panel">
+                <ul>
+                </ul>
+            </div>
+        </div>
         `
-        shadow.appendChild(div);
-        // 绑定事件
-        const _this = this
-        // 静音
-        div.querySelector('.volume-off').onclick = function () {
-            let icon = this.getAttribute('icon')
-            let is_volume_muted = false
-            if (this.icon === _this.icon.volume_high) {
-                this.setAttribute('icon', _this.icon.volume_off)
-                _this.toast("静音")
-                is_volume_muted = true
-            } else {
-                this.setAttribute('icon', _this.icon.volume_high)
-                _this.toast("启用音量")
-                is_volume_muted = false
-            }
-            _this.call({
-                entity_id: _this.stateObj.entity_id,
-                is_volume_muted: is_volume_muted
-            }, 'volume_mute')
-        }
-        // 调整音量
-        div.querySelector('.volume ha-paper-slider').onchange = function () {
-            let volume_level = this.value / 100
-            _this.call({
-                entity_id: _this.stateObj.entity_id,
-                volume_level: volume_level
-            }, 'volume_set')
-            _this.toast(`调整音量到${this.value}`)
-        }
-
-        // 设置样式
-        const style = document.createElement('style');
+        shadow.appendChild(ha_card)
+        // 创建样式
+        const style = document.createElement('style')
         style.textContent = `
+         .voice-panel{}
+         .music-panel{}
+         .hide{display:none;}
          
-         .loading{
-            width: 100%;height: 100vh;position: fixed;background: rgba(0,0,0,.7);top: 0;left: 0;display:none;
-            z-index:1000;
-         }
-         .toast{background-color:black;
-            color:white;
-            text-align:center;
-            width:100%;
-            position:fixed;
-            top:0;left:0;
-            z-index:1001;
-            display:none;
-            opacity: 0;
-            padding:22px 10px;
-            font-weight:bold;
-            font-size:14px;
-            transition: opacity 0.5s;}
-         
-         .source ha-paper-dropdown-menu{width:100%;}
-         
-         .volume{display:flex;align-items: center;}
-         .volume div:nth-child(1){width:40px;text-align:center;cursor:pointer;}
+         .volume{display:flex;align-items: center;text-align:center;}
+         .volume div:nth-child(1),
+         .volume div:nth-child(3){cursor:pointer;}
          .volume div:nth-child(2){width:100%;}
          .volume ha-paper-slider{width:100%;}
+         
+         .source ha-paper-dropdown-menu{width:100%;}
          
          .music-list-panel{}
          .music-list-panel ul{margin:0;padding:10px 0;list-style:none;}
@@ -116,216 +187,264 @@ class MoreInfoHaCloudMusic extends HTMLElement {
          .music-list-panel ul li.active{color: var(--primary-color);}
          .music-list-panel ul li:last-child{display:flex;}
          .music-list-panel ul li:last-child button{flex:1;padding:10px 0;border:none;}
-         
-        `;
+
+        
+         #inputPanel{display:flex;align-items: center;text-align:center;}
+         #txtInput {
+            border-radius: 10px;
+            outline: none;
+            width:100%;
+            box-sizing: border-box;
+            padding: 8px 10px;
+            border: 1px solid silver;
+            margin: 0 10px;
+        }
+
+        .content {
+            padding: 10px 0;
+            display: flex;
+            overflow: auto;
+        }
+
+        .content div {
+            flex: 1;
+        }
+
+        .content span {
+            display: inline-block;
+            padding: 5px 10px 8px 10px;
+        }
+
+        .content button {
+            border: none;
+            font-size: 30px;
+            outline: none;
+            width: 55px;
+            background-color: transparent;
+        }
+
+        .right {
+            text-align: right;
+        }
+
+        .right span {
+            background-color: purple;
+            color: white;
+            border-radius: 10px 10px 0px 10px;
+            text-align: left;
+        }
+
+        .right button {
+            float: right;
+
+        }
+
+        .left button {
+            float: left;
+        }
+
+        .left {
+            text-align: left;
+        }
+
+        .left span {
+            background-color: white;
+            border-radius: 10px 10px 10px 0px;
+        }
+        `
         shadow.appendChild(style);
+        // 保存核心DOM对象
         this.shadow = shadow
-
-        this.info = document.createElement('div')
-
-    }
-
-    showMask() {
-        this.shadow.querySelector('.mask').style.display = 'block'
-    }
-
-    hideMask() {
-        this.shadow.querySelector('.mask').style.display = 'none'
-    }
-
-    showLoading() {
-        this.loadingTime = Date.now()
-        this.shadow.querySelector('.loading').style.display = 'block'
-    }
-
-    hideLoading() {
-        if (Date.now() - this.loadingTime < 1000) {
-            setTimeout(() => {
-                this.shadow.querySelector('.loading').style.display = 'none'
-            }, 1000)
-        } else {
-            this.shadow.querySelector('.loading').style.display = 'none'
+        this.$ = this.shadow.querySelector.bind(this.shadow)
+        // 创建成功
+        this.isCreated = true
+        /* ***************** 附加代码 ***************** */
+        this.icon = {
+            volume_high: 'mdi:volume-high',
+            volume_off: 'mdi:volume-off',
         }
-    }
+        let { $ } = this
+        let _this = this
+        // 静音        
+        $('.volume-off').onclick = function () {
+            // 是否静音
+            let is_volume_muted = this.icon === _this.icon.volume_high
 
-    // 提示
-    toast(msg) {
-        let toast = this.shadow.querySelector('.toast')
-        if (toast.timer != null) {
-            clearTimeout(toast.timer)
+            _this.callService('media_player.volume_mute', {
+                entity_id: _this.stateObj.entity_id,
+                is_volume_muted
+            })
+
+            _this.toast(is_volume_muted ? "静音" : '启用音量')
+            this.setAttribute('icon', is_volume_muted ? _this.icon.volume_off : _this.icon.volume_high)
         }
-        toast.innerHTML = msg
-        toast.style.display = 'block'
-        toast.style.opacity = '1'
-        toast.timer = setTimeout(() => {
-            toast.style.opacity = '0'
-            toast.timer = setTimeout(() => {
-                toast.style.display = 'none'
-                toast.timer = null
-            }, 500)
-        }, 3000)
-    }
-
-    // 调用接口
-    async call(data, service, domain = 'media_player') {
-        this.showLoading()
-        // 开始执行加载中。。。
-        let auth = this.hass.auth
-        let authorization = ''
-        if (auth._saveTokens) {
-            // 过期
-            if (auth.expired) {
-                await auth.refreshAccessToken()
+        // 调整音量
+        $('.volume ha-paper-slider').onchange = function () {
+            let volume_level = this.value / 100
+            _this.callService('media_player.volume_set', {
+                entity_id: _this.stateObj.entity_id,
+                volume_level: volume_level
+            })
+            _this.toast(`调整音量到${this.value}`)
+        }
+        // 显示语音控制界面
+        let inputMode = $('.input-mode')
+        inputMode.onclick = () => {
+            let isText = inputMode.icon == 'mdi:card-text'
+            let icon = isText ? 'mdi:microphone' : 'mdi:card-text'
+            inputMode.icon = icon
+            this.toast(isText ? '切换到语音模式，自动发送文本' : '切换到文本模式')
+        }
+        $('.menu').onclick = () => {
+            $('.music-panel').classList.add('hide')
+            $('.voice-panel').classList.remove('hide')
+        }
+        $('.menu-open').onclick = () => {
+            $('.voice-panel').classList.add('hide')
+            $('.music-panel').classList.remove('hide')
+        }
+        // 选择源播放器
+        $('.source paper-listbox').addEventListener('selected-changed', function () {
+            let { entity_id, attributes } = _this._stateObj
+            let sound_mode_list = attributes.sound_mode_list
+            let sound_mode = sound_mode_list[this.selected]
+            // 选择源播放器
+            if (attributes.sound_mode != sound_mode) {
+                _this.callService('media_player.select_sound_mode', {
+                    entity_id,
+                    sound_mode
+                })
+                _this.toast(`更换源播放器：${sound_mode}`)
             }
-            authorization = `${auth.data.token_type} ${auth.accessToken}`
-        } else {
-            authorization = `Bearer ${auth.data.access_token}`
-        }
-        // 发送查询请求
-        fetch(`/api/services/${domain}/${service}`, {
-            method: 'post',
-            body: JSON.stringify(data),
-            headers: {
-                authorization
-            }
-        }).then(res => res.json()).then(res => {
+        })
+        // 语音输入
+        this.addMsg = (value) => {
+            let div = document.createElement('div')
+            div.className = `right content`
+            div.innerHTML = `<div><span>${value}</span></div><button data-cmd="${value}">😘</button>`
+            $(".list").insertBefore(div, $('.list>div'))
 
-        }).finally(() => {
-            //加载结束。。。
-            this.hideLoading()
+            this._hass.callApi('POST', 'events/ha_voice_text_event', { text: value }).then(res => {
+                this.toast("命令发送成功")
+            })
+        }
+
+        let txtInput = $('#txtInput')
+        txtInput.oninput = this.throttle(() => {
+            // 如果是文本模式，则不处理
+            let isText = inputMode.icon == 'mdi:card-text'
+            if (isText) return;
+
+            let value = txtInput.value.trim()
+            if (value) {
+                txtInput.value = ''
+                this.addMsg(value)
+            }
+        }, 1000)
+        txtInput.onkeypress = (event) => {
+            if (event.keyCode == 13) {
+                let value = txtInput.value.trim()
+                if (value) {
+                    txtInput.value = ''
+                    this.addMsg(value)
+                }
+            }
+        }
+        // 命令点击
+        $('.list').addEventListener('click', (event) => {
+            let ele = event.path[0]
+            if ('cmd' in ele.dataset) {
+                let text = ele.dataset['cmd']
+                this._hass.callApi('POST', 'events/ha_voice_text_event', { text }).then(res => {
+                    this.toast("命令发送成功")
+                })
+            }
         })
     }
 
-    timeForamt(num) {
-        if (num < 10) return '0' + String(num)
-        return String(num)
-    }
+    // 更新界面数据
+    updated(hass) {
+        let { $, _stateObj } = this
+        let _this = this
+        let attr = _stateObj.attributes
+        let entity_id = _stateObj.entity_id
+        let sound_mode_list = attr.sound_mode_list
+        let source_list = attr.source_list
+        // 音量
+        $('.volume .volume-off').setAttribute('icon', attr.is_volume_muted ? this.icon.volume_off : this.icon.volume_high)
+        $('.volume ha-paper-slider').value = attr.volume_level * 100
+        // 源播放器
+        if (sound_mode_list) {
+            // 判断当前是否需要更新DOM
+            let items = $('.source').querySelectorAll('paper-item')
+            if (items && items.length == sound_mode_list.length) return;
+            // 生成节点
+            let listbox = $('.source paper-listbox')
+            listbox.innerHTML = sound_mode_list.map((ele) => {
+                return `<paper-item>${ele}</paper-item>`
+            }).join('')
+            // 选择当前默认项
+            let sound_mode_index = sound_mode_list.indexOf(attr.sound_mode)
+            listbox.selected = sound_mode_index
 
-    // 自定义初始化方法
-    render() {
-        const _this = this
-        let attr = this.stateObj.attributes
-        let state = this.stateObj.state
-        let entity_id = this.stateObj.entity_id
-        // console.log(attr)
-        // console.log(this.stateObj.entity_id)
-
-        this.shadow.querySelector('.volume .volume-off').setAttribute('icon', attr.is_volume_muted ? this.icon.volume_off : this.icon.volume_high)
-        this.shadow.querySelector('.volume ha-paper-slider').value = attr.volume_level * 100
-
-        /************************ 音乐列表 ***************************************/
-        if (attr.source_list && attr.source_list.length > 0) {
-            ; (() => {
-                let ul = this.shadow.querySelector('.music-list-panel ul')
-                ul.innerHTML = ''
-                let fragment = document.createDocumentFragment();
-                attr.source_list.forEach((ele, index) => {
-                    let li = document.createElement('li')
-                    if (ele === attr.source) {
-                        li.className = 'active'
-                        li.innerHTML = `<span>${ele}</span> <ha-icon icon="mdi:music"></ha-icon>`
-                    } else {
-                        let span = document.createElement('span')
-                        span.textContent = ele
-                        li.appendChild(span)
-                        let ironIcon = document.createElement('ha-icon')
-                        ironIcon.setAttribute('icon', 'mdi:play-circle-outline')
-                        ironIcon.onclick = () => {
-                            // 这里播放音乐
-                            // console.log(index,ele)
-                            this.call({
-                                entity_id,
-                                source: ele
-                            }, 'select_source')
-                            this.toast(`开始播放： ${ele}`)
-                        }
-                        li.appendChild(ironIcon)
-                    }
-                    fragment.appendChild(li)
-                })
-                // 如果有下一页，则显示播放下一页
-                let media_playlist = attr.media_playlist
-                let obj = media_playlist[0]['load']
-                if (obj) {
-                    // 获取相关信息
-                    let { id, type, index, total } = obj
-                    // 当前所有页数的数据
-                    let count = index * 50
-
-                    let li = document.createElement('li')
-                    let btn1 = document.createElement('button')
-                    btn1.innerHTML = '播放上一页'
-                    btn1.onclick = () => {
-                        this.call({
-                            id,
-                            type,
-                            index: count - 100 + 1
-                        }, 'load', 'ha_cloud_music')
-                    }
-                    let btn2 = document.createElement('button')
-                    btn2.innerHTML = '播放下一页'
-                    btn2.onclick = () => {
-                        this.call({
-                            id,
-                            type,
-                            index: count + 1
-                        }, 'load', 'ha_cloud_music')
-                    }
-
-                    if (count > 50) li.appendChild(btn1)
-                    if (count < total - 50) li.appendChild(btn2)
-                    fragment.appendChild(li)
-                }
-
-                ul.appendChild(fragment)
-            })();
         }
-        /************************ 源播放器 ***************************************/
-        if (attr.sound_mode_list) {
-            let sound_mode_list = []
-            let sound_mode = attr.sound_mode_list.indexOf(attr.sound_mode)
-            // 获取当前节点数据
-            let items = this.shadow.querySelectorAll('.source paper-item')
-            if (items && items.length == attr.sound_mode_list.length) {
-                // console.log(items)
-                return
+        // 音乐列表
+        if (source_list && source_list.length > 0) {
+            let ul = $('.music-list-panel ul')
+            ul.innerHTML = ''
+            let fragment = document.createDocumentFragment();
+            attr.source_list.forEach((ele, index) => {
+                let li = document.createElement('li')
+                if (ele === attr.source) {
+                    li.className = 'active'
+                    li.innerHTML = `<span>${ele}</span> <ha-icon icon="mdi:music"></ha-icon>`
+                } else {
+                    let span = document.createElement('span')
+                    span.textContent = ele
+                    li.appendChild(span)
+                    let ironIcon = document.createElement('ha-icon')
+                    ironIcon.setAttribute('icon', 'mdi:play-circle-outline')
+                    ironIcon.onclick = () => {
+                        this.callService('media_player.select_source', {
+                            entity_id,
+                            source: ele
+                        })
+                        this.toast(`开始播放： ${ele}`)
+                    }
+                    li.appendChild(ironIcon)
+                }
+                fragment.appendChild(li)
+            })
+            // 如果有下一页，则显示播放下一页
+            let media_playlist = attr.media_playlist
+            let obj = media_playlist[0]['load']
+            if (obj) {
+                // 获取相关信息
+                let { id, type, index, total } = obj
+                // 当前所有页数的数据
+                let count = index * 50
+
+                let li = document.createElement('li')
+                let btn1 = document.createElement('button')
+                btn1.innerHTML = '播放上一页'
+                btn1.onclick = () => {
+                    this.callService('ha_cloud_music.load', {
+                        id, type, index: count - 100 + 1
+                    })
+                }
+                let btn2 = document.createElement('button')
+                btn2.innerHTML = '播放下一页'
+                btn2.onclick = () => {
+                    this.callService('ha_cloud_music.load', {
+                        id, type, index: count + 1
+                    })
+                }
+                if (count > 50) li.appendChild(btn1)
+                if (count < total - 50) li.appendChild(btn2)
+                fragment.appendChild(li)
             }
-
-            attr.sound_mode_list.forEach((ele) => {
-                sound_mode_list.push(`<paper-item>${ele}</paper-item>`)
-            })
-            this.shadow.querySelector('.source').innerHTML = `
-                <ha-paper-dropdown-menu label-float="" label="源播放器">
-                    <paper-listbox slot="dropdown-content" selected="${sound_mode}">
-                        ${sound_mode_list.join('')}
-                    </paper-listbox>
-                </ha-paper-dropdown-menu>
-            `
-            // 读取源播放器
-            this.shadow.querySelector('.source paper-listbox').addEventListener('selected-changed', function () {
-                if (sound_mode != this.selected) {
-                    // console.log(this.selected)
-                    // console.log('%O', this)
-                    sound_mode = this.selected
-                    let sound_mode_name = attr.sound_mode_list[this.selected]
-                    // 选择源播放器
-                    _this.call({
-                        entity_id,
-                        sound_mode: sound_mode_name
-                    }, 'select_sound_mode')
-                    _this.toast(`更换源播放器：${sound_mode_name}`)
-                }
-            })
+            ul.appendChild(fragment)
         }
-    }
-
-    get stateObj() {
-        return this._stateObj
-    }
-
-    set stateObj(value) {
-        this._stateObj = value
-        this.render()
     }
 }
 
