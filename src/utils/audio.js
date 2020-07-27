@@ -34,15 +34,8 @@ export default class {
         res.auth.refreshAccessToken()
       }
       let conn = res.conn
-      // 检测是否有除本身之外的播放器
-      // let mp = Object.keys(conn._ent.state).filter(key => key.indexOf('media_player') == 0 && key != 'media_player.ha_cloud_music')
-      // if (mp.length === 0) {
-      //   Vue.prototype.$mmToast("检测到当前HomeAssistant没有安装媒体播放器，本功能无法使用")
-      //   reject("检测到当前HomeAssistant没有安装媒体播放器，本功能无法使用")
-      //   return;
-      // }
       // 查找自定义播放器
-      let entity_id = Object.keys(conn._ent.state).find(key => key.indexOf('media_player.ha_cloud_music') === 0)
+      let entity_id = Object.keys(conn._ent.state).find(key => key.indexOf('media_player.yun_yin_le') === 0)
       // 获取当前播放器对象
       let ha_cloud_music = conn._ent.state[entity_id]
       // 获取播放器的状态与属性
