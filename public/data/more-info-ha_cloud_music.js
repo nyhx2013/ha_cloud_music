@@ -428,14 +428,14 @@ class MoreInfoHaCloudMusic extends HTMLElement {
                 btn1.innerHTML = '播放上一页'
                 btn1.onclick = () => {
                     let playIndex = count - 50 + 1
-                    this.toast(`播放第${playIndex}项音乐`)
+                    this.toast(`播放第${playIndex}首音乐`)
                     this.callService('ha_cloud_music.load', {id, type, index: playIndex})
                 }
                 let btn2 = document.createElement('button')
                 btn2.innerHTML = '播放下一页'
                 btn2.onclick = () => {
                     let playIndex = count + 50 + 1
-                    this.toast(`播放第${playIndex}项音乐`)
+                    this.toast(`播放第${playIndex}首音乐`)
                     this.callService('ha_cloud_music.load', {id, type, index: playIndex})
                 }
                 if (index > 0) li.appendChild(btn1)
