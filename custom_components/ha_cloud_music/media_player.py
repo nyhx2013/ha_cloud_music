@@ -1,15 +1,15 @@
 import json, os, logging, time, datetime, random, re, uuid, math, base64, asyncio, aiohttp
 from homeassistant.components.media_player import MediaPlayerEntity
 from homeassistant.components.media_player.const import (
-    MEDIA_TYPE_MUSIC,MEDIA_TYPE_URL, SUPPORT_PAUSE, SUPPORT_PLAY, SUPPORT_NEXT_TRACK, SUPPORT_PREVIOUS_TRACK, SUPPORT_TURN_ON, SUPPORT_TURN_OFF,
+    MEDIA_TYPE_MUSIC,MEDIA_TYPE_URL, SUPPORT_PAUSE, SUPPORT_PLAY, 
+    SUPPORT_NEXT_TRACK, SUPPORT_PREVIOUS_TRACK, SUPPORT_TURN_ON, SUPPORT_TURN_OFF, SUPPORT_STOP,
     SUPPORT_PLAY_MEDIA, SUPPORT_VOLUME_MUTE, SUPPORT_VOLUME_SET, SUPPORT_SELECT_SOURCE, SUPPORT_CLEAR_PLAYLIST, 
     SUPPORT_SELECT_SOUND_MODE, SUPPORT_SEEK, SUPPORT_VOLUME_STEP)
-from homeassistant.const import (
-    CONF_NAME, STATE_IDLE, STATE_PAUSED, STATE_PLAYING, STATE_OFF, STATE_UNAVAILABLE, EVENT_HOMEASSISTANT_STOP)
+from homeassistant.const import (STATE_IDLE, STATE_PAUSED, STATE_PLAYING, STATE_OFF, STATE_UNAVAILABLE)
 
 SUPPORT_FEATURES = SUPPORT_PAUSE | SUPPORT_VOLUME_SET | SUPPORT_VOLUME_MUTE | SUPPORT_SELECT_SOUND_MODE | \
-    SUPPORT_PLAY_MEDIA | SUPPORT_PLAY | SUPPORT_NEXT_TRACK | SUPPORT_PREVIOUS_TRACK | SUPPORT_SELECT_SOURCE | SUPPORT_CLEAR_PLAYLIST | \
-    SUPPORT_SEEK | SUPPORT_VOLUME_STEP
+    SUPPORT_TURN_ON | SUPPORT_TURN_OFF | SUPPORT_PLAY_MEDIA | SUPPORT_PLAY | SUPPORT_NEXT_TRACK | \
+    SUPPORT_PREVIOUS_TRACK | SUPPORT_SELECT_SOURCE | SUPPORT_CLEAR_PLAYLIST | SUPPORT_SEEK | SUPPORT_VOLUME_STEP
 
 _LOGGER = logging.getLogger(__name__)
 ################### 接口定义 ###################
@@ -323,6 +323,18 @@ class MediaPlayer(MediaPlayerEntity):
         if self._media_player == None:
             return None
         return self._media_player.media_position_updated_at
+
+    def turn_off(self):
+        print("关闭设备")
+        if self._media_player == None:
+            return None
+        self._media_player.is_on = False
+
+    def turn_on(self):
+        print("打开设备")
+        if self._media_player == None:
+            return None
+        self._media_player.is_on = True
 
     def media_seek(self, position):
         """将媒体设置到特定位置."""

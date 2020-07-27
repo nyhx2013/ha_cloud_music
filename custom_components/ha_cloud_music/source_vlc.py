@@ -14,6 +14,7 @@ class MediaPlayerVLC():
         self.media_position_updated_at = datetime.datetime.now()
         self.state = 'idle'
         self.is_tts = False
+        self.is_on = True
 
         try:
             import vlc
@@ -33,7 +34,7 @@ class MediaPlayerVLC():
     
     def end(self, event):
         # 音乐结束
-        if self._media is not None and self.is_tts == False:
+        if self._media is not None and self.is_tts == False and self.is_on == True:
             print('执行下一曲')
             self._media.media_end_next()
 
