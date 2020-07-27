@@ -227,7 +227,7 @@ class ApiMusic():
                         'list': json.dumps(list(_newlist), ensure_ascii=False)
                     }
                     await hass.services.async_call('media_player', 'play_media', {
-                                        'entity_id': 'media_player.ha_cloud_music',
+                                        'entity_id': 'media_player.yun_yin_le',
                                         'media_content_id': json.dumps(_dict, ensure_ascii=False),
                                         'media_content_type': 'music_playlist'
                                     })
@@ -253,7 +253,7 @@ class ApiMusic():
                         'list': json.dumps(list(_newlist), ensure_ascii=False)
                     }
                     await hass.services.async_call('media_player', 'play_media', {
-                                        'entity_id': 'media_player.ha_cloud_music',
+                                        'entity_id': 'media_player.yun_yin_le',
                                         'media_content_id': json.dumps(_dict, ensure_ascii=False),
                                         'media_content_type': 'music_playlist'
                                     }, blocking=True)
@@ -288,7 +288,7 @@ class ApiMusic():
                         'list': json.dumps(list(_newlist), ensure_ascii=False)
                     }
                     await hass.services.async_call('media_player', 'play_media', {
-                                        'entity_id': 'media_player.ha_cloud_music',
+                                        'entity_id': 'media_player.yun_yin_le',
                                         'media_content_id': json.dumps(_dict, ensure_ascii=False),
                                         'media_content_type': 'music_playlist'
                                     }, blocking=True)
@@ -319,7 +319,7 @@ class ApiMusic():
                     'list': json.dumps(list(_newlist), ensure_ascii=False)
                 }
                 await hass.services.async_call('media_player', 'play_media', {
-                                    'entity_id': 'media_player.ha_cloud_music',
+                                    'entity_id': 'media_player.yun_yin_le',
                                     'media_content_id': json.dumps(_dict, ensure_ascii=False),
                                     'media_content_type': 'music_playlist'
                                 }, blocking=True)
@@ -345,7 +345,7 @@ class ApiMusic():
                         'list': json.dumps(_newlist, ensure_ascii=False)
                     }
                     await hass.services.async_call('media_player', 'play_media', {
-                                        'entity_id': 'media_player.ha_cloud_music',
+                                        'entity_id': 'media_player.yun_yin_le',
                                         'media_content_id': json.dumps(_dict, ensure_ascii=False),
                                         'media_content_type': 'music_playlist'
                                     }, blocking=True)                
@@ -425,7 +425,7 @@ class ApiMusic():
                     'list': json.dumps(_newlist, ensure_ascii=False)
                 }
                 await hass.services.async_call('media_player', 'play_media', {
-                                    'entity_id': 'media_player.ha_cloud_music',
+                                    'entity_id': 'media_player.yun_yin_le',
                                     'media_content_id': json.dumps(_dict, ensure_ascii=False),
                                     'media_content_type': 'music_playlist'
                                 })

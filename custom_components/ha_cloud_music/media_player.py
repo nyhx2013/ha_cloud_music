@@ -164,7 +164,7 @@ class MediaPlayer(MediaPlayerEntity):
         self.media_url = None
         self._media_image_url = None
         self._media_title = None
-        self._media_name = None
+        self._media_name = ''
         self._media_artist = None
         self._media_album_name = None
         # 媒体播放器
@@ -201,8 +201,8 @@ class MediaPlayer(MediaPlayerEntity):
 
     @property
     def name(self):
-        """Return the name of the device."""
-        return DOMAIN
+        # 设备的名称
+        return "云音乐"
 
     @property
     def supported_features(self):
@@ -218,7 +218,6 @@ class MediaPlayer(MediaPlayerEntity):
         attr = super().state_attributes
         play_mode_list = ['列表循环','顺序播放','随机播放','单曲循环']
         attr.update({'custom_ui_more_info': 'more-info-ha_cloud_music', 
-            'friendly_name': '云音乐',
             'custom_ui_state_card': 'more-info-state-ha_cloud_music', 
             'play_mode': play_mode_list[self._play_mode]})
         return attr
@@ -401,19 +400,19 @@ class MediaPlayer(MediaPlayerEntity):
             _LOGGER.error(
                 "不受支持的媒体类型 %s",media_type)
             return
-        self.log('【当前播放音乐】【%s】:【%s】' , self._media_name, url)
+        self.log('【当前播放音乐】【%s】:【%s】'%(self._media_name, url))
 
         try:
             # 如果没有url则下一曲（如果超过3个错误，则停止）
             # 如果是云音乐播放列表 并且格式不是mp3不是m4a，则下一曲
             if url == None or (media_type == 'music_load' and url.find(".mp3") < 0 and url.find('.m4a') < 0):
-               self.log("没有找到【" + self._media_name + "】的播放链接，自动为您跳到下一首", "load_song_url")
+               self.notify("没有找到【" + self._media_name + "】的播放链接，自动为您跳到下一首", "load_song_url")
                self.error_count = self.error_count + 1
                if self.error_count < 3:
                  self.media_next_track()
                return
             else:
-                self.log("正在播放【" + self._media_name + "】", "load_song_url")
+                self.notify("正在播放【" + self._media_name + "】", "load_song_url")
         except Exception as e:
             print('这是一个正常的错误：', e)
 
@@ -565,7 +564,7 @@ class MediaPlayer(MediaPlayerEntity):
             if mode_list.count(_mode) == 0:
                 _mode = 4
             self.api_tts.tts_mode = _mode
-            self.log('设置TTS声音模式：' + str(_mode), 'config')
+            self.notify('设置TTS声音模式：' + str(_mode), 'config')
         # （禁用/启用）通知
         if 'is_notify' in _obj:
             is_notify = bool(_obj['is_notify'])
@@ -573,7 +572,7 @@ class MediaPlayer(MediaPlayerEntity):
             # 如果没有启用通知，则现在启用
             if self.is_notify == False:
                 self.is_notify = True
-            self.log(_str, 'config')
+            self.notify(_str, 'config')
             self.is_notify = is_notify
 
     # 加载播放列表
@@ -589,7 +588,7 @@ class MediaPlayer(MediaPlayerEntity):
             elif call.data['type'] == 'ximalaya':
                 _type = "ximalaya"
             else:
-                self.log("加载播放列表：type参数错误", "load_songlist")
+                self.notify("加载播放列表：type参数错误", "load_songlist")
                 return "type参数错误"
         elif 'id' in call.data:
             _id = call.data['id']
@@ -605,7 +604,7 @@ class MediaPlayer(MediaPlayerEntity):
         if 'index' in call.data:
             list_index = int(call.data['index']) - 1
         if self.loading == True:
-            self.log("正在加载歌单，请勿重复调用服务", "load_songlist")
+            self.notify("正在加载歌单，请勿重复调用服务", "load_songlist")
             return
         self.loading = True
 
@@ -620,10 +619,10 @@ class MediaPlayer(MediaPlayerEntity):
                         list_index = 0
                     self.music_index = list_index
                     await self.play_media('music_playlist', _newlist)
-                    self.log("正在播放歌单【"+obj['name']+"】", "load_songlist")
+                    self.notify("正在播放歌单【"+obj['name']+"】", "load_songlist")
                 else:
                     # 这里弹出提示
-                    self.log("没有找到id为【"+_id+"】的歌单信息", "load_songlist")
+                    self.notify("没有找到id为【"+_id+"】的歌单信息", "load_songlist")
             elif _type == "djradio":
                 self.log("【加载电台列表】，ID：%s", _id)
                 # 获取播放列表
@@ -636,9 +635,9 @@ class MediaPlayer(MediaPlayerEntity):
                 if len(_list) > 0:
                     self.music_index = list_index
                     await self.play_media('music_playlist', _list)
-                    self.log("正在播放专辑【" + _list[0]['album'] + "】", "load_songlist")
+                    self.notify("正在播放专辑【" + _list[0]['album'] + "】", "load_songlist")
                 else:
-                    self.log("没有找到id为【"+_id+"】的电台信息", "load_songlist")
+                    self.notify("没有找到id为【"+_id+"】的电台信息", "load_songlist")
             elif _type == 'ximalaya':
                 self.log("【加载喜马拉雅专辑列表】，ID：%s", _id)
                 # 播放第几条音乐
@@ -649,13 +648,13 @@ class MediaPlayer(MediaPlayerEntity):
                 if len(_list) > 0:
                     self.music_index = music_index
                     await self.play_media('music_playlist', _list)
-                    self.log("正在播放专辑【" + _list[0]['album'] + "】", "load_songlist")
+                    self.notify("正在播放专辑【" + _list[0]['album'] + "】", "load_songlist")
                 else:
-                    self.log("没有找到id为【"+_id+"】的专辑信息", "load_songlist")
+                    self.notify("没有找到id为【"+_id+"】的专辑信息", "load_songlist")
                     
         except Exception as e:
             self.log(e)
-            self.log("加载歌单的时候出现了异常", "load_songlist")
+            self.notify("加载歌单的时候出现了异常", "load_songlist")
         finally:
             # 这里重置    
             self.loading = False

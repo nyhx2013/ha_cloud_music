@@ -41,14 +41,14 @@ class ApiVoice():
 
         # 音乐控制解析
         if '下一曲' == _text:
-            await hass.services.async_call('media_player', 'media_next_track', {'entity_id': 'media_player.ha_cloud_music'})
+            await hass.services.async_call('media_player', 'media_next_track', {'entity_id': 'media_player.yun_yin_le'})
         elif '上一曲' == _text:
-            await hass.services.async_call('media_player', 'media_previous_track', {'entity_id': 'media_player.ha_cloud_music'})
+            await hass.services.async_call('media_player', 'media_previous_track', {'entity_id': 'media_player.yun_yin_le'})
         elif '播放音乐' == _text:
-            await hass.services.async_call('media_player', 'media_play', {'entity_id': 'media_player.ha_cloud_music'})
+            await hass.services.async_call('media_player', 'media_play', {'entity_id': 'media_player.yun_yin_le'})
         elif '暂停音乐' == _text:
-            await hass.services.async_call('media_player', 'media_pause', {'entity_id': 'media_player.ha_cloud_music'})
+            await hass.services.async_call('media_player', 'media_pause', {'entity_id': 'media_player.yun_yin_le'})
         elif '声音小点' == _text or '小点声音' == _text or '小一点声音' == _text or '声音小一点' == _text:
-            await hass.services.async_call('media_player', 'volume_down', {'entity_id': 'media_player.ha_cloud_music'})
+            await hass.services.async_call('media_player', 'volume_down', {'entity_id': 'media_player.yun_yin_le'})
         elif '声音大点' == _text or '大点声音' == _text or '大一点声音' == _text or '声音大一点' == _text:
-            await hass.services.async_call('media_player', 'volume_up', {'entity_id': 'media_player.ha_cloud_music'})
+            await hass.services.async_call('media_player', 'volume_up', {'entity_id': 'media_player.yun_yin_le'})
