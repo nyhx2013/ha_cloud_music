@@ -72,7 +72,7 @@ class MoreInfoHaCloudMusic extends HTMLElement {
         const ha_card = document.createElement('div');
         ha_card.className = 'more-info-ha_cloud_music'
         ha_card.innerHTML = `
-        <div class="voice-panel">      
+        <div class="voice-panel hide">      
             <div id="inputPanel">
                 <ha-icon class="input-mode" icon="mdi:microphone"></ha-icon>
                 <input type="text" placeholder="请使用手机语音输入法" autofocus id="txtInput" />
@@ -136,7 +136,7 @@ class MoreInfoHaCloudMusic extends HTMLElement {
                 </div>
             </div>
         </div>
-        <div class="music-panel hide">
+        <div class="music-panel">
             <!-- 音量控制 -->
             <div class="volume">
                 <div>
@@ -596,20 +596,20 @@ class MoreInfoStateHaCloudMusic extends HTMLElement {
         let { $ } = this
         $('.prev').onclick = () => {
             this.toast("上一曲")
-            this.callService("media_player.media_previous_track", { entity_id: "media_player.ha_cloud_music" })
+            this.callService("media_player.media_previous_track", { entity_id: this._stateObj.entity_id })
         }
         $('.next').onclick = () => {
             this.toast("下一曲")
-            this.callService("media_player.media_next_track", { entity_id: "media_player.ha_cloud_music" })
+            this.callService("media_player.media_next_track", { entity_id: this._stateObj.entity_id })
         }
         $('.action').onclick = () => {
             this.toast(this._stateObj.state == "playing" ? '暂停音乐' : '播放音乐')
-            this.callService("media_player.media_play_pause", { entity_id: "media_player.ha_cloud_music" })
+            this.callService("media_player.media_play_pause", { entity_id: this._stateObj.entity_id })
         }
         $('.controls-list').onclick = () => {
             this.toast("重新开始播放")
             let { source } = this.stateObj.attributes
-            if (source) this.callService("media_player.select_source", { entity_id: "media_player.ha_cloud_music", source })
+            if (source) this.callService("media_player.select_source", { entity_id: this._stateObj.entity_id, source })
         }
         $('.play_mode').onclick = () => {
             let icon = $('.play_mode').getAttribute('icon')
@@ -629,7 +629,7 @@ class MoreInfoStateHaCloudMusic extends HTMLElement {
             let attr = this.stateObj.attributes
             let seek_position = $('.progress ha-paper-slider').value / 100 * attr.media_duration
             this.callService("media_player.media_seek", {
-                entity_id: "media_player.ha_cloud_music",
+                entity_id: this._stateObj.entity_id,
                 seek_position
             })
             this.toast(`调整音乐进度到${seek_position}秒`)
