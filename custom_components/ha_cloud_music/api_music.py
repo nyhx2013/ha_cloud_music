@@ -45,7 +45,7 @@ class ApiMusic():
                 self.log('登录失败', res)
 
     def log(self, name, value = ''):
-        self.media.api_media.log('【ApiMusic接口】%s：%s',name,value)
+        self.media.log('【ApiMusic接口】%s：%s',name,value)
 
     async def get(self, url):
         link = self.api_url + url
