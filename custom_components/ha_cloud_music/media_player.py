@@ -177,6 +177,7 @@ class MediaPlayer(MediaPlayerEntity):
         self._media_position_updated_at = None
         self._media_position = 0
         self._media_duration = None
+        
         # 错误计数
         self.error_count = 0
         self.loading = False
@@ -228,6 +229,8 @@ class MediaPlayer(MediaPlayerEntity):
         play_mode_list = ['列表循环','顺序播放','随机播放','单曲循环']
         attr.update({'custom_ui_more_info': 'more-info-ha_cloud_music', 
             'custom_ui_state_card': 'more-info-state-ha_cloud_music', 
+            'tts_volume': self.api_tts.tts_volume,
+            'tts_mode': self.api_tts.tts_mode,
             'play_mode': play_mode_list[self._play_mode]})
         return attr
 
@@ -342,12 +345,14 @@ class MediaPlayer(MediaPlayerEntity):
             return None
         self.log('【设置播放位置】：%s', position)
         self._media_player.seek(position)
+        self.update_entity()
 
     def mute_volume(self, mute):
         """静音."""
         if self._media_player == None:
             return None
         self._media_player.mute_volume(mute)
+        self.update_entity()
 
     def set_volume_level(self, volume):
         """Set volume level, range 0..1."""
@@ -355,18 +360,21 @@ class MediaPlayer(MediaPlayerEntity):
             return None
         self.log('【设置音量】：%s', volume)
         self._media_player.set_volume_level(volume)
+        self.update_entity()
 
     def media_play(self):
         """Send play command."""
         if self._media_player == None:
             return None
         self._media_player.play()
+        self.update_entity()
 
     def media_pause(self):
         """Send pause command."""
         if self._media_player == None:
             return None
         self._media_player.pause()
+        self.update_entity()
 
     def media_stop(self):
         """Send stop command."""
@@ -477,6 +485,7 @@ class MediaPlayer(MediaPlayerEntity):
         self.log('【选择音乐】：%s', source)
         self.music_index = self._source_list.index(source)
         self.music_load()
+        self.update_entity()
         
     def select_sound_mode(self, sound_mode):
         print(sound_mode)
@@ -586,6 +595,12 @@ class MediaPlayer(MediaPlayerEntity):
                 _mode = 4
             self.api_tts.tts_mode = _mode
             self.notify('设置TTS声音模式：' + str(_mode), 'config')
+        # 设置TTS音量
+        if 'tts_volume' in _obj:
+            tts_volume = int(_obj['tts_volume'])
+            if 1 <= tts_volume <= 100:
+                self.api_tts.tts_volume = tts_volume
+                self.notify('设置TTS音量到' + str(tts_volume), 'config')
         # （禁用/启用）通知
         if 'is_notify' in _obj:
             is_notify = bool(_obj['is_notify'])
@@ -595,6 +610,8 @@ class MediaPlayer(MediaPlayerEntity):
                 self.is_notify = True
             self.notify(_str, 'config')
             self.is_notify = is_notify
+        
+        self.update_entity()
 
     # 加载播放列表
     async def load_songlist(self, call): 
@@ -696,6 +713,10 @@ class MediaPlayer(MediaPlayerEntity):
     def log(self, *args):
         _LOGGER.info(*args)
     
+    # 更新实体
+    def update_entity(self):
+        self.call_service('homeassistant', 'update_entity', {'entity_id': 'media_player.yun_yin_le'})
+
     # 通知
     def notify(self, message, type):
         self.call_service('persistent_notification', 'create', {"message": message, "title": "云音乐", "notification_id": "ha-cloud-music-" + type})

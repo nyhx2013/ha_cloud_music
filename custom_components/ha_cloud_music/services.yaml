@@ -34,6 +34,9 @@ config:
     tts_mode:
       description: TTS声音模式（1：标准男声，2：标准女声，3：情感男声，4：情感女声）
       example: 4
+    tts_volume:
+      description: TTS音量（1到100）
+      example: 50
 tts:
   description: 文字转语音
   fields:

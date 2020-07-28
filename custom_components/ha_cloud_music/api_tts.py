@@ -88,8 +88,10 @@ class ApiTTS():
         self.tts_after_message = cfg['tts_after_message']
         tts_mode = cfg['tts_mode']        
         if [1, 2, 3, 4].count(tts_mode) == 0:
-            tts_mode = 4            
+            tts_mode = 4
         self.tts_mode = tts_mode
+        # TTS音量
+        self.tts_volume = 0
         self.api_config = ApiConfig(os.path.join(os.path.dirname(__file__), 'dist/cache'))
     
     def log(self, name,value):
@@ -128,7 +130,8 @@ class ApiTTS():
             token = fetch_token()
             tex = quote_plus(text)  # 此处TEXT需要两次urlencode
             print(tex)
-            params = {'tok': token, 'tex': tex, 'per': self.tts_mode - 1, 'spd': SPD, 'pit': PIT, 'vol': VOL, 'aue': AUE, 'cuid': CUID,
+            per = [1,0,3,4][self.tts_mode - 1]
+            params = {'tok': token, 'tex': tex, 'per': per, 'spd': SPD, 'pit': PIT, 'vol': VOL, 'aue': AUE, 'cuid': CUID,
                     'lan': 'zh', 'ctp': 1}  # lan ctp 固定参数
 
             data = urlencode(params)
@@ -142,12 +145,22 @@ class ApiTTS():
 
         if self.media._media_player != None:
             self.media._media_player.is_tts = True
-            self.media._media_player.load(local_url)
+            # 保存当前音量
+            volume_level = self.media.volume_level
+            # 如果设置的TTS音量不为0，则改变音量
+            if self.tts_volume > 0:
+                print('设置TTS音量：%s'%(self.tts_volume))
+                self.media._media_player.set_volume_level(self.tts_volume / 100)
+
+            self.media._media_player.load(local_url)            
             # 计算当前文件时长，设置超时播放时间
             audio = MP3(ob_name)
             self.log('音频时长', audio.info.length)
             time.sleep(audio.info.length + 2)
             self.media._media_player.is_tts = False
+            # 恢复音量
+            print('恢复音量：%s'%(volume_level))
+            self.media._media_player.set_volume_level(volume_level)
 
     async def speak(self, call):
         try:
