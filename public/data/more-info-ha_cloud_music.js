@@ -72,11 +72,58 @@ class MoreInfoHaCloudMusic extends HTMLElement {
         const ha_card = document.createElement('div');
         ha_card.className = 'more-info-ha_cloud_music'
         ha_card.innerHTML = `
-        <div class="voice-panel hide">      
+        <div class="tabs">
+            <div data-id="music">列表</div>
+            <div data-id="setting">设置</div>
+            <div data-id="voice">语音</div>
+        </div>
+        <div class="setting-panel hide">
+        
+            <!-- 源播放器 -->
+            <div class="source">
+                <ha-paper-dropdown-menu label-float="" label="源播放器">
+                    <paper-listbox slot="dropdown-content">
+                    </paper-listbox>
+                </ha-paper-dropdown-menu>
+            </div>
+            
+            <!-- 音量控制 -->
+            <div class="volume">
+                <ha-icon class="volume-off" icon="mdi:volume-high"></ha-icon>
+                <div>
+                    <ha-paper-slider min="0" max="100" />
+                </div>
+            </div>
+
+            <!-- 音量控制 -->
+            <div class="tts-volume">
+                <ha-icon class="text-to-speech" icon="mdi:text-to-speech"></ha-icon>
+                <div>
+                    <ha-paper-slider min="0" max="100" />
+                </div>
+            </div>
+
+            <!-- 源播放器 -->
+            <div class="tts-source">
+                <ha-paper-dropdown-menu label-float="" label="声音模式">
+                    <paper-listbox slot="dropdown-content">
+                        <paper-item>标准男声</paper-item>
+                        <paper-item>标准女声</paper-item>
+                        <paper-item>情感男声</paper-item>
+                        <paper-item>情感女声</paper-item>
+                    </paper-listbox>
+                </ha-paper-dropdown-menu>
+            </div>
+                        
+            <!-- TTS输入 -->
+            <div class="tts-input">
+                <input type="text" placeholder="文字转语音" />
+            </div>
+        </div>
+        <div class="voice-panel hide">
             <div id="inputPanel">
                 <ha-icon class="input-mode" icon="mdi:microphone"></ha-icon>
                 <input type="text" placeholder="请使用手机语音输入法" autofocus id="txtInput" />
-                <ha-icon class="menu-open" icon="mdi:menu-open"></ha-icon>
             </div>
             <div class="list">
                 <div class="left content">
@@ -136,27 +183,7 @@ class MoreInfoHaCloudMusic extends HTMLElement {
                 </div>
             </div>
         </div>
-        <div class="music-panel">
-            <!-- 音量控制 -->
-            <div class="volume">
-                <div>
-                    <ha-icon class="volume-off" icon="mdi:volume-high"></ha-icon>
-                </div>
-                <div>
-                    <ha-paper-slider min="0" max="100" />
-                </div>                
-                <div>
-                    <ha-icon class="menu" icon="mdi:menu"></ha-icon>
-                </div>
-            </div>
-                        
-            <!-- 源播放器 -->
-            <div class="source">
-                <ha-paper-dropdown-menu label-float="" label="源播放器">
-                    <paper-listbox slot="dropdown-content">
-                    </paper-listbox>
-                </ha-paper-dropdown-menu>
-            </div>
+        <div class="music-panel">          
             <!-- 音乐列表 -->
             <div class="music-list-panel">
                 <ul>
@@ -168,17 +195,32 @@ class MoreInfoHaCloudMusic extends HTMLElement {
         // 创建样式
         const style = document.createElement('style')
         style.textContent = `
-         .voice-panel{}
+         .tabs{display:flex;align-items: center;text-align:center;border-bottom:1px solid #ddd;}
+         .tabs div{width:100%;cursor:pointer;padding-bottom:10px;}
+         
+         .setting-panel{padding:10px 0;}
+         .voice-panel{padding-top:15px;}
          .music-panel{}
          .hide{display:none;}
          
-         .volume{display:flex;align-items: center;text-align:center;}
-         .volume div:nth-child(1),
-         .volume div:nth-child(3){cursor:pointer;}
-         .volume div:nth-child(2){width:100%;}
-         .volume ha-paper-slider{width:100%;}
+         .volume{margin-top:10px;}
+         .volume,
+         .tts-volume{display:flex;align-items: center;text-align:center;padding:10px 0;}
+         .volume div,
+         .tts-volume div{width:100%;}
+         .volume ha-paper-slider,
+         .tts-volume ha-paper-slider{width:100%;}
          
+         .tts-source ha-paper-dropdown-menu,
          .source ha-paper-dropdown-menu{width:100%;}
+         
+         .tts-input input{width: 100%;
+            box-sizing: border-box;
+            margin-top: 20px;
+            border-radius: 10px;
+            outline: none;
+            border: 1px solid silver;
+            padding: 8px 10px;}
          
          .music-list-panel{}
          .music-list-panel ul{margin:0;padding:10px 0;list-style:none;}
@@ -196,7 +238,7 @@ class MoreInfoHaCloudMusic extends HTMLElement {
             box-sizing: border-box;
             padding: 8px 10px;
             border: 1px solid silver;
-            margin: 0 10px;
+            margin: 10px;
         }
 
         .content {
@@ -248,6 +290,8 @@ class MoreInfoHaCloudMusic extends HTMLElement {
 
         .left span {
             background-color: white;
+            border:1px solid #eee;
+            color: #555;
             border-radius: 10px 10px 10px 0px;
         }
         `
@@ -264,6 +308,28 @@ class MoreInfoHaCloudMusic extends HTMLElement {
         }
         let { $ } = this
         let _this = this
+        // 切换卡
+        $('.tabs').onclick = (event) => {
+            let id = event.path[0].dataset['id']
+            switch (id) {
+                case 'setting':
+                    $('.voice-panel').classList.add('hide')
+                    $('.music-panel').classList.add('hide')
+                    $('.setting-panel').classList.remove('hide')
+                    break;
+                case 'music':
+                    $('.setting-panel').classList.add('hide')
+                    $('.voice-panel').classList.add('hide')
+                    $('.music-panel').classList.remove('hide')
+                    break;
+                case 'voice':
+                    $('.setting-panel').classList.add('hide')
+                    $('.music-panel').classList.add('hide')
+                    $('.voice-panel').classList.remove('hide')
+                    break;
+            }
+            console.log()
+        }
         // 静音        
         $('.volume-off').onclick = function () {
             // 是否静音
@@ -286,22 +352,6 @@ class MoreInfoHaCloudMusic extends HTMLElement {
             })
             _this.toast(`调整音量到${this.value}`)
         }
-        // 显示语音控制界面
-        let inputMode = $('.input-mode')
-        inputMode.onclick = () => {
-            let isText = inputMode.icon == 'mdi:card-text'
-            let icon = isText ? 'mdi:microphone' : 'mdi:card-text'
-            inputMode.icon = icon
-            this.toast(isText ? '切换到语音模式，自动发送文本' : '切换到文本模式')
-        }
-        $('.menu').onclick = () => {
-            $('.music-panel').classList.add('hide')
-            $('.voice-panel').classList.remove('hide')
-        }
-        $('.menu-open').onclick = () => {
-            $('.voice-panel').classList.add('hide')
-            $('.music-panel').classList.remove('hide')
-        }
         // 选择源播放器
         $('.source paper-listbox').addEventListener('selected-changed', function () {
             let { entity_id, attributes } = _this._stateObj
@@ -316,6 +366,44 @@ class MoreInfoHaCloudMusic extends HTMLElement {
                 _this.toast(`更换源播放器：${sound_mode}`)
             }
         })
+        // 调整语音转文字音量
+        $('.tts-volume ha-paper-slider').onchange = function () {
+            _this.callService('ha_cloud_music.config', {
+                tts_volume: this.value
+            })
+            _this.toast(`调整TTS音量到${this.value}`)
+        }
+        // 文字转语音
+        let ttsInput = $('.tts-input input')
+        ttsInput.onkeypress = (event) => {
+            if (event.keyCode == 13) {
+                let message = ttsInput.value.trim()
+                if (message) {
+                    ttsInput.value = ''
+                    this.callService('ha_cloud_music.tts', { message })
+                }
+            }
+        }
+        // 声音模式
+        $('.tts-source paper-listbox').addEventListener('selected-changed', function () {
+            let { tts_mode } = _this._stateObj.attributes
+            let selected = this.selected + 1
+            if (tts_mode != selected) {
+                _this.callService('ha_cloud_music.config', {
+                    tts_mode: selected
+                })
+                _this.toast(`声音模式设置为${['度小宇', '度小美', '度逍遥', '度丫丫'][this.selected]}`)
+            }            
+        })
+
+        // 显示语音控制界面
+        let inputMode = $('.input-mode')
+        inputMode.onclick = () => {
+            let isText = inputMode.icon == 'mdi:card-text'
+            let icon = isText ? 'mdi:microphone' : 'mdi:card-text'
+            inputMode.icon = icon
+            this.toast(isText ? '切换到语音模式，自动发送文本' : '切换到文本模式')
+        }
         // 语音输入
         this.addMsg = (value) => {
             let div = document.createElement('div')
@@ -371,6 +459,8 @@ class MoreInfoHaCloudMusic extends HTMLElement {
         // 音量
         $('.volume .volume-off').setAttribute('icon', attr.is_volume_muted ? this.icon.volume_off : this.icon.volume_high)
         $('.volume ha-paper-slider').value = attr.volume_level * 100
+        // 设置TTS音量
+        $('.tts-volume ha-paper-slider').value = attr.tts_volume > 0 ? attr.tts_volume : attr.volume_level * 100
             // 源播放器
             ; (() => {
                 if (sound_mode_list) {
@@ -385,6 +475,8 @@ class MoreInfoHaCloudMusic extends HTMLElement {
                     // 选择当前默认项
                     let sound_mode_index = sound_mode_list.indexOf(attr.sound_mode)
                     listbox.selected = sound_mode_index
+                    // 选择当前声音模式
+                    $('.tts-source paper-listbox').selected = attr.tts_mode - 1
                 }
             })();
         // 音乐列表
@@ -429,14 +521,14 @@ class MoreInfoHaCloudMusic extends HTMLElement {
                 btn1.onclick = () => {
                     let playIndex = count - 50 + 1
                     this.toast(`播放第${playIndex}首音乐`)
-                    this.callService('ha_cloud_music.load', {id, type, index: playIndex})
+                    this.callService('ha_cloud_music.load', { id, type, index: playIndex })
                 }
                 let btn2 = document.createElement('button')
                 btn2.innerHTML = '播放下一页'
                 btn2.onclick = () => {
                     let playIndex = count + 50 + 1
                     this.toast(`播放第${playIndex}首音乐`)
-                    this.callService('ha_cloud_music.load', {id, type, index: playIndex})
+                    this.callService('ha_cloud_music.load', { id, type, index: playIndex })
                 }
                 if (index > 0) li.appendChild(btn1)
                 if (count < total - 50) li.appendChild(btn2)
@@ -656,14 +748,16 @@ class MoreInfoStateHaCloudMusic extends HTMLElement {
             $('.play_mode').setAttribute('icon', mode.icon)
         }
 
-        $('.progress div:nth-child(1)').textContent = `${this.timeForamt(Math.floor(attrs.media_position / 60))}:${this.timeForamt(attrs.media_position % 60)}`
-        $('.progress div:nth-child(3)').textContent = `${this.timeForamt(Math.floor(attrs.media_duration / 60))}:${this.timeForamt(attrs.media_duration % 60)}`
+        $('.progress div:nth-child(1)').textContent = `${this.timeForamt(attrs.media_position / 60)}:${this.timeForamt(attrs.media_position % 60)}`
+        $('.progress div:nth-child(3)').textContent = `${this.timeForamt(attrs.media_duration / 60)}:${this.timeForamt(attrs.media_duration % 60)}`
         if (attrs.media_position <= attrs.media_duration) {
             $('.progress ha-paper-slider').value = attrs.media_position / attrs.media_duration * 100
         }
     }
 
     timeForamt(num) {
+        if (isNaN(num)) return '00'
+        num = Math.floor(num)
         if (num < 10) return '0' + String(num)
         return String(num)
     }
