@@ -184,11 +184,14 @@ class MediaPlayer(MediaPlayerEntity):
         # 是否启用定时器
         self._timer_enable = True
         self._notify = True
+
+        _sound_mode_list = ['网页播放器']
         # 如果是Docker环境，则不显示VLC播放器
-        if os.path.isfile("/.dockerenv") == True:
-            self._sound_mode_list = ['MPD播放器', '网页播放器']
+        if os.path.isfile("/.dockerenv") == True and config['mpd_host'] is not None:
+            _sound_mode_list.append('MPD播放器')
         else:
-            self._sound_mode_list = ['VLC播放器', 'MPD播放器', '网页播放器']
+            _sound_mode_list.append('VLC播放器')
+        self._sound_mode_list = _sound_mode_list
         self._sound_mode = None
         # 读取播放器配置
         res =  read_config_file('sound_mode.json')
@@ -715,6 +718,7 @@ class MediaPlayer(MediaPlayerEntity):
     
     # 更新实体
     def update_entity(self):
+        time.sleep(1)
         self.call_service('homeassistant', 'update_entity', {'entity_id': 'media_player.yun_yin_le'})
 
     # 通知

@@ -432,4 +432,41 @@ class ApiMusic():
                     
 
     ###################### 播放新闻 ######################
+
+    
+    ###################### 播放广播 ######################
+
+    async def play_fm(self, name):
+        hass = self.hass
+        async with aiohttp.ClientSession() as session:
+            async with session.get('https://search.qingting.fm/v3/search?categoryid=0&k=' + name + '&page=1&pagesize=15&include=all') as res:
+                r = await res.json()
+                docs = r['data']['data']['docs']
+                if isinstance(docs, list):
+                    # 过滤直播
+                    filter_list = list(filter(lambda item: item['type'] == 'channel_live', docs))
+                    if len(filter_list) == 0:
+                        return None
+                    # print(filter_list)
+                    # 整理格式
+                    _newlist = map(lambda item: {
+                        "id": item['id'],
+                        "name": item['title'],
+                        "album": item['category_name'],
+                        "image": item['cover'],
+                        "duration": 0,
+                        "url": 'http://lhttp.qingting.fm/live/' + str(item['id']) + '/64k.mp3',
+                        "song": item['title'],
+                        "singer": '蜻蜓FM'
+                    }, filter_list)
+                    # 调用服务，执行播放
+                    _dict = {
+                        'index': 0,
+                        'list': json.dumps(list(_newlist), ensure_ascii=False)
+                    }
+                    await hass.services.async_call('media_player', 'play_media', {
+                                        'entity_id': 'media_player.yun_yin_le',
+                                        'media_content_id': json.dumps(_dict, ensure_ascii=False),
+                                        'media_content_type': 'music_playlist'
+                                    })
     

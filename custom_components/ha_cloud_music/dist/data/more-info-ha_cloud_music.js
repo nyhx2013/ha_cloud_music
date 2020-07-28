@@ -147,7 +147,7 @@ class MoreInfoHaCloudMusic extends HTMLElement {
                 </div>
                 <div class="left content">
                     <button>😁</button>
-                    <div><span>林俊杰👌歌手都来自网易云音乐</span></div>
+                    <div><span>林俊杰👌歌手来自网易云音乐</span></div>
                 </div>
                 <div class="right content">
                     <div><span>播放歌曲明天你好</span></div>
@@ -163,7 +163,7 @@ class MoreInfoHaCloudMusic extends HTMLElement {
                 </div>
                 <div class="left content">
                     <button>😁</button>
-                    <div><span>段子来了😄来自喜马拉雅哦</span></div>
+                    <div><span>段子来了😄来自喜马拉雅</span></div>
                 </div>
                 <div class="right content">
                     <div><span>播放电台宋宇的报刊选读</span></div>
@@ -171,7 +171,7 @@ class MoreInfoHaCloudMusic extends HTMLElement {
                 </div>                
                 <div class="left content">
                     <button>😁</button>
-                    <div><span>宋宇的报刊选读😜来自网易云音乐哦</span></div>
+                    <div><span>宋宇的报刊选读😜来自网易云音乐</span></div>
                 </div>
                 <div class="right content">
                     <div><span>播放歌单私人雷达</span></div>
@@ -180,6 +180,14 @@ class MoreInfoHaCloudMusic extends HTMLElement {
                 <div class="left content">
                     <button>😁</button>
                     <div><span>私人雷达😊来自网易云音乐哦</span></div>
+                </div>
+                <div class="right content">
+                    <div><span>播放广播中央人民广播电台</span></div>
+                    <button data-cmd="播放广播中央人民广播电台">😘</button>
+                </div>     
+                <div class="left content">
+                    <button>😁</button>
+                    <div><span>电台🙌来自蜻蜓FM</span></div>
                 </div>
             </div>
         </div>

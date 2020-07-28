@@ -38,6 +38,10 @@ class ApiVoice():
         if _text.find('播放专辑') == 0:
             _name = _text.split('播放专辑')[1]
             await self.api_music.play_ximalaya(_name)
+        # 播放广播
+        if _text.find('播放广播') == 0:
+            _name = _text.split('播放广播')[1]
+            await self.api_music.play_fm(_name)
 
         # 音乐控制解析
         if '下一曲' == _text:
