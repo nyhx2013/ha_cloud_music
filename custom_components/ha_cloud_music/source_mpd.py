@@ -44,8 +44,8 @@ class MediaPlayerMPD():
             # 连接MPD服务
             self._client.connect(config['mpd_host'], config.get('mpd_port', '6600'))
             if 'mpd_password' in config:
-                self._client.password(config['mpd_password'])            
-            print('MPD服务连接成功')
+                self._client.password(config['mpd_password'])
+            self.log('MPD服务连接成功')
         except Exception as ex:
             print(ex)
             return
@@ -54,6 +54,7 @@ class MediaPlayerMPD():
 
     def _disconnect(self):
         """Disconnect from MPD."""
+        self.log('MPD断开连接')
         try:
             self._client.disconnect()
         except Exception as ex:
@@ -170,6 +171,9 @@ class MediaPlayerMPD():
         self._client.stop()
         self._client.disconnect()
 
+    def log(self, msg):
+        if self._media is not None:
+            self._media.log(msg, 'source_mpd')
 '''
 mm = MediaPlayerMPD({'mpd_host': '192.168.1.113'})
 if mm.is_support:
