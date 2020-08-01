@@ -56,7 +56,7 @@ class ApiMusic():
             async with aiohttp.ClientSession(headers=HEADERS, cookies=COOKIES, cookie_jar=jar) as session:
                 async with session.get(link) as resp:
                     # 如果是登录，则将登录状态保存起来
-                    if '/login?' in url:
+                    if '/login' in url:
                         _dict = {}
                         cookies = session.cookie_jar.filter_cookies(self.api_url)
                         for key, cookie in cookies.items():
