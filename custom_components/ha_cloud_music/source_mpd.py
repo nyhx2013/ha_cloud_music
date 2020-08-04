@@ -117,18 +117,19 @@ class MediaPlayerMPD():
             self._client.clear()
             self._client.add(url)
             self._client.play()
-
-        self.state = 'playing'
+        # 不是TTS时才设置状态
+        self.is_tts == False:
+            self.state = 'playing'
         
     def play(self):
         # 播放
-        self._client.pause(0)
         self.state = 'playing'
+        self._client.pause(0)
     
     def pause(self):
         # 暂停
-        self._client.pause(1)
         self.state = 'paused'
+        self._client.pause(1)
     
     def seek(self, position):
         # 设置进度
