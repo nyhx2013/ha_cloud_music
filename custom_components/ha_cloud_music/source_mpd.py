@@ -118,7 +118,7 @@ class MediaPlayerMPD():
             self._client.add(url)
             self._client.play()
         # 不是TTS时才设置状态
-        self.is_tts == False:
+        if self.is_tts == False:
             self.state = 'playing'
         
     def play(self):
