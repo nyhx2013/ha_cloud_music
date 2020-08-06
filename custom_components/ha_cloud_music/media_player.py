@@ -549,7 +549,13 @@ class MediaPlayer(MediaPlayerEntity):
         
         # 如果有传入类型，则根据类型处理
         if 'type' in music_info:
-            if music_info['type'] == 'url':
+            if music_info['type'] == 'url' and music_info['url'] == '':
+                # 如果传入的是能直接播放的音频，但是url又为空，可能是喜马拉雅没有VIP视频的资源
+                # 这个时候就调用外部接口获取VIP的资源
+                # 需要自己部署接口
+                url = await self.api_music.get_ximalaya_vip_audio_url(music_info['id'])
+                return url
+            elif music_info['type'] == 'url':
                 # 如果传入的是能直接播放的音频
                 return music_info['url']
             elif music_info['type'] == 'djradio' or music_info['type'] == 'cloud':                
@@ -638,9 +644,6 @@ class MediaPlayer(MediaPlayerEntity):
             _id = call.data['rid']
             _type = "djradio"
         
-        # 兼容旧的格式
-        if 'list_index' in call.data:
-            list_index = int(call.data['list_index']) - 1
         # 新的参数
         if 'index' in call.data:
             list_index = int(call.data['index']) - 1
@@ -699,6 +702,8 @@ class MediaPlayer(MediaPlayerEntity):
         finally:
             # 这里重置    
             self.loading = False
+        # 更新实体
+        self.update_entity()
 
     # 单曲点歌
     async def pick_song(self, call): 

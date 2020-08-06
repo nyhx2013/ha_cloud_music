@@ -111,10 +111,10 @@ class ApiTTS():
             self.log('恢复当前播放URL', self.media_url)
             #self.media._media_player.load(self.media_url)
             #time.sleep(2)
+            self.log('恢复当前进度', self.media_position)            
             #self.media._media_player.seek(self.media_position)
             #self.media._media_player.play()
             self.media._media_player.reloadURL(self.media_url, self.media_position)
-            self.log('恢复当前进度', self.media_position)  
             self.media_url = None
 
     # 获取语音URL

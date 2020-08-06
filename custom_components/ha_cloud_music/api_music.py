@@ -20,6 +20,7 @@ class ApiMusic():
         self.uid = cfg['uid']
         self.user = cfg['user']
         self.password = cfg['password']
+        self.ximalaya_api = cfg.get('ximalaya_api', 'http://localhost:3002/id/')
 
     async def login(self):
         # 如果有用户名密码，则登录
@@ -49,6 +50,7 @@ class ApiMusic():
 
     async def get(self, url):
         link = self.api_url + url
+        print(link)
         result = None
         try:
             global COOKIES            
@@ -151,7 +153,7 @@ class ApiMusic():
             return None
 
     # 获取网易电台列表
-    async def djradio_playlist(self, id, offset, size):
+    async def djradio_playlist(self, id, offset, size):        
         obj = await self.get('/dj/program?rid='+str(id)+'&limit=50&offset='+str(offset * size))
         if obj['code'] == 200:
             _list = obj['programs']
@@ -166,7 +168,7 @@ class ApiMusic():
                 "load":{
                     'id': id,
                     'type': 'djradio',
-                    'index': offset,
+                    'index': offset + 1,
                     'total': _totalCount
                 },
                 "type": "djradio",
@@ -178,16 +180,17 @@ class ApiMusic():
 
     # 喜马拉雅播放列表
     async def ximalaya_playlist(self, id, index, size):
-        obj = await self.proxy_get('https://mobile.ximalaya.com/mobile/v1/album/track?albumId=' + str(id) + '&device=android&isAsc=true&pageId='\
-            + str(index) + '&pageSize=' + str(size) +'&statEvent=pageview%2Falbum%40203355&statModule=%E6%9C%80%E5%A4%9A%E6%94%B6%E8%97%8F%E6%A6%9C&statPage=ranklist%40%E6%9C%80%E5%A4%9A%E6%94%B6%E8%97%8F%E6%A6%9C&statPosition=8')
-
+        url = 'https://mobile.ximalaya.com/mobile/v1/album/track?albumId=' + str(id) + '&device=android&isAsc=true&pageId=' + str(index) + '&pageSize=' + str(size) +'&statEvent=pageview%2Falbum%40203355&statModule=%E6%9C%80%E5%A4%9A%E6%94%B6%E8%97%8F%E6%A6%9C&statPage=ranklist%40%E6%9C%80%E5%A4%9A%E6%94%B6%E8%97%8F%E6%A6%9C&statPosition=8'
+        print(url)
+        obj = await self.proxy_get(url)
         if obj['ret'] == 0:
             _list = obj['data']['list']
             _totalCount = obj['data']['totalCount']
             if len(_list) > 0:
                 # 获取专辑名称
-                _obj = await self.proxy_get('http://mobile.ximalaya.com/v1/track/baseInfo?device=android&trackId='+str(_list[0]['trackId']))
-                
+                url = 'http://mobile.ximalaya.com/v1/track/baseInfo?device=android&trackId='+str(_list[0]['trackId'])
+                print(url)
+                _obj = await self.proxy_get(url)                
                 # 格式化列表
                 _newlist = map(lambda item: {
                     "id": item['trackId'],
@@ -233,6 +236,12 @@ class ApiMusic():
                                     })
         return None
 
+    # 获取VIP音频链接
+    async def get_ximalaya_vip_audio_url(self, id):
+        obj = await self.proxy_get(self.ximalaya_api + str(id))
+        if obj['code'] == 0:
+            return obj['data']
+        return None
     ###################### 获取音乐列表 ######################
 
     ###################### 播放音乐列表 ######################

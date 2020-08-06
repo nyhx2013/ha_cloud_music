@@ -459,7 +459,9 @@ class MoreInfoHaCloudMusic extends HTMLElement {
          .music-list-panel ul li span{width:100%;display:block;}
          .music-list-panel ul li.active{color: var(--primary-color);}
          .music-list-panel ul li:last-child{display:flex;}
-         .music-list-panel ul li:last-child button{flex:1;padding:10px 0;border:none;color:white;background-color:var(--primary-color);}
+         .music-list-panel ul li:last-child button{flex:1;padding:10px 0;margin:2px;border:none;
+            cursor: pointer;
+            color: white;background-color:var(--primary-color);}
         
          #inputPanel{display:flex;align-items: center;text-align:center;}
          #txtInput {
@@ -624,7 +626,7 @@ class MoreInfoHaCloudMusic extends HTMLElement {
                     tts_mode: selected
                 })
                 _this.toast(`声音模式设置为${['度小宇', '度小美', '度逍遥', '度丫丫'][this.selected]}`)
-            }            
+            }
         })
 
         // 显示语音控制界面
@@ -745,23 +747,24 @@ class MoreInfoHaCloudMusic extends HTMLElement {
                 let { id, type, index, total } = obj
                 // 当前所有页数的数据
                 let count = index * 50
-
+                console.log(obj, count)
                 let li = document.createElement('li')
                 let btn1 = document.createElement('button')
                 btn1.innerHTML = '播放上一页'
                 btn1.onclick = () => {
-                    let playIndex = count - 50 + 1
+                    let playIndex = count - 100 + 1
                     this.toast(`播放第${playIndex}首音乐`)
                     this.callService('ha_cloud_music.load', { id, type, index: playIndex })
                 }
                 let btn2 = document.createElement('button')
                 btn2.innerHTML = '播放下一页'
                 btn2.onclick = () => {
-                    let playIndex = count + 50 + 1
+                    let playIndex = count + 1
                     this.toast(`播放第${playIndex}首音乐`)
                     this.callService('ha_cloud_music.load', { id, type, index: playIndex })
                 }
-                if (index > 0) li.appendChild(btn1)
+                // 如果大于第一页，则显示上一页
+                if (index > 1) li.appendChild(btn1)
                 if (count < total - 50) li.appendChild(btn2)
                 fragment.appendChild(li)
             }
