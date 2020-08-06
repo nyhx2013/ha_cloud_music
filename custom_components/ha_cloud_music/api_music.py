@@ -50,7 +50,9 @@ class ApiMusic():
 
     async def get(self, url):
         link = self.api_url + url
-        print(link)
+        # 不是登录请求，则显示出来（这里保护登录信息）
+        if '/login' not in url:
+            print(link)
         result = None
         try:
             global COOKIES            
@@ -74,6 +76,7 @@ class ApiMusic():
         return result
     
     async def proxy_get(self, url):
+        print(url)
         result = None
         try:
             async with aiohttp.ClientSession(headers=HEADERS) as session:
