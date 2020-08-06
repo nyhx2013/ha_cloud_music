@@ -561,7 +561,6 @@ class MoreInfoHaCloudMusic extends HTMLElement {
                     $('.voice-panel').classList.remove('hide')
                     break;
             }
-            console.log()
         }
         // 静音        
         $('.volume-off').onclick = function () {
@@ -747,7 +746,7 @@ class MoreInfoHaCloudMusic extends HTMLElement {
                 let { id, type, index, total } = obj
                 // 当前所有页数的数据
                 let count = index * 50
-                console.log(obj, count)
+                // console.log(obj, count)
                 let li = document.createElement('li')
                 let btn1 = document.createElement('button')
                 btn1.innerHTML = '播放上一页'
