@@ -48,23 +48,37 @@ class MediaPlayerVLC():
         self.media_position_updated_at = datetime.datetime.now()
         self._muted = (self._client.audio_get_mute() == 1)
 
+    def reloadURL(self, url, position):
+        # 重新加载URL
+        self.load(url)
+        # 先把声音设置为0，然后调整位置之后再还原
+        volume_level = self.volume_level
+        # print(volume_level)
+        self.set_volume_level(0)
+        time.sleep(2)
+        self.seek(position)
+        time.sleep(1)
+        self.set_volume_level(volume_level)
+
     def load(self, url):
         # 加载URL
         self._client.set_media(self._instance.media_new(url))
         self._client.play()
-        self.state = 'playing'
+        # 不是TTS时才设置状态
+        if self.is_tts == False:
+            self.state = 'playing'
 
     def play(self):
+        self.state = 'playing'
         # 播放
         if self._client.is_playing() == False:
             self._client.play()
-        self.state = 'playing'
     
     def pause(self):
+        self.state = 'paused'
         # 暂停
         if self._client.is_playing() == True:
             self._client.pause()
-        self.state = 'paused'
     
     def seek(self, position):
         # 设置进度
