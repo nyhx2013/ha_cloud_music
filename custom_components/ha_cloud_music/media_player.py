@@ -187,10 +187,14 @@ class MediaPlayer(MediaPlayerEntity):
 
         _sound_mode_list = ['网页播放器']
         # 如果是Docker环境，则不显示VLC播放器
-        if os.path.isfile("/.dockerenv") == True and config['mpd_host'] is not None:
+        if os.path.isfile("/.dockerenv") == True:
             _sound_mode_list.append('MPD播放器')
         else:
             _sound_mode_list.append('VLC播放器')
+            # 如果有配置mpd，则显示MPD播放器
+            if config['mpd_host'] is not None:
+                _sound_mode_list.append('MPD播放器')
+
         self._sound_mode_list = _sound_mode_list
         self._sound_mode = None
         # 读取播放器配置
