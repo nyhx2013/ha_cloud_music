@@ -119,9 +119,10 @@ class MediaPlayerMPD():
 
     def load(self, url):
         # 加载URL
+        url = url.replace("https://", "http://")
         try:
             self._client.clear()
-            self._client.add(url.replace("https://", "http://"))
+            self._client.add(url)
             self._client.play()
         except Exception as ex:
             print('加载URL出现异常：', ex)

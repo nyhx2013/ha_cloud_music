@@ -62,6 +62,7 @@ class MediaPlayerVLC():
 
     def load(self, url):
         # 加载URL
+        url = url.replace("https://", "http://")
         self._client.set_media(self._instance.media_new(url))
         self._client.play()
         # 不是TTS时才设置状态
