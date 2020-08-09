@@ -11,15 +11,15 @@ class ApiVoice():
         _text = event.data.get('text', '').strip(' 。，、＇：∶；?‘’“”〝〞ˆˇ﹕︰﹔﹖﹑·¨….¸;！´？！～—ˉ｜‖＂〃｀@﹫¡¿﹏﹋﹌︴々﹟#﹩$﹠&﹪%*﹡﹢﹦﹤‐￣¯―﹨ˆ˜﹍﹎+=<­­＿_-\ˇ~﹉﹊（）〈〉‹›﹛﹜『』〖〗［］《》〔〕{}「」【】︵︷︿︹︽_﹁﹃︻︶︸﹀︺︾ˉ﹂﹄︼')
         #_log_info('监听语音小助手的文本：' + _text)
         # 我想听xxx的歌
-        pattern = re.compile(r"我想听(.+)的歌")
+        pattern = re.compile(r"^我想听(.+)的歌$")
         singer = pattern.findall(_text)
         if len(singer) == 1:
             # 正在播放xxx的歌
             singerName = singer[0]
             # 开始搜索当前歌手的热门歌曲
             await self.api_music.play_singer_hotsong(singerName)
-        # 播放第几首
-        pattern = re.compile(r"播放第(.+)首")
+        # 播放第几集
+        pattern = re.compile(r"^播放第(.+)[集|首]$")
         NO = pattern.findall(_text)
         if len(NO) == 1:
             index = NO[0]
@@ -58,7 +58,18 @@ class ApiVoice():
         # 播放专辑
         if _text.find('播放专辑') == 0:
             _name = _text.split('播放专辑')[1]
-            await self.api_music.play_ximalaya(_name)
+            # 这里配置是否还有指定集数
+            pattern = re.compile(r"(.+)第(.+)[集|首]$")
+            NO = pattern.findall(_name)
+            if len(NO) == 1:
+                _name = NO[0][0]
+                index = NO[0][1]
+                if is_number(index) == False:
+                    index = t(index)
+                print(_name, index)
+                await self.api_music.play_ximalaya(_name, int(index))
+            else:
+                await self.api_music.play_ximalaya(_name)
         # 播放广播
         if _text.find('播放广播') == 0:
             _name = _text.split('播放广播')[1]

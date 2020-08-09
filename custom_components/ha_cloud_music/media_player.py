@@ -203,14 +203,17 @@ class MediaPlayer(MediaPlayerEntity):
             self.select_sound_mode(res['state'])
 
         # 读取音乐列表
-        music_playlist = read_config_file('music_playlist.json')
-        if music_playlist != None:
-            self.music_playlist = music_playlist
-            source_list = []
-            for index in range(len(self.music_playlist)):
-                music_info = self.music_playlist[index]
-                source_list.append(str(index + 1) + '.' + music_info['song'] + ' - ' + music_info['singer'])
-            self._source_list = source_list
+        try:
+            music_playlist = read_config_file('music_playlist.json')
+            if music_playlist != None:
+                self.music_playlist = music_playlist
+                source_list = []
+                for index in range(len(self.music_playlist)):
+                    music_info = self.music_playlist[index]
+                    source_list.append(str(index + 1) + '.' + music_info['song'] + ' - ' + music_info['singer'])
+                self._source_list = source_list
+        except Exception as ex:
+            pass
 
     def update(self):
         # 数据更新
@@ -416,10 +419,14 @@ class MediaPlayer(MediaPlayerEntity):
             # 如果是list类型，则进行操作
             if isinstance(media_id, list):
                 self.music_playlist = media_id
+            elif isinstance(media_id, dict):
+                _dict = media_id
+                self.music_playlist = _dict['list']
+                self.music_index = _dict['index']
             else:
-                dict = json.loads(media_id)
-                self.music_playlist = json.loads(dict['list'])
-                self.music_index = dict['index']
+                _dict = json.loads(media_id)
+                self.music_playlist = json.loads(_dict['list'])
+                self.music_index = _dict['index']
             
             # 保存音乐播放列表到本地
             write_config_file('music_playlist.json', self.music_playlist)

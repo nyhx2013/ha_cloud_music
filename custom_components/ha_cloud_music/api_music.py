@@ -1,4 +1,4 @@
-import aiohttp, asyncio, json, re, os, uuid
+import aiohttp, asyncio, json, re, os, uuid, math
 import http.cookiejar as HC
 from .api_config import get_config_path, read_config_file, write_config_file
 
@@ -214,7 +214,7 @@ class ApiMusic():
         return []
 
     # 播放专辑
-    async def play_ximalaya(self, name):
+    async def play_ximalaya(self, name, number=50):
         hass = self.hass
         url = 'https://m.ximalaya.com/m-revision/page/search?kw=' + name + '&core=all&page=1&rows=5'
         obj = await self.proxy_get(url)
@@ -225,18 +225,17 @@ class ApiMusic():
                 albumInfo = result['albums'][0]['albumInfo']
                 id = albumInfo['id']
                 print('获取ID：' + str(id))
-                _newlist = await self.ximalaya_playlist(id, 1, 50)
+                _newlist = await self.ximalaya_playlist(id, math.ceil(number / 50), 50)
                 if len(_newlist) > 0:
                     # 调用服务，执行播放
+                    index = number % 50 - 1
+                    if index < 0:
+                        index = 0
                     _dict = {
-                        'index': 0,
-                        'list': json.dumps(list(_newlist), ensure_ascii=False)
+                        'index': index,
+                        'list': _newlist
                     }
-                    await hass.services.async_call('media_player', 'play_media', {
-                                        'entity_id': 'media_player.yun_yin_le',
-                                        'media_content_id': json.dumps(_dict, ensure_ascii=False),
-                                        'media_content_type': 'music_playlist'
-                                    })
+                    await self.media.play_media('music_playlist', _dict)
         return None
 
     # 获取VIP音频链接
