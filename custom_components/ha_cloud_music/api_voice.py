@@ -38,6 +38,21 @@ class ApiVoice():
                             'type': load['type'], 
                             'index': index
                         })
+        # 重新加载专辑
+        if _text == '重新加载专辑':
+            music_playlist = self.api_music.media.music_playlist
+            if music_playlist is not None and len(music_playlist) > 0:
+                music_info = music_playlist[0]
+                # 获取加载数据
+                if 'load' in music_info:
+                    load = music_info['load']
+                    _newlist = await self.api_music.ximalaya_playlist(load['id'], load['index'])
+                    if len(_newlist) > 0:
+                        await self.api_music.media.play_media('music_playlist', {
+                            'index': self.api_music.media.music_index,
+                            'list': _newlist
+                        })
+                        print('重新加载专辑成功')
 
         # 播放电台 xxxx
         if _text.find('播放电台') == 0:
@@ -77,13 +92,13 @@ class ApiVoice():
 
         # 音乐控制解析
         if '下一曲' == _text:
-            await hass.services.async_call('media_player', 'media_next_track', {'entity_id': 'media_player.yun_yin_le'})
+            self.api_music.media.media_next_track()
         elif '上一曲' == _text:
-            await hass.services.async_call('media_player', 'media_previous_track', {'entity_id': 'media_player.yun_yin_le'})
+            self.api_music.media.media_previous_track()
         elif '播放音乐' == _text:
-            await hass.services.async_call('media_player', 'media_play', {'entity_id': 'media_player.yun_yin_le'})
+            self.api_music.media.media_play()
         elif '暂停音乐' == _text:
-            await hass.services.async_call('media_player', 'media_pause', {'entity_id': 'media_player.yun_yin_le'})
+            self.api_music.media.media_pause()
         elif '声音小点' == _text or '小点声音' == _text or '小一点声音' == _text or '声音小一点' == _text:
             await hass.services.async_call('media_player', 'volume_down', {'entity_id': 'media_player.yun_yin_le'})
         elif '声音大点' == _text or '大点声音' == _text or '大一点声音' == _text or '声音大一点' == _text:

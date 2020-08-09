@@ -182,7 +182,7 @@ class ApiMusic():
             return []
 
     # 喜马拉雅播放列表
-    async def ximalaya_playlist(self, id, index, size):
+    async def ximalaya_playlist(self, id, index, size=50):
         url = 'https://mobile.ximalaya.com/mobile/v1/album/track?albumId=' + str(id) + '&device=android&isAsc=true&pageId=' + str(index) + '&pageSize=' + str(size) +'&statEvent=pageview%2Falbum%40203355&statModule=%E6%9C%80%E5%A4%9A%E6%94%B6%E8%97%8F%E6%A6%9C&statPage=ranklist%40%E6%9C%80%E5%A4%9A%E6%94%B6%E8%97%8F%E6%A6%9C&statPosition=8'
         obj = await self.proxy_get(url)
         if obj['ret'] == 0:
@@ -191,7 +191,7 @@ class ApiMusic():
             if len(_list) > 0:
                 # 获取专辑名称
                 url = 'http://mobile.ximalaya.com/v1/track/baseInfo?device=android&trackId='+str(_list[0]['trackId'])
-                _obj = await self.proxy_get(url)                
+                _obj = await self.proxy_get(url)
                 # 格式化列表
                 _newlist = map(lambda item: {
                     "id": item['trackId'],
