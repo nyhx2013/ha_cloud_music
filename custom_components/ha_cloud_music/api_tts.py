@@ -122,7 +122,7 @@ class ApiTTS():
          # 生成文件名
         f_name = self.api_config.md5(text + str(self.tts_mode)) + ".mp3"
         # 创建目录名称
-        _dir =  self.api_config.get_path('tts')
+        _dir =  self.hass.config.path("tts")
         self.api_config.mkdir(_dir)
         # 生成缓存文件名称
         ob_name = _dir + '/' + f_name
@@ -142,7 +142,7 @@ class ApiTTS():
             # 如果没有下载，则延时1秒
             time.sleep(1)
         # 生成播放地址
-        local_url = self.hass.config.api.deprecated_base_url + ROOT_PATH + '/cache/tts/' + f_name        
+        local_url = self.hass.config.api.deprecated_base_url + '/tts-local/' + f_name        
         self.log('本地URL', local_url)
 
         if self.media._media_player != None:

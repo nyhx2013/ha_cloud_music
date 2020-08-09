@@ -88,6 +88,7 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
     if os.path.isdir(local):
         # 注册静态目录
         hass.http.register_static_path(ROOT_PATH, local, False)
+        hass.http.register_static_path('/tts-local', hass.config.path("tts"), False)
         # 注册网关接口
         hass.http.register_view(ApiView)
         # 注册菜单栏
@@ -117,7 +118,7 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
 
     # 注册服务【tts】
     hass.services.register(DOMAIN, 'tts', mp.api_tts.speak)
-    hass.services.register(DOMAIN, 'tts_clear', mp.api_tts.clear)
+    # hass.services.register(DOMAIN, 'tts_clear', mp.api_tts.clear)
 
     # 监听语音小助手的文本
     if is_voice == True:
