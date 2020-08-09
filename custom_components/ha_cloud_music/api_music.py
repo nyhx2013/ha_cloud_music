@@ -214,7 +214,7 @@ class ApiMusic():
         return []
 
     # 播放专辑
-    async def play_ximalaya(self, name, number=50):
+    async def play_ximalaya(self, name, number=1):
         hass = self.hass
         url = 'https://m.ximalaya.com/m-revision/page/search?kw=' + name + '&core=all&page=1&rows=5'
         obj = await self.proxy_get(url)
@@ -230,7 +230,7 @@ class ApiMusic():
                     # 调用服务，执行播放
                     index = number % 50 - 1
                     if index < 0:
-                        index = 0
+                        index = 49
                     _dict = {
                         'index': index,
                         'list': _newlist
