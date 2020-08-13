@@ -14,7 +14,7 @@ SUPPORT_FEATURES = SUPPORT_PAUSE | SUPPORT_VOLUME_SET | SUPPORT_VOLUME_MUTE | SU
 _LOGGER = logging.getLogger(__name__)
 ################### 接口定义 ###################
 # 常量
-from .api_config import DOMAIN, VERSION, ROOT_PATH, TrueOrFalse, write_config_file, read_config_file
+from .api_config import DOMAIN, VERSION, ROOT_PATH, ApiConfig, TrueOrFalse
 # 网易云接口
 from .api_music import ApiMusic
 # 网关视图
@@ -62,7 +62,8 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
 
     ################### 定义实体类 ###################
     # 播放器实例
-    mp = MediaPlayer(hass, config)
+    api_config = ApiConfig(hass.config.path(".shaonianzhentan/ha_cloud_music"))
+    mp = MediaPlayer(hass, config, api_config)
     mp.api_tts = ApiTTS(mp,{
         'tts_before_message': tts_before_message,
         'tts_after_message': tts_after_message,
@@ -73,7 +74,7 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
         'uid': uid, 
         'user': user, 
         'password': password
-    })
+    })    
     # 开始登录    
     hass.async_create_task(mp.api_music.login())
     
@@ -156,8 +157,9 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
 ###################媒体播放器##########################
 class MediaPlayer(MediaPlayerEntity):
 
-    def __init__(self, hass, config):
+    def __init__(self, hass, config, api_config):
         self._config = config
+        self.api_config = api_config
 
         self._hass = hass
         self.music_playlist = None
@@ -199,19 +201,23 @@ class MediaPlayer(MediaPlayerEntity):
         self._sound_mode_list = _sound_mode_list
         self._sound_mode = None
         # 读取播放器配置
-        res =  read_config_file('sound_mode.json')
+        res = self.api_config.get_sound_mode()
         if res is not None:
             self.select_sound_mode(res['state'])
 
         # 读取音乐列表
         try:
-            music_playlist = read_config_file('music_playlist.json')
-            if music_playlist != None:
-                self.music_playlist = music_playlist
+            res = self.api_config.get_playlist()
+            if res is not None:
+                self.music_playlist = res['playlist']
+                self.music_index = int(res['index'])
                 source_list = []
                 for index in range(len(self.music_playlist)):
                     music_info = self.music_playlist[index]
-                    source_list.append(str(index + 1) + '.' + music_info['song'] + ' - ' + music_info['singer'])
+                    _source = str(index + 1) + '.' + music_info['song'] + ' - ' + music_info['singer']
+                    if self.music_index == index:
+                        self._source = _source
+                    source_list.append(_source)
                 self._source_list = source_list
         except Exception as ex:
             pass
@@ -402,6 +408,8 @@ class MediaPlayer(MediaPlayerEntity):
             self.music_index = int(media_id)
             music_info = self.music_playlist[self.music_index]            
             url = await self.get_url(music_info)
+            # 保存音乐播放列表到本地
+            self.api_config.set_playlist(self.music_playlist, self.music_index)
         elif media_type == MEDIA_TYPE_URL:
             self.log('加载播放列表链接：%s', media_id)
             play_list = await self.api_music.proxy_get(media_id)
@@ -430,8 +438,8 @@ class MediaPlayer(MediaPlayerEntity):
                 self.music_index = _dict['index']
             
             # 保存音乐播放列表到本地
-            write_config_file('music_playlist.json', self.music_playlist)
-            
+            self.api_config.set_playlist(self.music_playlist, self.music_index)
+                        
             music_info = self.music_playlist[self.music_index]
             url = await self.get_url(music_info)
             #数据源
@@ -539,8 +547,7 @@ class MediaPlayer(MediaPlayerEntity):
 
         if self._media_player is not None:
             self._sound_mode = sound_mode
-            write_config_file('sound_mode.json', {'state': self._sound_mode})
-
+            self.api_config.set_sound_mode(sound_mode)
             self.log('【选择源播放器】：%s', sound_mode)
 
     ###################  自定义方法  ##########################

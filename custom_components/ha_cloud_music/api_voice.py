@@ -84,7 +84,8 @@ class ApiVoice():
                 print(_name, index)
                 await self.api_music.play_ximalaya(_name, int(index))
             else:
-                await self.api_music.play_ximalaya(_name)
+                # 优先读取本地数据
+                await self.api_music.play_ximalaya(_name, -1)
         # 播放广播
         if _text.find('播放广播') == 0:
             _name = _text.split('播放广播')[1]

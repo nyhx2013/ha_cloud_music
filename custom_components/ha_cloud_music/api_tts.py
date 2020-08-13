@@ -1,4 +1,4 @@
-import os, hashlib, asyncio, threading, time, aiohttp, json, urllib
+import os, hashlib, asyncio, threading, time, aiohttp, json, urllib, mutagen
 from mutagen.mp3 import MP3
 from homeassistant.helpers import template
 from homeassistant.const import (STATE_IDLE, STATE_PAUSED, STATE_PLAYING, STATE_OFF, STATE_UNAVAILABLE)
@@ -138,6 +138,10 @@ class ApiTTS():
 
             data = urlencode(params)
             urllib.request.urlretrieve(TTS_URL + '?' + data, ob_name)
+            # 修改MP3文件属性
+            meta = mutagen.File(ob_name, easy=True)
+            meta['title'] = text
+            meta.save()
         else:
             # 如果没有下载，则延时1秒
             time.sleep(1)
@@ -162,7 +166,7 @@ class ApiTTS():
             self.media._media_player.is_tts = False
             # 恢复音量
             print('恢复音量：%s'%(volume_level))
-            self.media._media_player.set_volume_level(volume_level)
+            self.media._media_player.set_volume_level(volume_level)            
 
     async def speak(self, call):
         try:

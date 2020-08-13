@@ -1,7 +1,7 @@
 import json, os, shutil, hashlib, base64
 
 DOMAIN = 'ha_cloud_music'
-VERSION = '4.0.9'
+VERSION = '4.0.10'
 DOMAIN_API = '/' + DOMAIN + '-api'
 ROOT_PATH = '/' + DOMAIN + '-local/' + VERSION
 
@@ -10,30 +10,39 @@ def TrueOrFalse(val, trueStr, falseStr):
         return trueStr
     return falseStr
 
-# 获取配置路径
-def get_config_path(name):
-    return os.path.join(os.path.dirname(__file__), 'dist/cache/' + name).replace('\\','/')
-
-# 读取配置
-def read_config_file(name):
-    fn = get_config_path(name)
-    if os.path.isfile(fn):
-        with open(fn,'r',encoding='utf-8') as f:
-            content = json.load(f)
-            return content
-    return None
-
-# 写入配置
-def write_config_file(name, obj):
-    with open(get_config_path(name),'w',encoding='utf-8') as f:
-        json.dump(obj,f,ensure_ascii=False)
-
 class ApiConfig():
 
     def __init__(self, _dir):        
         if os.path.exists(_dir) == False:           
             os.mkdir(_dir) 
         self.dir = _dir
+
+    ''' 【设置/获取】播放列表 '''
+    def get_playlist(self):
+        return self.read('playlist.json')
+
+    def set_playlist(self, playlist, index):
+        content = {
+            'index': index,
+            'playlist': playlist
+        }
+        self.write('playlist.json', content)
+        # 缓存当前播放列表
+        music_info = playlist[index]
+        if 'load' in music_info:
+            obj = music_info['load']
+            self.write(obj['type'] + '-' + str(obj['id']) + '.json', content)
+
+    # 缓存文件
+    def get_cache_playlist(self, type, id):
+        return self.read(type + '-' + str(id) + '.json')
+
+    ''' 【设置/获取】播放器 '''
+    def get_sound_mode(self):
+        return self.read('sound_mode.json')
+
+    def set_sound_mode(self, sound_mode):
+        self.write('sound_mode.json', {'state': sound_mode})
 
     # 加密
     def md5(self, data):

@@ -1,6 +1,5 @@
 import aiohttp, asyncio, json, re, os, uuid, math
 import http.cookiejar as HC
-from .api_config import get_config_path, read_config_file, write_config_file
 
 # 全局请求头
 HEADERS = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.87 Safari/537.36'}
@@ -36,11 +35,6 @@ class ApiMusic():
             # 登录成功
             if res['code'] == 200:
                 self.uid = str(res['account']['id'])
-                write_config_file('account.json', {
-                    'uid': self.uid,
-                    'user': self.user,
-                    'account': res['account']
-                })
                 self.log('登录成功')
             else:
                 self.log('登录失败', res)
@@ -225,17 +219,28 @@ class ApiMusic():
                 albumInfo = result['albums'][0]['albumInfo']
                 id = albumInfo['id']
                 print('获取ID：' + str(id))
+                # 优先获取本地数据
+                if number == -1:
+                    # 读取本地数据
+                    res = self.media.api_config.get_cache_playlist('ximalaya', id)
+                    if res is not None:
+                        await self.media.play_media('music_playlist', {
+                                'index': res['index'],
+                                'list': res['playlist']
+                            })
+                        return None
+                    number = 1
+                
                 _newlist = await self.ximalaya_playlist(id, math.ceil(number / 50), 50)
+                index = number % 50 - 1
+                if index < 0:
+                    index = 49
+                # 调用服务，执行播放
                 if len(_newlist) > 0:
-                    # 调用服务，执行播放
-                    index = number % 50 - 1
-                    if index < 0:
-                        index = 49
-                    _dict = {
+                    await self.media.play_media('music_playlist', {
                         'index': index,
                         'list': _newlist
-                    }
-                    await self.media.play_media('music_playlist', _dict)
+                    })
         return None
 
     # 获取VIP音频链接
