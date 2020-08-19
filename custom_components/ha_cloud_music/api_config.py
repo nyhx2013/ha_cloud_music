@@ -1,7 +1,7 @@
 import json, os, shutil, hashlib, base64
 
 DOMAIN = 'ha_cloud_music'
-VERSION = '4.0.10'
+VERSION = '4.0.11'
 DOMAIN_API = '/' + DOMAIN + '-api'
 ROOT_PATH = '/' + DOMAIN + '-local/' + VERSION
 

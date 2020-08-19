@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta name="viewport"
+    content="width=device-width, height=device-height, initial-scale=1.0, viewport-fit=cover, user-scalable=no, minimal-ui" />
+  <meta charset="utf-8" />
+  <title>云音乐网页播放器</title>
+  <style>
+  </style>
+</head>
+
+<body>
+  <audio id="audio" controls></audio>
+  <script type="module">
+    import {
+      getAuth,
+      getUser,
+      callService,
+      createConnection,
+      subscribeEntities,
+      ERR_HASS_HOST_REQUIRED
+    } from "./dist/index.js";
+
+
+
+    async function updateAudio(is_end = 0) {
+      await callService(connection, 'ha_cloud_music', 'web_media_player_updated', {
+        volume_level: audio.volume,
+        is_volume_muted: audio.muted,
+        media_duration: audio.duration,
+        media_position_updated_at: new Date().toISOString(),
+        media_position: audio.currentTime,
+        is_end
+      })
+      await callService(connection, 'homeassistant', 'update_entity', {
+        entity_id: "media_player.yun_yin_le"
+      })
+    }
+    let audio = document.querySelector('#audio');
+    let step = 0
+    // 音乐进度
+    audio.ontimeupdate = () => {
+      if (step > 5) {
+        updateAudio()
+        step = 0
+      }
+      step++
+    }
+    // 音乐结束
+    audio.onended = () => {
+      // 下一曲
+      updateAudio(1)
+    }
+
+    (async () => {
+      let auth;
+      try {
+        auth = await getAuth({
+          loadTokens() {
+            try {
+              return JSON.parse(localStorage['voice-token'])
+            } catch{ }
+          },
+          saveTokens: (data) => {
+            localStorage['voice-token'] = JSON.stringify(data)
+          }
+        });
+      } catch (err) {
+        if (err === ERR_HASS_HOST_REQUIRED) {
+          const hassUrl = `${location.protocol}//${location.host}`
+          if (!hassUrl) return;
+          auth = await getAuth({ hassUrl });
+        } else {
+          alert(`Unknown error: ${err}`);
+          return;
+        }
+      }
+      const connection = await createConnection({ auth });
+      // subscribeEntities(connection, entities =>
+      //   renderEntities(connection, entities)
+      // );
+      // Clear url if we have been able to establish a connection
+      if (location.search.includes("auth_callback=1")) {
+        history.replaceState(null, "", location.pathname);
+      }
+
+      // To play from the console
+      window.auth = auth;
+      window.connection = connection;
+      getUser(connection).then(user => {
+        console.log("Logged in as", user);
+        window.user = user;
+        // 这里写代码咯
+        connection.subscribeEvents((res) => {
+          console.log(res)
+          let evobj = res.data
+          let value = evobj.data
+          switch (evobj.type) {
+            case 'load':
+              audio.src = value
+              audio.play()
+              break;
+            case 'play':
+              audio.play()
+              break;
+            case 'pause':
+              audio.pause()
+              break;
+            case 'volume_set':
+              audio.volume = value
+              updateAudio()
+              break;
+            case 'media_position':
+              audio.currentTime = value
+              updateAudio()
+              break;
+            case 'is_volume_muted':
+              audio.muted = value
+              updateAudio()
+              break;
+          }
+        }, 'web_media_player_changed')
+      });
+    })();
+
+  </script>
+</body>
+
+</html>

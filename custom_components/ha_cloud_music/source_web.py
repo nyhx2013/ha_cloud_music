@@ -13,6 +13,8 @@ class MediaPlayerWEB():
         self.media_duration = 0
         self.media_position_updated_at = datetime.datetime.now()
         self.state = 'idle'
+        self.is_tts = False
+        self.is_on = True
         # 不同字段
         self.volume_level = 1
         self.is_support = True
@@ -22,23 +24,38 @@ class MediaPlayerWEB():
             self.hass = media._hass
 
     def update(self, event):
-        '''
-        state = event.data.get('state')
-        if state == "playing":
-            self.state = "playing"
-        elif state == "paused":
-            self.state = "paused"
-        '''
-        self.volume_level = event.data.get('volume_level')
-        self._muted = event.data.get('is_volume_muted')
-        self.media_duration = int(event.data.get('media_duration'))
-        self.media_position = int(event.data.get('media_position'))
-        self.media_position_updated_at = datetime.datetime.now()
+        data = event.data
+        # 音乐结束
+        if self._media is not None and self.is_tts == False and self.is_on == True and data.get('is_end') == 1:
+            print('执行下一曲')
+            self._media.media_end_next()
+        else:
+            self.volume_level = data.get('volume_level')
+            self._muted = data.get('is_volume_muted')
+            self.media_duration = data.get('media_duration')
+            self.media_position = data.get('media_position')
+            self.media_position_updated_at = datetime.datetime.now()
+
+    def reloadURL(self, url, position):
+        # 重新加载URL
+        print('重新加载URL：', url)
+        self.load(url)
+        # 先把声音设置为0，然后调整位置之后再还原
+        volume_level = self.volume_level
+        print('当前声音：', volume_level)
+        self.set_volume_level(0)
+        time.sleep(2)
+        self.seek(position)
+        time.sleep(1)
+        print('还原声音：', volume_level)
+        self.set_volume_level(volume_level)
 
     def load(self, url):
         # 加载URL
         self.hass.bus.fire("web_media_player_changed", {"type": "load", "data": url})
-        self.state = "playing"
+        # 不是TTS时才设置状态
+        if self.is_tts == False:
+            self.state = 'playing'
 
     def play(self):
         # 播放
