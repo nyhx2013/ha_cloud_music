@@ -1,9 +1,7 @@
 import os, hashlib, asyncio, threading, time, aiohttp, json, urllib, mutagen
 from mutagen.mp3 import MP3
 from homeassistant.helpers import template
-from homeassistant.const import (STATE_IDLE, STATE_PAUSED, STATE_PLAYING, STATE_OFF, STATE_UNAVAILABLE)
-
-from .api_config import ROOT_PATH, ApiConfig
+from homeassistant.const import (STATE_PLAYING)
 
 # 百度TTS
 IS_PY3 = True
@@ -75,8 +73,6 @@ def fetch_token():
 
 """  TOKEN end """
 
-
-
 class ApiTTS():
     def __init__(self, media, cfg):
         self.hass = media._hass
@@ -89,10 +85,15 @@ class ApiTTS():
         tts_mode = cfg['tts_mode']        
         if [1, 2, 3, 4].count(tts_mode) == 0:
             tts_mode = 4
+        tts_volume = 0
+        tts_config = media.api_config.get_tts()
+        if tts_config is not None:
+            tts_mode = tts_config.get('mode', 4)
+            tts_volume = tts_config.get('volume', 0)
+        # TTS声音模式
         self.tts_mode = tts_mode
         # TTS音量
-        self.tts_volume = 0
-        self.api_config = ApiConfig(os.path.join(os.path.dirname(__file__), 'dist/cache'))
+        self.tts_volume = tts_volume
     
     def log(self, name,value):
         self.media.log('【文本转语音】%s：%s',name,value)
@@ -120,10 +121,10 @@ class ApiTTS():
     # 获取语音URL
     def play_url(self, text):
          # 生成文件名
-        f_name = 'tts-' + self.api_config.md5(text + str(self.tts_mode)) + ".mp3"
+        f_name = 'tts-' + self.media.api_config.md5(text + str(self.tts_mode)) + ".mp3"
         # 创建目录名称
         _dir =  self.hass.config.path("tts")
-        self.api_config.mkdir(_dir)
+        self.media.api_config.mkdir(_dir)
         # 生成缓存文件名称
         ob_name = _dir + '/' + f_name
         self.log('本地文件路径', ob_name)
@@ -180,13 +181,5 @@ class ApiTTS():
 
             self.thread = threading.Thread(target=self.async_tts, args=(text,))
             self.thread.start()            
-        except Exception as ex:
-            self.log('出现异常', ex)
-
-    # 清除缓存
-    async def clear(self, call):
-        try:
-            _path = self.api_config.get_path('tts')
-            self.api_config.delete(_path)  
         except Exception as ex:
             self.log('出现异常', ex)

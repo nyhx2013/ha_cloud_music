@@ -1,7 +1,7 @@
 import json, os, shutil, hashlib, base64
 
 DOMAIN = 'ha_cloud_music'
-VERSION = '4.0.11'
+VERSION = '4.1'
 DOMAIN_API = '/' + DOMAIN + '-api'
 ROOT_PATH = '/' + DOMAIN + '-local/' + VERSION
 
@@ -16,6 +16,16 @@ class ApiConfig():
         if os.path.exists(_dir) == False:           
             os.mkdir(_dir) 
         self.dir = _dir
+
+    def get_tts(self):
+        return self.read('tts.json')
+
+    def set_tts(self, mode, volume):
+        content = {
+            'mode': mode,
+            'volume': volume
+        }
+        self.write('tts.json', content)
 
     ''' 【设置/获取】播放列表 '''
     def get_playlist(self):

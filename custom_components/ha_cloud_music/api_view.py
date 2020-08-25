@@ -11,15 +11,24 @@ class ApiView(HomeAssistantView):
     async def post(self, request):
         response = await request.json()
         hass = request.app["hass"]
+        mp = hass.data[DOMAIN]
         if 'type' in response:
             _type = response['type']
+            _name = response.get('name', '')
             if _type == 'web':
-                mp = hass.data[DOMAIN]
                 _result = await mp.api_music.get(response['url'])
                 return self.json(_result)
             elif _type == 'proxy':
-                mp = hass.data[DOMAIN]
                 _result = await mp.api_music.proxy_get(response['url'])
+                return self.json(_result)
+            elif _type == 'search-ximalaya':
+                _result = await mp.api_music.search_ximalaya(_name)
+                return self.json(_result)
+            elif _type == 'search-djradio':
+                _result = await mp.api_music.search_djradio(_name)
+                return self.json(_result)
+            elif _type == 'search-playlist':
+                _result = await mp.api_music.search_playlist(_name)
                 return self.json(_result)
                 
         return self.json(response)

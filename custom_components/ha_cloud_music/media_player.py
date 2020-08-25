@@ -623,12 +623,16 @@ class MediaPlayer(MediaPlayerEntity):
                 _mode = 4
             self.api_tts.tts_mode = _mode
             self.notify('设置TTS声音模式：' + str(_mode), 'config')
+            # 保存TTS配置
+            self.api_config.set_tts(self.api_tts.tts_mode, self.api_tts.tts_volume)
         # 设置TTS音量
         if 'tts_volume' in _obj:
             tts_volume = int(_obj['tts_volume'])
             if 1 <= tts_volume <= 100:
                 self.api_tts.tts_volume = tts_volume
                 self.notify('设置TTS音量到' + str(tts_volume), 'config')
+                # 保存TTS配置
+                self.api_config.set_tts(self.api_tts.tts_mode, self.api_tts.tts_volume)
         # （禁用/启用）通知
         if 'is_notify' in _obj:
             is_notify = bool(_obj['is_notify'])

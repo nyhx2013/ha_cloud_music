@@ -122,6 +122,51 @@ class ApiMusic():
 
     ###################### 获取音乐播放URL ######################
 
+    ###################### 搜索音乐列表 ######################
+
+    async def search_ximalaya(self, name):
+        _newlist = []
+        url = 'https://m.ximalaya.com/m-revision/page/search?kw=' + name + '&core=all&page=1&rows=20'
+        obj = await self.proxy_get(url)
+        if obj['ret'] == 0:
+            artists = obj['data']['albumViews']['albums']
+            _newlist = list(map(lambda item: {
+                "id": item['albumInfo']['id'],
+                "name": item['albumInfo']['title'],
+                "cover": item['albumInfo']['cover_path'],
+                "intro": item['albumInfo']['intro'],
+                "creator": item['albumInfo']['nickname']
+            }, artists))
+        return _newlist
+    
+    async def search_djradio(self, name):
+        _newlist = []
+        obj = await self.get('/search?keywords='+ name +'&type=1009')
+        if obj['code'] == 200:
+            artists = obj['result']['djRadios']
+            _newlist = list(map(lambda item: {
+                "id": item['id'],
+                "name": item['name'],
+                "cover": item['picUrl'],
+                "intro": item['dj']['signature'],
+                "creator": item['dj']['nickname']
+            }, artists))
+        return _newlist
+    
+    async def search_playlist(self, name):
+        _newlist = []
+        obj = await self.get('/search?keywords='+ name +'&type=1000')
+        if obj['code'] == 200:
+            artists = obj['result']['playlists']
+            _newlist = list(map(lambda item: {
+                "id": item['id'],
+                "name": item['name'],
+                "cover": item['coverImgUrl'],
+                "intro": item['description'],
+                "creator": item['creator']['nickname']
+            }, artists))
+        return _newlist
+
     ###################### 获取音乐列表 ######################
 
     # 获取网易歌单列表
