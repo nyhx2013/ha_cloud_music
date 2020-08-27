@@ -171,10 +171,12 @@ class ApiTTS():
 
     async def speak(self, call):
         try:
-            text = call.data['message']
-            # 解析模板
-            tpl = template.Template(text, self.hass)
-            text = self.tts_before_message + tpl.async_render(None) + self.tts_after_message
+            text = call.data.get('text', '')
+            if text == '':
+                # 解析模板
+                tpl = template.Template(call.data['message'], self.hass)
+                text = self.tts_before_message + tpl.async_render(None) + self.tts_after_message
+
             self.log('解析后的内容', text)
             if self.thread != None:
                 self.thread.join()
