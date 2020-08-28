@@ -25,13 +25,16 @@
 
 
     async function updateAudio(is_end = 0) {
-      await callService(connection, 'ha_cloud_music', 'web_media_player_updated', {
-        volume_level: audio.volume,
-        is_volume_muted: audio.muted,
-        media_duration: audio.duration,
-        media_position_updated_at: new Date().toISOString(),
-        media_position: audio.currentTime,
-        is_end
+      connection.sendMessage({
+        type: 'ha_cloud_music_event',
+        data: {
+          volume_level: audio.volume,
+          is_volume_muted: audio.muted,
+          media_duration: audio.duration,
+          media_position_updated_at: new Date().toISOString(),
+          media_position: audio.currentTime,
+          is_end
+        }
       })
       await callService(connection, 'homeassistant', 'update_entity', {
         entity_id: "media_player.yun_yin_le"
@@ -120,7 +123,7 @@
               updateAudio()
               break;
           }
-        }, 'web_media_player_changed')
+        }, 'ha_cloud_music_event')
       });
     })();
 

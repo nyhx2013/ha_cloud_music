@@ -14,7 +14,7 @@ SUPPORT_FEATURES = SUPPORT_PAUSE | SUPPORT_VOLUME_SET | SUPPORT_VOLUME_MUTE | SU
 _LOGGER = logging.getLogger(__name__)
 ################### 接口定义 ###################
 # 常量
-from .api_config import DOMAIN, VERSION, ROOT_PATH, ApiConfig, TrueOrFalse
+from .api_config import DOMAIN, VERSION, ROOT_PATH, ApiConfig, TrueOrFalse, WEB_PATH
 # 网易云接口
 from .api_music import ApiMusic
 # 网关视图
@@ -90,6 +90,7 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
         # 注册静态目录
         hass.http.register_static_path(ROOT_PATH, local, False)
         hass.http.register_static_path('/tts-local', hass.config.path("tts"), False)
+        hass.http.register_static_path(WEB_PATH, hass.config.path("custom_components/ha_cloud_music/local"), False)
         # 注册网关接口
         hass.http.register_view(ApiView)
         # 注册菜单栏
