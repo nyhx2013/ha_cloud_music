@@ -15,7 +15,7 @@ class ApiConfig():
 
     def __init__(self, _dir):        
         if os.path.exists(_dir) == False:           
-            os.mkdir(_dir) 
+            self.mkdir(_dir)
         self.dir = _dir
 
     def get_tts(self):
