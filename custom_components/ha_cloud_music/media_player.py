@@ -173,7 +173,9 @@ class MediaPlayer(MediaPlayerEntity):
         self._media_album_name = None
         # 媒体播放器
         self._media_player = None
-        self._volume = None
+        # 音量
+        self._volume_level = 1
+        
         self._source_list = None
         self._source = None
         # 播放模式（0：列表循环，1：顺序播放，2：随机播放，3：单曲循环）
@@ -212,6 +214,7 @@ class MediaPlayer(MediaPlayerEntity):
             if res is not None:
                 self.music_playlist = res['playlist']
                 self.music_index = int(res['index'])
+                self._volume_level = float(res.get('volume_level', 1))
                 source_list = []
                 for index in range(len(self.music_playlist)):
                     music_info = self.music_playlist[index]
@@ -316,9 +319,7 @@ class MediaPlayer(MediaPlayerEntity):
 
     @property
     def volume_level(self):
-        if self._media_player == None:
-            return None
-        return self._media_player.volume_level
+        return self._volume_level
 
     @property
     def is_volume_muted(self):
@@ -331,7 +332,6 @@ class MediaPlayer(MediaPlayerEntity):
         if self._media_player == None:
             return None
         return self._media_player.media_duration
-
 
     @property
     def media_position(self):
@@ -377,6 +377,7 @@ class MediaPlayer(MediaPlayerEntity):
         if self._media_player == None:
             return None
         self.log('【设置音量】：%s', volume)
+        self._volume_level = volume
         self._media_player.set_volume_level(volume)
         self.update_entity()
 
@@ -410,7 +411,7 @@ class MediaPlayer(MediaPlayerEntity):
             music_info = self.music_playlist[self.music_index]            
             url = await self.get_url(music_info)
             # 保存音乐播放列表到本地
-            self.api_config.set_playlist(self.music_playlist, self.music_index)
+            self.api_config.set_playlist(self)
         elif media_type == MEDIA_TYPE_URL:
             self.log('加载播放列表链接：%s', media_id)
             play_list = await self.api_music.proxy_get(media_id)
@@ -439,7 +440,7 @@ class MediaPlayer(MediaPlayerEntity):
                 self.music_index = _dict['index']
             
             # 保存音乐播放列表到本地
-            self.api_config.set_playlist(self.music_playlist, self.music_index)
+            self.api_config.set_playlist(self)
                         
             music_info = self.music_playlist[self.music_index]
             url = await self.get_url(music_info)

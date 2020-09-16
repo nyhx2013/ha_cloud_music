@@ -32,8 +32,12 @@ class ApiConfig():
     def get_playlist(self):
         return self.read('playlist.json')
 
-    def set_playlist(self, playlist, index):
+    def set_playlist(self, media):
+        volume_level = media.volume_level
+        playlist = media.music_playlist
+        index = media.music_index
         content = {
+            'volume_level': volume_level,
             'index': index,
             'playlist': playlist
         }

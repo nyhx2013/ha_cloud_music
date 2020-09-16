@@ -58,14 +58,11 @@ class MediaPlayerWEB():
         # 重新加载URL
         self.load(url)
         # 先把声音设置为0，然后调整位置之后再还原
-        volume_level = self.volume_level
-        if volume_level > 0:
-            self.set_volume_level(0)
-        time.sleep(2)
+        self.set_volume_level(0)
+        time.sleep(1)
         self.seek(position)
-        if volume_level > 0:
-            time.sleep(1)
-            self.set_volume_level(volume_level)
+        time.sleep(1)
+        self.set_volume_level(self._media.volume_level)
 
     def load(self, url):
         # 加载URL
