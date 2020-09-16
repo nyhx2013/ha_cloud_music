@@ -27,7 +27,7 @@ media_player:
     show_mode: fullscreen
     uid: 47445304
     user: 网易云账号(邮箱或手机号)
-    passwowrd: 网易云密码
+    password: 网易云密码
     tts_before_message: '主人：'
     tts_after_message: '。我是爱你的小喵'
     tts_mode: 4
