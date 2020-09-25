@@ -3,7 +3,7 @@
   "name": "ha_cloud_music",
   "documentation": "https://github.com/shaonianzhentan/ha_cloud_music",
   "requirements": [
-    "mutagen==1.44.0",
+    "mutagen==1.45.1",
     "python-mpd2==1.0.0",
     "python-vlc==1.1.2"
   ],

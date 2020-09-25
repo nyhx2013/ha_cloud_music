@@ -111,7 +111,7 @@ class MoreInfoStateHaCloudMusic extends HTMLElement {
         <div class="progress">
           <div>00:00</div>
           <div>
-             <ha-paper-slider min="0" max="100" value="50" />
+             <input class="ha-paper-slider" type="range" min="0" max="100" value="50" style="width:200px" />
           </div>                 
           <div>00:00</div>
         </div>
@@ -174,9 +174,9 @@ class MoreInfoStateHaCloudMusic extends HTMLElement {
 
         }
 
-        $('.progress ha-paper-slider').onchange = () => {
+        $('.progress .ha-paper-slider').onchange = () => {
             let attr = this.stateObj.attributes
-            let seek_position = $('.progress ha-paper-slider').value / 100 * attr.media_duration
+            let seek_position = $('.progress .ha-paper-slider').value / 100 * attr.media_duration
             this.callService("media_player.media_seek", {
                 entity_id: this._stateObj.entity_id,
                 seek_position
@@ -209,7 +209,7 @@ class MoreInfoStateHaCloudMusic extends HTMLElement {
         $('.progress div:nth-child(1)').textContent = `${this.timeForamt(attrs.media_position / 60)}:${this.timeForamt(attrs.media_position % 60)}`
         $('.progress div:nth-child(3)').textContent = `${this.timeForamt(attrs.media_duration / 60)}:${this.timeForamt(attrs.media_duration % 60)}`
         if (attrs.media_position <= attrs.media_duration) {
-            $('.progress ha-paper-slider').value = attrs.media_position / attrs.media_duration * 100
+            $('.progress .ha-paper-slider').value = attrs.media_position / attrs.media_duration * 100
         }
     }
 
@@ -331,17 +331,17 @@ class MoreInfoHaCloudMusic extends HTMLElement {
         
             <!-- 源播放器 -->
             <div class="source">
-                <ha-paper-dropdown-menu label-float="" label="源播放器">
-                    <paper-listbox slot="dropdown-content">
-                    </paper-listbox>
-                </ha-paper-dropdown-menu>
+                <fieldset>
+                    <legend>源播放器</legend>
+                    <select></select>
+                </fieldset>
             </div>
             
             <!-- 音量控制 -->
             <div class="volume">
                 <ha-icon class="volume-off" icon="mdi:volume-high"></ha-icon>
                 <div>
-                    <ha-paper-slider min="0" max="100" />
+                    <input class="ha-paper-slider" type="range" min="0" max="100" />
                 </div>
             </div>
 
@@ -349,20 +349,20 @@ class MoreInfoHaCloudMusic extends HTMLElement {
             <div class="tts-volume">
                 <ha-icon class="text-to-speech" icon="mdi:text-to-speech"></ha-icon>
                 <div>
-                    <ha-paper-slider min="0" max="100" />
+                    <input class="ha-paper-slider" type="range" min="0" max="100" />
                 </div>
             </div>
 
-            <!-- 源播放器 -->
             <div class="tts-source">
-                <ha-paper-dropdown-menu label-float="" label="声音模式">
-                    <paper-listbox slot="dropdown-content">
-                        <paper-item>标准男声</paper-item>
-                        <paper-item>标准女声</paper-item>
-                        <paper-item>情感男声</paper-item>
-                        <paper-item>情感女声</paper-item>
-                    </paper-listbox>
-                </ha-paper-dropdown-menu>
+                <fieldset>
+                    <legend>声音模式</legend>
+                    <select>
+                        <option>标准男声</option>
+                        <option>标准女声</option>
+                        <option>情感男声</option>
+                        <option>情感女声</option>
+                    </select>
+                </fieldset>
             </div>
                         
             <!-- TTS输入 -->
@@ -474,11 +474,11 @@ class MoreInfoHaCloudMusic extends HTMLElement {
          .tts-volume{display:flex;align-items: center;text-align:center;padding:10px 0;}
          .volume div,
          .tts-volume div{width:100%;}
-         .volume ha-paper-slider,
-         .tts-volume ha-paper-slider{width:100%;}
+         .volume .ha-paper-slider,
+         .tts-volume .ha-paper-slider{width:100%;}
          
-         .tts-source ha-paper-dropdown-menu,
-         .source ha-paper-dropdown-menu{width:100%;}
+         .tts-source select,
+         .source select{width:100%; border:none;}
          
          .tts-input input{width: 100%;
             box-sizing: border-box;
@@ -620,7 +620,7 @@ class MoreInfoHaCloudMusic extends HTMLElement {
             this.setAttribute('icon', is_volume_muted ? _this.icon.volume_off : _this.icon.volume_high)
         }
         // 调整音量
-        $('.volume ha-paper-slider').onchange = function () {
+        $('.volume .ha-paper-slider').onchange = function () {
             let volume_level = this.value / 100
             _this.callService('media_player.volume_set', {
                 entity_id: _this.stateObj.entity_id,
@@ -629,10 +629,10 @@ class MoreInfoHaCloudMusic extends HTMLElement {
             _this.toast(`调整音量到${this.value}`)
         }
         // 选择源播放器
-        $('.source paper-listbox').addEventListener('selected-changed', function () {
+        $('.source select').addEventListener('change', function () {
             let { entity_id, attributes } = _this._stateObj
             let sound_mode_list = attributes.sound_mode_list
-            let sound_mode = sound_mode_list[this.selected]
+            let sound_mode = sound_mode_list[this.selectedIndex]
             // 选择源播放器
             if (attributes.sound_mode != sound_mode) {
                 _this.callService('media_player.select_sound_mode', {
@@ -643,7 +643,7 @@ class MoreInfoHaCloudMusic extends HTMLElement {
             }
         })
         // 调整语音转文字音量
-        $('.tts-volume ha-paper-slider').onchange = function () {
+        $('.tts-volume .ha-paper-slider').onchange = function () {
             _this.callService('ha_cloud_music.config', {
                 tts_volume: this.value
             })
@@ -660,18 +660,19 @@ class MoreInfoHaCloudMusic extends HTMLElement {
                 }
             }
         }
-        // 声音模式
-        $('.tts-source paper-listbox').addEventListener('selected-changed', function () {
+        // 声音模式        
+        $('.tts-source select').addEventListener('change', function () {
+            const { selectedIndex } = this
             let { tts_mode } = _this._stateObj.attributes
-            let selected = this.selected + 1
+            let selected = selectedIndex + 1
             if (tts_mode != selected) {
                 _this.callService('ha_cloud_music.config', {
                     tts_mode: selected
                 })
-                _this.toast(`声音模式设置为${['度小宇', '度小美', '度逍遥', '度丫丫'][this.selected]}`)
+                _this.toast(`声音模式设置为${['度小宇', '度小美', '度逍遥', '度丫丫'][selectedIndex]}`)
             }
         })
-
+        
         // 显示语音控制界面
         let inputMode = $('.input-mode')
         inputMode.onclick = () => {
@@ -788,25 +789,25 @@ class MoreInfoHaCloudMusic extends HTMLElement {
         let source_list = attr.source_list
         // 音量
         $('.volume .volume-off').setAttribute('icon', attr.is_volume_muted ? this.icon.volume_off : this.icon.volume_high)
-        $('.volume ha-paper-slider').value = attr.volume_level * 100
+        $('.volume .ha-paper-slider').value = attr.volume_level * 100
         // 设置TTS音量
-        $('.tts-volume ha-paper-slider').value = attr.tts_volume > 0 ? attr.tts_volume : attr.volume_level * 100
+        $('.tts-volume .ha-paper-slider').value = attr.tts_volume > 0 ? attr.tts_volume : attr.volume_level * 100
             // 源播放器
             ; (() => {
                 if (sound_mode_list) {
                     // 判断当前是否需要更新DOM
-                    let items = $('.source').querySelectorAll('paper-item')
+                    let items = $('.source').querySelectorAll('option')
                     if (items && items.length == sound_mode_list.length) return;
                     // 生成节点
-                    let listbox = $('.source paper-listbox')
+                    let listbox = $('.source select')
                     listbox.innerHTML = sound_mode_list.map((ele) => {
-                        return `<paper-item>${ele}</paper-item>`
+                        return `<option>${ele}</option>`
                     }).join('')
                     // 选择当前默认项
                     let sound_mode_index = sound_mode_list.indexOf(attr.sound_mode)
-                    listbox.selected = sound_mode_index
+                    listbox.selectedIndex = sound_mode_index
                     // 选择当前声音模式
-                    $('.tts-source paper-listbox').selected = attr.tts_mode - 1
+                    $('.tts-source select').selectedIndex = attr.tts_mode - 1
                 }
             })();
         // 音乐列表

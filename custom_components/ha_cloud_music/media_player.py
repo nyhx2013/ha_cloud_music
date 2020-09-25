@@ -105,7 +105,7 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
             require_admin=True
         )
         # 添加状态卡片
-        hass.components.frontend.add_extra_js_url(hass, ROOT_PATH + '/data/more-info-ha_cloud_music.js')
+        hass.components.frontend.add_extra_js_url(hass, WEB_PATH + '/data/card.js')
     ################### 注册静态目录与接口网关 ###################
 
     ################### 注册服务 ################### 
