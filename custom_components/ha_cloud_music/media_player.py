@@ -316,6 +316,7 @@ class MediaPlayer(MediaPlayerEntity):
             return STATE_PLAYING
         elif self._media_player.state == 'paused':
             return STATE_PAUSED
+        return STATE_IDLE
 
     @property
     def volume_level(self):
