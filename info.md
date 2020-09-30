@@ -1,7 +1,4 @@
 
-# 4.0系列正在测试中（不支持自定义播放器，请勿直接升级使用）
-
-
 [完整配置文档](https://github.com/shaonianzhentan/ha_cloud_music/tree/master/docs "完整配置文档")
 
 ## 更新说明
