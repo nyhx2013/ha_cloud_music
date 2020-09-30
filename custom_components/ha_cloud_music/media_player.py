@@ -198,7 +198,7 @@ class MediaPlayer(MediaPlayerEntity):
         else:
             _sound_mode_list.append('VLC播放器')
             # 如果有配置mpd，则显示MPD播放器
-            if config['mpd_host'] is not None:
+            if 'mpd_host' in config:
                 _sound_mode_list.append('MPD播放器')
 
         self._sound_mode_list = _sound_mode_list
