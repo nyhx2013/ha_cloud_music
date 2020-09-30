@@ -28,7 +28,6 @@ class MediaPlayerOther():
             entity = hass.states.get(self.entity_id)
             attr = entity.attributes
             if 'media_position' in attr:
-                self.state = entity.state
                 media_position = attr['media_position']
                 # 如果进度是字符串，并且包含冒号
                 if isinstance(media_position, str) and ':' in media_position:
@@ -45,8 +44,9 @@ class MediaPlayerOther():
                         if self._media is not None and self.state == 'playing' and self.is_tts == False and self.is_on == True:
                             self.state = 'idle'
                             self._media.media_end_next()
-                    # 最后20秒时，实时更新
-                    if media_duration - media_position < 20:
+                    # 最后15秒时，实时更新
+                    if media_duration - media_position < 15:
+                        print("当前进度：%s，总时长：%s"%(media_position, media_duration))
                         hass.async_create_task(hass.services.async_call('homeassistant', 'update_entity', {'entity_id': self.entity_id}))
 
                 self.media_position = media_position
