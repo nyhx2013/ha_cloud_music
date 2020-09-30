@@ -16,6 +16,7 @@ class MediaPlayerOther():
         self.is_tts = False
         self.is_on = True
         # 定时更新
+        self.count = 0
         self.volume_level = 1
         self.timer = threading.Timer(1, self.update)
         self.timer.start()
@@ -41,14 +42,21 @@ class MediaPlayerOther():
                 if media_duration > 0:
                     if media_duration - media_position <= 3:
                         print('执行下一曲方法')
-                        if self._media is not None and self.state == 'playing' and self.is_tts == False and self.is_on == True:
-                            self.state = 'idle'
+                        if self._media is not None and self.state == 'playing' and self.is_tts == False and self.is_on == True and self.count > 0:
+                            self.count = -5
+                            self.state = 'idle'                            
                             self._media.media_end_next()
-                    # 最后15秒时，实时更新
-                    if media_duration - media_position < 15:
+                    # 最后10秒时，实时更新
+                    elif media_duration - media_position < 10:
                         print("当前进度：%s，总时长：%s"%(media_position, media_duration))
                         hass.async_create_task(hass.services.async_call('homeassistant', 'update_entity', {'entity_id': self.entity_id}))
-
+                
+                # 防止通信太慢，导致进度跟不上自动下下一曲
+                self.count = self.count + 1
+                if self.count > 100:
+                    self.count = 0
+                
+                # 正常获取值
                 self.media_position = media_position
                 self.media_duration = media_duration
                 self.volume_level = attr['volume_level']
