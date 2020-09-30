@@ -1,68 +1,125 @@
-# 其他播放器
+import time, datetime
+import threading
 
 class MediaPlayerOther():
 
     # 初始化
-    def __init__(self, config, media=None):
-        self.config = config
-        self._muted = False
+    def __init__(self, entity_id, media=None):
+        # 播放器相同字段
+        self.entity_id = entity_id
         self._media = media
-        self.volume_level = 0
-        self.is_support = True
-        def handle_event(event):
-            state = event.data.get('state')
-            if state == "playing":
-                self.state = "playing"
-            elif state == "paused":
-                self.state = "paused"
-            
-            self.volume_level = event.data.get('volume_level')
-            self._muted = event.data.get('is_volume_muted')
-            self.media_duration = event.data.get('media_duration')
-            self.media_position = event.data.get('media_position')
-            self.media_position_updated_at = datetime.datetime.now()
+        self._muted = False
+        self.media_position = 0
+        self.media_duration = 0
+        self.media_position_updated_at = datetime.datetime.now()
+        self.state = 'idle'
+        self.is_tts = False
+        self.is_on = True
+        # 定时更新
+        self.volume_level = 1
+        self.timer = threading.Timer(1, self.update)
+        self.timer.start()
 
-        # 监听web播放器的更新
-        if 'hass' in media:
-            self.hass = media.hass
-            media.hass.services.register("ha_cloud_music", 'web_media_player_updated', handle_event)
+    def update(self):
+        # 更新
+        try:
+            hass = self._media._hass
+            # 读取当前实体信息
+            entity = hass.states.get(self.entity_id)
+            attr = entity.attributes
+            if 'media_position' in attr:
+                self.state = entity.state
+                media_position = attr['media_position']
+                # 如果进度是字符串，并且包含冒号
+                if isinstance(media_position, str) and ':' in media_position:
+                    arr = media_position.split(':')
+                    media_position = int(arr[0])
+                    media_duration = int(arr[1])
+                else:
+                    media_duration = attr['media_duration']
+                # print("当前进度：%s，总时长：%s"%(media_position, media_duration))
+                # 判断是否下一曲
+                if media_duration > 0:
+                    if media_duration - media_position <= 3:
+                        print('执行下一曲方法')
+                        if self._media is not None and self.state == 'playing' and self.is_tts == False and self.is_on == True:
+                            self.state = 'idle'
+                            self._media.media_end_next()
+                    # 最后10秒时，实时更新
+                    if media_duration - media_position < 10:
+                        hass.async_create_task(hass.services.async_call('homeassistant', 'update_entity', {'entity_id': self.entity_id}))
 
-    def load(self, url):
+                self.media_position = media_position
+                self.media_duration = media_duration
+                self.volume_level = attr['volume_level']
+                self.media_position_updated_at = datetime.datetime.now()
+        except Exception as e:
+            print('出现异常', e)
+        # 递归调用自己
+        self.timer = threading.Timer(2, self.update)
+        self.timer.start()  
+
+    def reloadURL(self, url, position):        
+        # 重新加载URL
+        self.load(url)
+        # 先把声音设置为0，然后调整位置之后再还原
+        self.set_volume_level(0)
+        time.sleep(1)
+        self.seek(position)
+        time.sleep(1)
+        self.set_volume_level(self._media.volume_level)
+
+    def load(self, url):        
         # 加载URL
-        self.hass.bus.fire("web_media_player_changed", {"type": "load", "data": url})
+        url = url.replace("https://", "http://")
+        self.call_service('play_media', {
+            'media_content_id': url,
+            'media_content_type': 'music'
+        })
+        # 不是TTS时才设置状态
+        if self.is_tts == False:
+            self.state = 'playing'
 
     def play(self):
         # 播放
-        self.hass.bus.fire("web_media_player_changed", {"type": "play"})
+        self.state = 'playing'
+        self.call_service('media_play', {})
     
     def pause(self):
         # 暂停
-        self.hass.bus.fire("web_media_player_changed", {"type": "pause"})
+        self.state = 'paused'
+        self.call_service('media_pause', {})
     
     def seek(self, position):
         # 设置进度
-        self.hass.bus.fire("web_media_player_changed", {"type": "media_position", "data": position})
+        self.call_service('media_seek', {'seek_position': position})
 
     def mute_volume(self, mute):
         # 静音
-        self.hass.bus.fire("web_media_player_changed", {"type": "is_volume_muted", "data": mute})
+        self.call_service('volume_mute', {'is_volume_muted': mute})
 
     def set_volume_level(self, volume):
         # 设置音量
-        self.hass.bus.fire("web_media_player_changed", {"type": "volume_set", "data": volume})
+        self.call_service('volume_set', {'volume_level': volume})
 
     def volume_up(self):
         # 增加音量
-        current_volume = self.volume_level
-        if current_volume <= 100:
-            self.set_volume_level(current_volume + 5)
+        self.call_service('volume_up', {})
 
     def volume_down(self):
         # 减少音量
-        current_volume = self.volume_level
-        if current_volume <= 100:
-            self.set_volume_level(current_volume - 5)
+        self.call_service('volume_down', {})
 
     def stop(self):
         # 停止
-        self.hass.bus.fire("web_media_player_changed", {"type": "pause"})
+        self.pause()
+        self.timer.cancel()
+
+    def log(self, msg):
+        if self._media is not None:
+            self._media.log(msg, 'source_other')
+
+    def call_service(self, service, data):
+        hass = self._media._hass
+        data.update({'entity_id': self.entity_id})
+        hass.async_create_task(hass.services.async_call('media_player', service, data))

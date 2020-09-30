@@ -186,7 +186,7 @@ class MoreInfoStateHaCloudMusic extends HTMLElement {
     }
 
     // 更新界面数据
-    updated(hass) {
+    updated() {
         let { $, _stateObj } = this
         // console.log(_stateObj)
         let action = $('.action')
@@ -631,8 +631,8 @@ class MoreInfoHaCloudMusic extends HTMLElement {
         // 选择源播放器
         $('.source select').addEventListener('change', function () {
             let { entity_id, attributes } = _this._stateObj
-            let sound_mode_list = attributes.sound_mode_list
-            let sound_mode = sound_mode_list[this.selectedIndex]
+            let sound_mode = this.value
+            console.log(sound_mode)
             // 选择源播放器
             if (attributes.sound_mode != sound_mode) {
                 _this.callService('media_player.select_sound_mode', {
@@ -672,7 +672,7 @@ class MoreInfoHaCloudMusic extends HTMLElement {
                 _this.toast(`声音模式设置为${['度小宇', '度小美', '度逍遥', '度丫丫'][selectedIndex]}`)
             }
         })
-        
+
         // 显示语音控制界面
         let inputMode = $('.input-mode')
         inputMode.onclick = () => {
@@ -781,7 +781,7 @@ class MoreInfoHaCloudMusic extends HTMLElement {
     }
 
     // 更新界面数据
-    updated(hass) {
+    updated() {
         let { $, _stateObj } = this
         let attr = _stateObj.attributes
         let entity_id = _stateObj.entity_id
@@ -800,12 +800,19 @@ class MoreInfoHaCloudMusic extends HTMLElement {
                     if (items && items.length == sound_mode_list.length) return;
                     // 生成节点
                     let listbox = $('.source select')
-                    listbox.innerHTML = sound_mode_list.map((ele) => {
-                        return `<option>${ele}</option>`
+                    let sound_mode_list_str = sound_mode_list.map((ele) => {
+                        return `<option value="${ele}">${ele}</option>`
                     }).join('')
+                    // 其他播放器
+                    const states = this._hass.states
+                    sound_mode_list_str += Object.keys(states).filter(ele => ele.indexOf('media_player') === 0 && !ele.includes('media_player.yun_yin_le')).map(key => {
+                        let entity = states[key]
+                        if (entity.state === "unavailable") return ''
+                        return `<option value="${key}">${entity.attributes.friendly_name}</option>`
+                    })
+                    listbox.innerHTML = sound_mode_list_str
                     // 选择当前默认项
-                    let sound_mode_index = sound_mode_list.indexOf(attr.sound_mode)
-                    listbox.selectedIndex = sound_mode_index
+                    listbox.value = attr.sound_mode
                     // 选择当前声音模式
                     $('.tts-source select').selectedIndex = attr.tts_mode - 1
                 }

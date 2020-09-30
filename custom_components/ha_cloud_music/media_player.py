@@ -27,6 +27,7 @@ from .api_tts import ApiTTS
 from .source_web import MediaPlayerWEB
 from .source_vlc import MediaPlayerVLC
 from .source_mpd import MediaPlayerMPD
+from .source_other import MediaPlayerOther
 
 def setup_platform(hass, config, add_entities, discovery_info=None):
 
@@ -519,6 +520,11 @@ class MediaPlayer(MediaPlayerEntity):
         if self._sound_mode == sound_mode:
             return None
         
+        # 如果当前正在播放，则保存相关信息
+        is_playing = self.state == STATE_PLAYING
+        media_url = self.media_url
+        media_position = self.media_position
+        
         # 选择播放器
         if self._media_player is not None:
             try:
@@ -546,12 +552,15 @@ class MediaPlayer(MediaPlayerEntity):
                 self.notify("当前系统不支持VLC播放器", "select_sound_mode")
                 self._media_player = None
         else:
-            self._media_player = None
+            self._media_player = MediaPlayerOther(sound_mode, self)
 
         if self._media_player is not None:
             self._sound_mode = sound_mode
             self.api_config.set_sound_mode(sound_mode)
             self.log('【选择源播放器】：%s', sound_mode)
+            # 恢复播放
+            if is_playing == True:
+                self._media_player.reloadURL(media_url, media_position)
 
     ###################  自定义方法  ##########################
 
