@@ -45,8 +45,8 @@ class MediaPlayerOther():
                         if self._media is not None and self.state == 'playing' and self.is_tts == False and self.is_on == True:
                             self.state = 'idle'
                             self._media.media_end_next()
-                    # 最后10秒时，实时更新
-                    if media_duration - media_position < 10:
+                    # 最后20秒时，实时更新
+                    if media_duration - media_position < 20:
                         hass.async_create_task(hass.services.async_call('homeassistant', 'update_entity', {'entity_id': self.entity_id}))
 
                 self.media_position = media_position
