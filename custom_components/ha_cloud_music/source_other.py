@@ -62,6 +62,7 @@ class MediaPlayerOther():
     def reloadURL(self, url, position):        
         # 重新加载URL
         self.load(url)
+        time.sleep(1)
         # 先把声音设置为0，然后调整位置之后再还原
         self.set_volume_level(0)
         time.sleep(1)
