@@ -332,7 +332,7 @@ class MoreInfoHaCloudMusic extends HTMLElement {
             <!-- 源播放器 -->
             <div class="source">
                 <fieldset>
-                    <legend>源播放器</legend>
+                    <legend><a href="/ha_cloud_music-web/index.html?v=${Date.now()}" target="_blank" title="云音乐网页播放器" class="source-web-player">源播放器</a></legend>
                     <select></select>
                 </fieldset>
             </div>
@@ -479,6 +479,7 @@ class MoreInfoHaCloudMusic extends HTMLElement {
          
          .tts-source select,
          .source select{width:100%; border:none;}
+         .source-web-player{color:var(--primary-color);text-decoration:none;}
          
          .tts-input input{width: 100%;
             box-sizing: border-box;
