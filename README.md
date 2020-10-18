@@ -24,7 +24,7 @@
 ```
 media_player:
   - platform: ha_cloud_music
-    api_url: 接口请求地址
+    api_url: 接口请求地址（文档：https://neteasecloudmusicapi.vercel.app）
     mpd_host: MPD播放器host（如果你有的话）
 
 ```
