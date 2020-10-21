@@ -1,5 +1,6 @@
 import aiohttp, asyncio, json, re, os, uuid, math
 import http.cookiejar as HC
+from homeassistant.helpers.network import get_url
 
 # 全局请求头
 HEADERS = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.87 Safari/537.36'}
@@ -531,3 +532,37 @@ class ApiMusic():
                                         'media_content_type': 'music_playlist'
                                     })
     
+    ###################### 获取本地音乐库 ######################
+
+    def get_local_media_list(self, search_type):        
+        file_path = ''
+        singer = "默认列表"
+        if search_type != 'library_music':
+            file_path = search_type.replace('library_', '')
+            singer = file_path
+
+        hass = self.hass
+        children = []
+        base_url = get_url(hass).strip('/')
+        path = hass.config.path("media/ha_cloud_music")
+        file_path = file_path.replace('library_', '')
+        # 获取所有文件
+        file_dir = os.path.join(path, file_path)
+        for filename in os.listdir(file_dir):
+            if os.path.isfile(os.path.join(file_dir, filename)) and '.mp3' in filename:
+                songid = f"{base_url}/media-local/"
+                if file_path != '':
+                    songid += f"{file_path}/{filename}"
+                else:
+                    songid += filename
+                children.append({
+                    "name": filename,
+                    "song": filename,
+                    "singer": singer,
+                    "album": "媒体库",
+                    "image": f"{base_url}/static/icons/favicon-192x192.png",
+                    "type": "url",
+                    "url": songid
+                })
+        return children
+

@@ -1,15 +1,18 @@
 import json, os, logging, time, datetime, random, re, uuid, math, base64, asyncio, aiohttp
 from homeassistant.components.media_player import MediaPlayerEntity
 from homeassistant.components.media_player.const import (
-    MEDIA_TYPE_MUSIC,MEDIA_TYPE_URL, SUPPORT_PAUSE, SUPPORT_PLAY, 
+    MEDIA_TYPE_MUSIC,MEDIA_TYPE_URL, SUPPORT_PAUSE, SUPPORT_PLAY, SUPPORT_BROWSE_MEDIA, 
     SUPPORT_NEXT_TRACK, SUPPORT_PREVIOUS_TRACK, SUPPORT_TURN_ON, SUPPORT_TURN_OFF, SUPPORT_STOP,
     SUPPORT_PLAY_MEDIA, SUPPORT_VOLUME_MUTE, SUPPORT_VOLUME_SET, SUPPORT_SELECT_SOURCE, SUPPORT_CLEAR_PLAYLIST, 
     SUPPORT_SELECT_SOUND_MODE, SUPPORT_SEEK, SUPPORT_VOLUME_STEP)
 from homeassistant.const import (STATE_IDLE, STATE_PAUSED, STATE_PLAYING, STATE_OFF, STATE_UNAVAILABLE)
+from homeassistant.components.media_player.errors import BrowseError
+from .browse_media import build_item_response, library_payload
 
 SUPPORT_FEATURES = SUPPORT_PAUSE | SUPPORT_VOLUME_SET | SUPPORT_VOLUME_MUTE | SUPPORT_SELECT_SOUND_MODE | \
     SUPPORT_TURN_ON | SUPPORT_TURN_OFF | SUPPORT_PLAY_MEDIA | SUPPORT_PLAY | SUPPORT_NEXT_TRACK | \
-    SUPPORT_PREVIOUS_TRACK | SUPPORT_SELECT_SOURCE | SUPPORT_CLEAR_PLAYLIST | SUPPORT_SEEK | SUPPORT_VOLUME_STEP
+    SUPPORT_PREVIOUS_TRACK | SUPPORT_SELECT_SOURCE | SUPPORT_CLEAR_PLAYLIST | SUPPORT_SEEK | SUPPORT_VOLUME_STEP | \
+    SUPPORT_BROWSE_MEDIA
 
 _LOGGER = logging.getLogger(__name__)
 ################### 接口定义 ###################
@@ -61,9 +64,11 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
         return
     ################### 系统配置 ###################
 
-    ################### 定义实体类 ###################
+    ################### 定义实体类 ###################    
     # 播放器实例
     api_config = ApiConfig(hass.config.path(".shaonianzhentan/ha_cloud_music"))
+    # 创建媒体文件夹
+    api_config.mkdir(hass.config.path("media/ha_cloud_music"))
     mp = MediaPlayer(hass, config, api_config)
     mp.api_tts = ApiTTS(mp,{
         'tts_before_message': tts_before_message,
@@ -91,6 +96,7 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
         # 注册静态目录
         hass.http.register_static_path(ROOT_PATH, local, False)
         hass.http.register_static_path('/tts-local', hass.config.path("tts"), False)
+        hass.http.register_static_path('/media-local', hass.config.path("media/ha_cloud_music"), False)
         hass.http.register_static_path(WEB_PATH, hass.config.path("custom_components/ha_cloud_music/local"), False)
         # 注册网关接口
         hass.http.register_view(ApiView)
@@ -404,6 +410,7 @@ class MediaPlayer(MediaPlayerEntity):
         self._media_player.pause()
 		
     async def play_media(self, media_type, media_id, **kwargs):
+        is_bind_source_list = False
         # 播放媒体URL文件
         self.log('【播放列表类型】：%s', media_type)
         if media_type == MEDIA_TYPE_MUSIC:
@@ -421,12 +428,7 @@ class MediaPlayer(MediaPlayerEntity):
             music_info = self.music_playlist[0]
             url = await self.get_url(music_info)
             #数据源
-            source_list = []
-            for index in range(len(self.music_playlist)):
-                music_info = self.music_playlist[index]
-                source_list.append(str(index + 1) + '.' + music_info['song'] + ' - ' + music_info['singer'])
-            self._source_list = source_list
-            self.log('绑定数据源：%s', self._source_list)
+            is_bind_source_list = True
         elif media_type == 'music_playlist':
             self.log('初始化播放列表')
             # 如果是list类型，则进行操作
@@ -440,24 +442,34 @@ class MediaPlayer(MediaPlayerEntity):
                 _dict = json.loads(media_id)
                 self.music_playlist = json.loads(_dict['list'])
                 self.music_index = _dict['index']
-            
+                
             # 保存音乐播放列表到本地
             self.api_config.set_playlist(self)
                         
             music_info = self.music_playlist[self.music_index]
             url = await self.get_url(music_info)
             #数据源
-            source_list = []
-            for index in range(len(self.music_playlist)):
-                music_info = self.music_playlist[index]
-                source_list.append(str(index + 1) + '.' + music_info['song'] + ' - ' + music_info['singer'])
-            self._source_list = source_list
+            is_bind_source_list = True            
+        elif 'library_' in media_type:
+            # 本地音乐库
+            self.music_playlist = self.api_music.get_local_media_list(media_type)
+            self.music_index = 0
+            url = self.music_playlist[self.music_index]['url']
+            #数据源
+            is_bind_source_list = True
         else:
             _LOGGER.error(
                 "不受支持的媒体类型 %s",media_type)
             return
         self.log('【当前播放音乐】【%s】:【%s】'%(self._media_name, url))
 
+        # 绑定数据源
+        if is_bind_source_list:
+            source_list = []
+            for index in range(len(self.music_playlist)):
+                music_info = self.music_playlist[index]
+                source_list.append(str(index + 1) + '.' + music_info['song'] + ' - ' + music_info['singer'])
+            self._source_list = source_list
         try:
             # 如果没有url则下一曲（如果超过3个错误，则停止）
             # 如果是云音乐播放列表 并且格式不是mp3不是m4a，则下一曲
@@ -561,6 +573,22 @@ class MediaPlayer(MediaPlayerEntity):
             # 恢复播放
             if is_playing == True:
                 self._media_player.reloadURL(media_url, media_position)
+
+    async def async_browse_media(self, media_content_type=None, media_content_id=None):
+        """Implement the websocket media browsing helper."""
+        if media_content_type in [None, "library"]:
+            return await self._hass.async_add_executor_job(library_payload, self)
+
+        payload = {
+            "search_type": media_content_type,
+            "search_id": media_content_id,
+        }
+        response = await build_item_response(self, payload)
+        if response is None:
+            raise BrowseError(
+                f"Media not found: {media_content_type} / {media_content_id}"
+            )
+        return response
 
     ###################  自定义方法  ##########################
 

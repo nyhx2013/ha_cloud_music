@@ -460,6 +460,7 @@ class MoreInfoHaCloudMusic extends HTMLElement {
          .tabs div{width:100%;cursor:pointer;padding-bottom:10px;}
          .search-panel{background-color: #ebecf0; padding:20px 10px;}
          .setting-panel{padding:10px 0;}
+         .setting-panel select{background:white;}
          .voice-panel{padding-top:15px;}
          .music-panel{}
          .hide{display:none;}
@@ -492,8 +493,8 @@ class MoreInfoHaCloudMusic extends HTMLElement {
          .music-list-panel{}
          .music-list-panel ul{margin:0;padding:10px 0;list-style:none;}
          .music-list-panel ul li{padding:10px 0;display:flex;    align-items: center;}
-         .music-list-panel ul li span{width:100%;display:block;}
-         .music-list-panel ul li ha-icon{cursor:pointer;}
+         .music-list-panel ul li span{width:calc(100% - 35px);display:block;word-wrap: break-word; word-break: normal;}
+         .music-list-panel ul li ha-icon{cursor:pointer;float:right;}
          .music-list-panel ul li.active{color: var(--primary-color);}
          .music-list-panel ul li:last-child{display:flex;}
          .music-list-panel ul li:last-child button{flex:1;padding:10px 0;margin:2px;border:none;
