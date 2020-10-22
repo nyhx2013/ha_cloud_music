@@ -369,6 +369,9 @@ class MoreInfoHaCloudMusic extends HTMLElement {
             <div class="tts-input">
                 <input type="text" placeholder="文字转语音" />
             </div>
+            <!-- 缓存 --> 
+            <button class="cache-button">缓存当前音乐到media目录</button>
+            </div>
         </div>
         <div class="voice-panel hide">
             <div id="inputPanel">
@@ -490,9 +493,11 @@ class MoreInfoHaCloudMusic extends HTMLElement {
             border: 1px solid silver;
             padding: 8px 10px;}
          
+         .cache-button{margin-top:20px; padding:10px; width:100%; border:none; cursor: pointer; color: white; background-color:var(--primary-color);}
+
          .music-list-panel{}
          .music-list-panel ul{margin:0;padding:10px 0;list-style:none;}
-         .music-list-panel ul li{padding:10px 0;display:flex;    align-items: center;}
+         .music-list-panel ul li{padding:10px 0;display:flex;    align-items: center; border-bottom:1px dashed #eee;}
          .music-list-panel ul li span{width:calc(100% - 35px);display:block;word-wrap: break-word; word-break: normal;}
          .music-list-panel ul li ha-icon{cursor:pointer;float:right;}
          .music-list-panel ul li.active{color: var(--primary-color);}
@@ -675,6 +680,30 @@ class MoreInfoHaCloudMusic extends HTMLElement {
                 _this.toast(`声音模式设置为${['度小宇', '度小美', '度逍遥', '度丫丫'][selectedIndex]}`)
             }
         })
+        // 缓存音乐
+        let loading = false
+        $('.cache-button').onclick = () => {
+            const { media_url, media_title, media_artist } = this._stateObj.attributes
+            if (media_url) {
+                if (media_url.includes('music.126.net') || media_url.includes('nf.migu.cn')) {
+                    if (loading) return this.toast('你这样点，会把系统搞卡死')
+                    loading = true
+                    console.log(media_url)
+                    this.callService('ha_cloud_music.cache', {
+                        name: `${media_title} - ${media_artist}`,
+                        url: media_url
+                    })
+                    this.toast('开始缓存音乐，请去【media/ha_cloud_music】目录查看')
+                    setTimeout(() => {
+                        loading = false
+                    }, 3000)
+                } else {
+                    this.toast('只支持网易云音乐的链接')
+                }
+            } else {
+                this.toast('当前播放链接有问题，不能缓存')
+            }
+        }
 
         // 显示语音控制界面
         let inputMode = $('.input-mode')

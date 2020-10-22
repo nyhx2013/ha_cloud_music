@@ -1,4 +1,4 @@
-import aiohttp, asyncio, json, re, os, uuid, math
+import aiohttp, asyncio, json, re, os, uuid, math, urllib, threading
 import http.cookiejar as HC
 from homeassistant.helpers.network import get_url
 
@@ -532,6 +532,16 @@ class ApiMusic():
                                         'media_content_type': 'music_playlist'
                                     })
     
+    ###################### 缓存到本地音乐库 ######################
+
+    async def cache_file(self, url, file_name):
+        hass = self.hass
+        path = hass.config.path("media/ha_cloud_music")
+        file_path = os.path.join(path, file_name + '.mp3')
+        print('【缓存文件】' + file_path)
+        thread = threading.Thread(target=urllib.request.urlretrieve, args=(url, file_path))
+        thread.start()
+
     ###################### 获取本地音乐库 ######################
 
     def get_local_media_list(self, search_type):        

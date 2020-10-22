@@ -43,6 +43,15 @@ tts:
     message:
       description: 要播放的文字(支持内置模板格式)
       example: '现在的时间是{{now().strftime("%H:%M")}}'
+cache:
+  description: 缓存音乐文件
+  fields:
+    name:
+      description: mp3文件名称
+      example: '不会用就别乱调用，可能会把系统搞卡死'
+    url:
+      description: mp3音乐链接
+      example: '不会用千万别乱调用，可能会把系统搞卡死崩溃'
 tts_clear:
   description: 清除文字转语音的缓存
 web_media_player_updated:

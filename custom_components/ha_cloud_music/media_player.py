@@ -129,6 +129,9 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
     hass.services.register(DOMAIN, 'tts', mp.api_tts.speak)
     # hass.services.register(DOMAIN, 'tts_clear', mp.api_tts.clear)
 
+    # 注册服务【缓存文件】
+    hass.services.register(DOMAIN, 'cache', mp.cache)
+
     # 监听语音小助手的文本
     if is_voice == True:
         _ApiVoice = ApiVoice(hass, mp.api_music)
@@ -259,6 +262,7 @@ class MediaPlayer(MediaPlayerEntity):
             'custom_ui_state_card': 'more-info-state-ha_cloud_music', 
             'tts_volume': self.api_tts.tts_volume,
             'tts_mode': self.api_tts.tts_mode,
+            'media_url': self.media_url,
             'play_mode': play_mode_list[self._play_mode]})
         return attr
 
@@ -684,6 +688,13 @@ class MediaPlayer(MediaPlayerEntity):
             self.is_notify = is_notify
         
         self.update_entity()
+
+    # 缓存文件
+    async def cache(self, call):
+        data = call.data
+        url = data['url']
+        name = data['name']
+        await self.api_music.cache_file(url, name)
 
     # 加载播放列表
     async def load_songlist(self, call): 
