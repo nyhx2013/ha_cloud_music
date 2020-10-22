@@ -21,12 +21,21 @@
 > 后台插件配置
 
 然后在configuration.yaml中配置以下内容
-```
+```yaml
 media_player:
   - platform: ha_cloud_music
     api_url: 接口请求地址（文档：https://neteasecloudmusicapi.vercel.app）
     mpd_host: MPD播放器host（如果你有的话）
 
+```
+
+> 注意事项（一定要配置）`当属性过多会把数据库撑爆，一定要把这个播放器过滤掉`
+```yaml
+# 配置日志记录，排除掉这个实体
+recorder:
+  exclude:
+    entities:
+      - media_player.yun_yin_le  
 ```
 
 [完整配置文档](./docs/ "完整配置文档")
