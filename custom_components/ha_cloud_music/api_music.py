@@ -565,9 +565,10 @@ class ApiMusic():
                     songid += urllib.parse.quote(f"{file_path}/{filename}")
                 else:
                     songid += urllib.parse.quote(filename)
+                song = filename.replace('.mp3', '')
                 children.append({
-                    "name": filename,
-                    "song": filename,
+                    "name": song,
+                    "song": song,
                     "singer": singer,
                     "album": "媒体库",
                     "image": f"{base_url}/static/icons/favicon-192x192.png",
