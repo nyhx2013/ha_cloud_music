@@ -53,9 +53,14 @@ class MediaPlayerVLC():
         self.load(url)
         # 先把声音设置为0，然后调整位置之后再还原
         self.set_volume_level(0)
-        time.sleep(1)
-        self.seek(position)
-        time.sleep(1)
+        # 局域网资源，则优化快进规则
+        if self._media.base_url in url:
+            time.sleep(0.1)
+            self.seek(position)
+        else:
+            time.sleep(1)
+            self.seek(position)
+            time.sleep(1)
         self.set_volume_level(self._media.volume_level)
 
     def load(self, url):
@@ -82,8 +87,9 @@ class MediaPlayerVLC():
     def seek(self, position):
         # 设置进度
         track_length = self._client.get_length() / 1000
-        self.media_position = position
-        self._client.set_position(position / track_length)
+        if track_length > 0:
+            self.media_position = position
+            self._client.set_position(position / track_length)
 
     def mute_volume(self, mute):
         # 静音

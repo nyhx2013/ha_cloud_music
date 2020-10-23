@@ -30,7 +30,6 @@ class MediaPlayerWEB():
         self.is_support = True
         # 监听web播放器的更新
         if media is not None:
-            # media._hass.services.register("ha_cloud_music", 'web_media_player_updated', self.update)
             self.hass = media._hass
             # 监听web播放器的更新
             self.hass.components.websocket_api.async_register_command(
@@ -59,9 +58,14 @@ class MediaPlayerWEB():
         self.load(url)
         # 先把声音设置为0，然后调整位置之后再还原
         self.set_volume_level(0)
-        time.sleep(1)
-        self.seek(position)
-        time.sleep(1)
+        # 局域网资源，则优化快进规则
+        if self._media.base_url in url:
+            time.sleep(0.1)
+            self.seek(position)
+        else:
+            time.sleep(1)
+            self.seek(position)
+            time.sleep(1)
         self.set_volume_level(self._media.volume_level)
 
     def load(self, url):

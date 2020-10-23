@@ -52,7 +52,3 @@ cache:
     url:
       description: mp3音乐链接
       example: '不会用千万别乱调用，可能会把系统搞卡死崩溃'
-tts_clear:
-  description: 清除文字转语音的缓存
-web_media_player_updated:
-  description: 和网页播放器通信时使用，请勿手动调用

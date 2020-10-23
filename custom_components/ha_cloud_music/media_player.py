@@ -1,5 +1,6 @@
 import json, os, logging, time, datetime, random, re, uuid, math, base64, asyncio, aiohttp
 from homeassistant.components.media_player import MediaPlayerEntity
+from homeassistant.helpers.network import get_url
 from homeassistant.components.media_player.const import (
     MEDIA_TYPE_MUSIC,MEDIA_TYPE_URL, SUPPORT_PAUSE, SUPPORT_PLAY, SUPPORT_BROWSE_MEDIA, 
     SUPPORT_NEXT_TRACK, SUPPORT_PREVIOUS_TRACK, SUPPORT_TURN_ON, SUPPORT_TURN_OFF, SUPPORT_STOP,
@@ -127,7 +128,6 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
 
     # 注册服务【tts】
     hass.services.register(DOMAIN, 'tts', mp.api_tts.speak)
-    # hass.services.register(DOMAIN, 'tts_clear', mp.api_tts.clear)
 
     # 注册服务【缓存文件】
     hass.services.register(DOMAIN, 'cache', mp.cache)
@@ -356,6 +356,10 @@ class MediaPlayer(MediaPlayerEntity):
         if self._media_player == None:
             return None
         return self._media_player.media_position_updated_at
+
+    @property
+    def base_url(self):
+        return get_url(self._hass)
 
     def turn_off(self):
         print("关闭设备")
