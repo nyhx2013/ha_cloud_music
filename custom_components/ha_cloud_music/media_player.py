@@ -456,7 +456,10 @@ class MediaPlayer(MediaPlayerEntity):
             is_bind_source_list = True            
         elif 'library_' in media_type:
             # 本地音乐库
-            self.music_playlist = self.api_music.get_local_media_list(media_type)
+            music_playlist = self.api_music.get_local_media_list(media_type)
+            if len(music_playlist) == 0:
+                return None
+            self.music_playlist = music_playlist
             self.music_index = 0
             url = self.music_playlist[self.music_index]['url']
             #数据源

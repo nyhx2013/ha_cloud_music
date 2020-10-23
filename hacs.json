@@ -1,6 +1,6 @@
 {
   "name": "云音乐",
   "country": "CN",
-  "render_readme": false,
+  "render_readme": true,
   "domains": ["media_player"]
 }

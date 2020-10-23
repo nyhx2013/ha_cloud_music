@@ -562,9 +562,9 @@ class ApiMusic():
             if os.path.isfile(os.path.join(file_dir, filename)) and '.mp3' in filename:
                 songid = f"{base_url}/media-local/"
                 if file_path != '':
-                    songid += f"{file_path}/{filename}"
+                    songid += urllib.parse.quote(f"{file_path}/{filename}")
                 else:
-                    songid += filename
+                    songid += urllib.parse.quote(filename)
                 children.append({
                     "name": filename,
                     "song": filename,
