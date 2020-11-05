@@ -33,7 +33,8 @@ class ApiView(HomeAssistantView):
             elif _type == 'play_media':
                 await mp.play_media('music_playlist', {
                                 'index': response['index'],
-                                'list': response['playlist']
+                                'list': response['list']
                             })
+                return self.json({"code": 0, "msg": "播放成功"})
                 
         return self.json(response)
