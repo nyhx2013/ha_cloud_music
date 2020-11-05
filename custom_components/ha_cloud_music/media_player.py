@@ -18,7 +18,8 @@ SUPPORT_FEATURES = SUPPORT_PAUSE | SUPPORT_VOLUME_SET | SUPPORT_VOLUME_MUTE | SU
 _LOGGER = logging.getLogger(__name__)
 ################### 接口定义 ###################
 # 常量
-from .api_config import DOMAIN, VERSION, ROOT_PATH, ApiConfig, TrueOrFalse, WEB_PATH
+from .const import DOMAIN, VERSION, ROOT_PATH, WEB_PATH
+from .api_config import ApiConfig, TrueOrFalse
 # 网易云接口
 from .api_music import ApiMusic
 # 网关视图
@@ -417,6 +418,10 @@ class MediaPlayer(MediaPlayerEntity):
             return None
         self._media_player.pause()
 		
+    async def async_play_media(self, media_type, media_id, **kwargs):
+        ''' 异步方法 '''
+        await self.play_media(media_type, media_id)
+
     async def play_media(self, media_type, media_id, **kwargs):
         is_bind_source_list = False
         # 播放媒体URL文件
@@ -442,22 +447,22 @@ class MediaPlayer(MediaPlayerEntity):
             # 如果是list类型，则进行操作
             if isinstance(media_id, list):
                 self.music_playlist = media_id
+                self.music_index = 0
             elif isinstance(media_id, dict):
                 _dict = media_id
                 self.music_playlist = _dict['list']
                 self.music_index = _dict['index']
             else:
-                _dict = json.loads(media_id)
-                self.music_playlist = json.loads(_dict['list'])
-                self.music_index = _dict['index']
-                
+                self.notify("播放数据错误", "load_song_url")
+                return
+
             # 保存音乐播放列表到本地
             self.api_config.set_playlist(self)
                         
             music_info = self.music_playlist[self.music_index]
             url = await self.get_url(music_info)
             #数据源
-            is_bind_source_list = True            
+            is_bind_source_list = True
         elif 'library_' in media_type:
             # 本地音乐库
             music_playlist = self.api_music.get_local_media_list(media_type)

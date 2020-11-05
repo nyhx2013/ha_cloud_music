@@ -310,15 +310,7 @@ class ApiMusic():
                 _newlist = await self.djradio_playlist(singerId, 0, 50)
                 if len(_newlist) > 0:
                     # 调用服务，执行播放
-                    _dict = {
-                        'index': 0,
-                        'list': json.dumps(list(_newlist), ensure_ascii=False)
-                    }
-                    await hass.services.async_call('media_player', 'play_media', {
-                                        'entity_id': 'media_player.yun_yin_le',
-                                        'media_content_id': json.dumps(_dict, ensure_ascii=False),
-                                        'media_content_type': 'music_playlist'
-                                    }, blocking=True)
+                    await self.media.play_media('music_playlist', list(_newlist))
         else:
             return None
     
@@ -344,16 +336,8 @@ class ApiMusic():
                         "song": item['name'],
                         "singer": len(item['ar']) > 0 and item['ar'][0]['name'] or '未知'
                         }, _list)
-                    # 调用服务，执行播放
-                    _dict = {
-                        'index': 0,
-                        'list': json.dumps(list(_newlist), ensure_ascii=False)
-                    }
-                    await hass.services.async_call('media_player', 'play_media', {
-                                        'entity_id': 'media_player.yun_yin_le',
-                                        'media_content_id': json.dumps(_dict, ensure_ascii=False),
-                                        'media_content_type': 'music_playlist'
-                                    }, blocking=True)
+                    # 调用服务，执行播放                    
+                    await self.media.play_media('music_playlist', list(_newlist))
         else:
             return None
 
@@ -376,16 +360,7 @@ class ApiMusic():
                     "singer": len(item['artists']) > 0 and item['artists'][0]['name'] or '未知'
                     }, _list)
                 # 调用服务，执行播放
-                _dict = {
-                    'index': 0,
-                    'list': json.dumps(list(_newlist), ensure_ascii=False)
-                }
-                await hass.services.async_call('media_player', 'play_media', {
-                                    'entity_id': 'media_player.yun_yin_le',
-                                    'media_content_id': json.dumps(_dict, ensure_ascii=False),
-                                    'media_content_type': 'music_playlist'
-                                }, blocking=True)
-                
+                await self.media.play_media('music_playlist', list(_newlist))
         else:
             return None
             
@@ -402,15 +377,7 @@ class ApiMusic():
                 if obj != None and len(obj['list']) > 0:
                     _newlist = obj['list']
                     # 调用服务，执行播放
-                    _dict = {
-                        'index': 0,
-                        'list': json.dumps(_newlist, ensure_ascii=False)
-                    }
-                    await hass.services.async_call('media_player', 'play_media', {
-                                        'entity_id': 'media_player.yun_yin_le',
-                                        'media_content_id': json.dumps(_dict, ensure_ascii=False),
-                                        'media_content_type': 'music_playlist'
-                                    }, blocking=True)                
+                    await self.media.play_media('music_playlist', _newlist)
         else:
             return None
     
@@ -482,16 +449,7 @@ class ApiMusic():
                 北京市：29d6168ed172c09fc81d2d71d4ec0686
                 '''
                 # 调用服务，执行播放
-                _dict = {
-                    'index': 0,
-                    'list': json.dumps(_newlist, ensure_ascii=False)
-                }
-                await hass.services.async_call('media_player', 'play_media', {
-                                    'entity_id': 'media_player.yun_yin_le',
-                                    'media_content_id': json.dumps(_dict, ensure_ascii=False),
-                                    'media_content_type': 'music_playlist'
-                                })
-                    
+                await self.media.play_media('music_playlist', _newlist)
 
     ###################### 播放新闻 ######################
 
@@ -522,15 +480,7 @@ class ApiMusic():
                         "singer": '蜻蜓FM'
                     }, filter_list)
                     # 调用服务，执行播放
-                    _dict = {
-                        'index': 0,
-                        'list': json.dumps(list(_newlist), ensure_ascii=False)
-                    }
-                    await hass.services.async_call('media_player', 'play_media', {
-                                        'entity_id': 'media_player.yun_yin_le',
-                                        'media_content_id': json.dumps(_dict, ensure_ascii=False),
-                                        'media_content_type': 'music_playlist'
-                                    })
+                    await self.media.play_media('music_playlist', list(_newlist))
     
     ###################### 缓存到本地音乐库 ######################
 

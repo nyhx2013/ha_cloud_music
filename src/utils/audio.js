@@ -55,26 +55,14 @@ export default class {
       o.isReady = ['playing', 'paused'].includes(state)
       o.isPlaying = state == 'playing'
       o.state = state
+      o.fetch = (url, data) => {
+        return top.document.querySelector('home-assistant').hass.fetchWithAuth(url, {
+          method: 'POST',
+          body: JSON.stringify(data)
+        }).then(res => res.json())
+      }
       o.call = async (service_data, service = 'play_media', domain = 'media_player') => {
-        let hass = top.document.querySelector('home-assistant').hass
-        let auth = hass.auth
-        let authorization = ''
-        if (auth._saveTokens) {
-          // 过期
-          if (auth.expired) {
-            await auth.refreshAccessToken()
-          }
-          authorization = `${auth.data.token_type} ${auth.accessToken}`
-        } else {
-          authorization = `Bearer ${auth.data.access_token}`
-        }
-        fetch(`/api/services/${domain}/${service}`, {
-            method: 'post',
-            headers: {
-                authorization
-            },
-            body: JSON.stringify(service_data)
-        }).then(res => res.json()).then(arr => {
+        o.fetch(`/api/services/${domain}/${service}`, service_data).then(arr => {
           if (Array.isArray(arr) && arr.length === 1) {
             let { attributes } = arr[0]
             if (service === 'media_seek') {
@@ -159,20 +147,19 @@ export default class {
         })
       })
       //播放歌单
-      this.hass.then(({ attr, call, entity_id }) => {
+      this.hass.then(({ attr, fetch, entity_id }) => {
         // 获取当前播放的音乐
         let { song, singer } = pl[currentIndex]
         let { media_title, media_artist, index } = attr
         // 如果歌名、歌手、当前索引不一样，则播放
         if (song != media_title || singer != media_artist || index != currentIndex) {
-          call({
-            entity_id,
-            media_content_id: JSON.stringify({
-              index: currentIndex,
-              list: JSON.stringify(pl)
-            }),
-            media_content_type: 'music_playlist'
-          }, 'play_media')
+          fetch('/ha_cloud_music-api', {
+            type: 'play_media',
+            index: currentIndex,
+            list: pl
+          }).then((data) => {
+            // console.log(data)
+          })
         }
       })
     }

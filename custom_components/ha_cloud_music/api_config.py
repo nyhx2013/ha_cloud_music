@@ -1,10 +1,6 @@
 import json, os, shutil, hashlib, base64
 
-DOMAIN = 'ha_cloud_music'
-VERSION = '4.2.3'
-DOMAIN_API = '/' + DOMAIN + '-api'
-WEB_PATH = '/' + DOMAIN + '-web'
-ROOT_PATH = '/' + DOMAIN + '-local/' + VERSION
+from .const import DOMAIN, VERSION, DOMAIN_API, WEB_PATH, ROOT_PATH
 
 def TrueOrFalse(val, trueStr, falseStr):
     if val:

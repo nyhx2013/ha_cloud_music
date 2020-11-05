@@ -419,12 +419,12 @@ class MoreInfoHaCloudMusic extends HTMLElement {
                     <div><span>段子来了😄来自喜马拉雅</span></div>
                 </div>
                 <div class="right content">
-                    <div><span>播放电台宋宇的报刊选读</span></div>
-                    <button data-cmd="播放电台宋宇的报刊选读">😘</button>
+                    <div><span>播放电台宋宇选读</span></div>
+                    <button data-cmd="播放电台宋宇选读">😘</button>
                 </div>                
                 <div class="left content">
                     <button>😁</button>
-                    <div><span>宋宇的报刊选读😜来自网易云音乐</span></div>
+                    <div><span>宋宇选读😜来自网易云音乐</span></div>
                 </div>
                 <div class="right content">
                     <div><span>播放歌单私人雷达</span></div>

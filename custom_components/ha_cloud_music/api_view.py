@@ -1,6 +1,6 @@
 from homeassistant.components.http import HomeAssistantView
 
-from .api_config import DOMAIN_API,DOMAIN
+from .const import DOMAIN_API, DOMAIN
 
 ##### 网关控制
 class ApiView(HomeAssistantView):
@@ -30,5 +30,10 @@ class ApiView(HomeAssistantView):
             elif _type == 'search-playlist':
                 _result = await mp.api_music.search_playlist(_name)
                 return self.json(_result)
+            elif _type == 'play_media':
+                await mp.play_media('music_playlist', {
+                                'index': response['index'],
+                                'list': response['playlist']
+                            })
                 
         return self.json(response)
