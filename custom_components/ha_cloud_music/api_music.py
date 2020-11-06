@@ -1,4 +1,4 @@
-import aiohttp, asyncio, json, re, os, uuid, math, urllib, threading
+import aiohttp, asyncio, json, re, os, uuid, math, urllib, threading, re
 import http.cookiejar as HC
 from homeassistant.helpers.network import get_url
 
@@ -487,7 +487,11 @@ class ApiMusic():
     async def cache_file(self, url, file_name):
         hass = self.hass
         path = hass.config.path("media/ha_cloud_music")
-        file_path = os.path.join(path, file_name + '.mp3')
+        # 替换文件名特殊字符为下划线
+        rstr = r"[\/\\\:\*\?\"\<\>\|]"
+        name = re.sub(rstr, "_", file_name)
+
+        file_path = os.path.join(path, name + '.mp3')
         print('【缓存文件】' + file_path)
         thread = threading.Thread(target=urllib.request.urlretrieve, args=(url, file_path))
         thread.start()
