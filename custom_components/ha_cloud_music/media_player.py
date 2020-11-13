@@ -57,8 +57,6 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
 
     # 是否开启语音文字处理程序（默认启用）
     is_voice = config.get('is_voice', True)
-    # 是否启用通知（默认启用）
-    is_notify = config.get('is_notify', True)
 
     # 检测配置
     if api_url == '':
@@ -72,6 +70,9 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
     # 创建媒体文件夹
     api_config.mkdir(hass.config.path("media/ha_cloud_music"))
     mp = MediaPlayer(hass, config, api_config)
+    # 是否启用通知（默认启用）
+    mp.is_notify = config.get('is_notify', True)
+    
     mp.api_tts = ApiTTS(mp,{
         'tts_before_message': tts_before_message,
         'tts_after_message': tts_after_message,
@@ -200,7 +201,7 @@ class MediaPlayer(MediaPlayerEntity):
         self.loading = False
         # 是否启用定时器
         self._timer_enable = True
-        self._notify = True
+        self.is_notify = True
 
         _sound_mode_list = ['网页播放器']
         # 如果是Docker环境，则不显示VLC播放器
