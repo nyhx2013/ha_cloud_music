@@ -453,7 +453,7 @@ class MediaPlayer(MediaPlayerEntity):
                 self.music_playlist = _dict['list']
                 self.music_index = _dict['index']
             else:
-                self.notify("播放数据错误", "load_song_url")
+                self.notify("播放数据错误", "error")
                 return
 
             # 保存音乐播放列表到本地
@@ -502,7 +502,7 @@ class MediaPlayer(MediaPlayerEntity):
 
         # 加载音乐
         if self._media_player is None:
-            self.notify("请重新选择源播放器", "play_media")
+            self.notify("请重新选择源播放器", "error")
         else:
             self.media_url = url
             self._media_player.load(url)
@@ -561,23 +561,23 @@ class MediaPlayer(MediaPlayerEntity):
             except Exception as ex:
                 print(ex)
                 self._media_player = None
-                self.notify(self._sound_mode + "连接异常", "select_sound_mode")
+                self.notify(self._sound_mode + "连接异常", "error")
 
         if sound_mode == '网页播放器':
             self._media_player = MediaPlayerWEB(self._config, self)
         elif sound_mode == 'MPD播放器':
             # 判断是否配置mpd_host
             if 'mpd_host' not in self._config:
-                self.notify("MPD播放器需要配置mpd_host", "select_sound_mode")
+                self.notify("MPD播放器需要配置mpd_host", "error")
                 self._media_player = None
             self._media_player = MediaPlayerMPD(self._config, self)
             if self._media_player.is_support == False:
-                self.notify("不支持MPD播放器，请确定是否正确配置", "select_sound_mode")
+                self.notify("不支持MPD播放器，请确定是否正确配置", "error")
                 self._media_player = None
         elif sound_mode == 'VLC播放器':
             self._media_player = MediaPlayerVLC(self._config, self)
             if self._media_player.is_support == False:
-                self.notify("当前系统不支持VLC播放器", "select_sound_mode")
+                self.notify("当前系统不支持VLC播放器", "error")
                 self._media_player = None
         else:
             self._media_player = MediaPlayerOther(sound_mode, self)
@@ -721,7 +721,7 @@ class MediaPlayer(MediaPlayerEntity):
             elif call.data['type'] == 'ximalaya':
                 _type = "ximalaya"
             else:
-                self.notify("加载播放列表：type参数错误", "load_songlist")
+                self.notify("加载播放列表：type参数错误", "error")
                 return "type参数错误"
         elif 'id' in call.data:
             _id = call.data['id']
@@ -767,7 +767,7 @@ class MediaPlayer(MediaPlayerEntity):
                     await self.play_media('music_playlist', _list)
                     self.notify("正在播放专辑【" + _list[0]['album'] + "】", "load_songlist")
                 else:
-                    self.notify("没有找到id为【"+_id+"】的电台信息", "load_songlist")
+                    self.notify("没有找到id为【"+_id+"】的电台信息", "error")
             elif _type == 'ximalaya':
                 self.log("【加载喜马拉雅专辑列表】，ID：%s", _id)
                 # 播放第几条音乐
@@ -780,11 +780,11 @@ class MediaPlayer(MediaPlayerEntity):
                     await self.play_media('music_playlist', _list)
                     self.notify("正在播放专辑【" + _list[0]['album'] + "】", "load_songlist")
                 else:
-                    self.notify("没有找到id为【"+_id+"】的专辑信息", "load_songlist")
+                    self.notify("没有找到id为【"+_id+"】的专辑信息", "error")
                     
         except Exception as e:
             self.log(e)
-            self.notify("加载歌单的时候出现了异常", "load_songlist")
+            self.notify("加载歌单的时候出现了异常", "error")
         finally:
             # 这里重置    
             self.loading = False
@@ -814,4 +814,6 @@ class MediaPlayer(MediaPlayerEntity):
 
     # 通知
     def notify(self, message, type):
-        self.call_service('persistent_notification', 'create', {"message": message, "title": "云音乐", "notification_id": "ha-cloud-music-" + type})
+        # 开启通过，或者错误提示，则显示通知
+        if self.is_notify or type == "error":
+            self.call_service('persistent_notification', 'create', {"message": message, "title": "云音乐", "notification_id": "ha-cloud-music-" + type})
