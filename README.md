@@ -8,6 +8,8 @@
 
 ## 如何使用
 
+如果实在不会用或有问题，请看完先：https://www.bilibili.com/video/BV1et4y1a7RU/
+
 > 安装
 
 1.使用[HACS安装](https://github.com/custom-components/hacs)
