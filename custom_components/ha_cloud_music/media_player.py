@@ -490,8 +490,8 @@ class MediaPlayer(MediaPlayerEntity):
         try:
             # 如果没有url则下一曲（如果超过3个错误，则停止）
             # 如果是云音乐播放列表 并且格式不是mp3不是m4a，则下一曲
-            if url == None or (media_type == 'music_load' and url.find(".mp3") < 0 and url.find('.m4a') < 0):
-               self.notify("没有找到【" + self._media_name + "】的播放链接，自动为您跳到下一首", "load_song_url")
+            if url is None or (media_type == 'music_load' and url.find(".mp3") < 0 and url.find('.m4a') < 0):
+               self.notify("没有找到【" + self._media_name + "】的播放链接，自动为您跳到下一首", "error")
                self.error_count = self.error_count + 1
                if self.error_count < 3:
                  self.media_next_track()
