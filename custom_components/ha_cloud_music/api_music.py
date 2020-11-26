@@ -74,7 +74,7 @@ class ApiMusic():
         print(url)
         result = None
         try:
-            async with aiohttp.ClientSession(headers=HEADERS) as session:
+            async with aiohttp.ClientSession(headers=HEADERS.update({'Referer': url})) as session:
                 async with session.get(url) as resp:
                     # 喜马拉雅返回的是文本内容
                     if 'https://mobile.ximalaya.com/mobile/' in url:
