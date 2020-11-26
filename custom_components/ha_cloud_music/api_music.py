@@ -74,7 +74,9 @@ class ApiMusic():
         print(url)
         result = None
         try:
-            async with aiohttp.ClientSession(headers=HEADERS.update({'Referer': url})) as session:
+            headers = {'Referer': url}
+            headers.update(HEADERS)
+            async with aiohttp.ClientSession(headers=headers) as session:
                 async with session.get(url) as resp:
                     # 喜马拉雅返回的是文本内容
                     if 'https://mobile.ximalaya.com/mobile/' in url:
@@ -113,7 +115,7 @@ class ApiMusic():
             else:    
                 keywords = songName + ' - '+ singerName
             
-            res = await self.proxy_get("http://m.music.migu.cn/migu/remoting/scr_search_tag?rows=10&type=2&keyword=" + keywords + "&pgc=1")
+            res = await self.proxy_get("http://m.music.migu.cn/migu/remoting/scr_search_tag?rows=10&type=2&keyword=" + urllib.parse.quote(keywords) + "&pgc=1")
             
             if 'musics' in res and len(res['musics']) > 0 and (songName in res['musics'][0]['songName'] or searchObj):
                 return res['musics'][0]['mp3']
