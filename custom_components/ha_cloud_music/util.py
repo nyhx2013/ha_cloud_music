@@ -88,20 +88,17 @@ def matcher_prev_next(text):
 def matcher_playlist_index(text):
     matchObj = re.match(r'播放第(.+)(集|首)(.*)', text)
     if matchObj is not None:
-        index = matchObj.group(1)
-        if is_number(index) == False:
-            index = chinese2digits(index)
-        return int(index)
+        return format_number(matchObj.group(1))
 
 ########################################## 音量调整
 def matcher_volume_setting(text):
-    matchObj = re.match(r'把(TTS|音乐)(声音|音量)调到(.+)', text)
+    matchObj = re.match(r'(把tts|把音乐|音乐|tts)(声音|音量)调到(.+)', text)
     if matchObj is not None:
         volume_level = matchObj.group(3)
         if volume_level == '最大':
             volume_level = 100.0
         elif volume_level == '最小':
             volume_level = 20.0
-        elif is_number(volume_level) == False:
-            volume_level = chinese2digits(volume_level)
+        else:
+            volume_level = format_number(volume_level)
         return (matchObj.group(1), float(volume_level) / 100.0)
