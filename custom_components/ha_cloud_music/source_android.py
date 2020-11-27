@@ -22,7 +22,8 @@ class MediaPlayerAndroid():
         self._muted_volume = 0
         self.volume_level = 1
         # 定时更新
-        self.timer = threading.Timer(1, self.update)
+        self.request('set', 'music_reset')
+        self.timer = threading.Timer(2, self.update)
         self.timer.start()
 
     # 发送数据请求
@@ -49,19 +50,20 @@ class MediaPlayerAndroid():
             print(res)
             media_position = res['media_position']
             media_duration = res['media_duration']
+            state = res['state']
             self.volume_level = res.get('volume_level')
             # 判断是否下一曲
-            if media_duration > 0:
+            if state == 'end':
+                print('执行下一曲方法')
+                if self._media is not None and self.state == 'playing' and self.is_tts == False and self.is_on == True:
+                    self.state = 'idle'
+                    self._media.media_end_next()
+                    time.sleep(3)
+            else:
                 # print("当前进度：%s，总时长：%s"%(media_position, media_duration))
-                if media_duration - media_position <= 1:
-                    print('执行下一曲方法')
-                    if self._media is not None and self.state == 'playing' and self.is_tts == False and self.is_on == True:
-                        self.state = 'idle'
-                        self._media.media_end_next()
-            # print("当前进度：%s，总时长：%s"%(media_position, media_duration))
-            self.media_position = media_position
-            self.media_duration = media_duration
-            self.media_position_updated_at = datetime.datetime.now()
+                self.media_position = media_position
+                self.media_duration = media_duration
+                self.media_position_updated_at = datetime.datetime.now()
             self.is_support = True
         except Exception as e:
             self.is_support = False
@@ -115,7 +117,7 @@ class MediaPlayerAndroid():
 
     def set_volume_level(self, volume):
         # 设置音量
-        self.request('set', 'msuic_set_volume', volume * 100)
+        self.request('set', 'msuic_set_volume', int(volume * 100))
 
     def volume_up(self):
         # 增加音量
@@ -130,7 +132,8 @@ class MediaPlayerAndroid():
             self.set_volume_level(current_volume - 5)
 
     def stop(self):
-        pause
+        self.timer.cancel()
+        self.request('set', 'music_reset')
 
     def log(self, msg):
         if self._media is not None:
