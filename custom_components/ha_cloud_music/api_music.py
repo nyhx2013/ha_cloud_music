@@ -34,10 +34,11 @@ class ApiMusic():
                 # 手机号码登录
                 res = await self.get('/login/cellphone?phone=' + self.user + '&password=' + self.password)
             # 登录成功
-            if res['code'] == 200:
+            if res is not None and res['code'] == 200:
                 self.uid = str(res['account']['id'])
                 self.log('登录成功')
             else:
+                self.media.notify("网易云登录失败，请检查账号密码是否错误。如果确定没错，请检查接口是否正常。", "error")
                 self.log('登录失败', res)
 
     def log(self, name, value = ''):
