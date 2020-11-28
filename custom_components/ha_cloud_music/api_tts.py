@@ -163,7 +163,7 @@ class ApiTTS():
             # 计算当前文件时长，设置超时播放时间
             audio = MP3(ob_name)
             self.log('音频时长', audio.info.length)
-            time.sleep(audio.info.length + 2)
+            time.sleep(audio.info.length + 3)
             self.media._media_player.is_tts = False
             # 恢复音量
             print('恢复音量：%s'%(volume_level))
