@@ -60,4 +60,4 @@ android:
       example: 100
     volume:
       description: 系统音乐声音1-15
-      example: 10
+      example: 15

@@ -149,11 +149,11 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
             # 设置屏幕亮度
             brightness = data.get('brightness')
             if brightness is not None:
-                hass.async_create_task(mp.api_music.proxy_get(f'{url_prefix}brightness&value=' + brightness))
+                hass.async_create_task(mp.api_music.proxy_get(f'{url_prefix}brightness&value=' + str(brightness)))
             # 设置音乐声音
             volume = data.get('volume')            
             if volume is not None:
-                hass.async_create_task(mp.api_music.proxy_get(f'{url_prefix}volume&value=' + volume))
+                hass.async_create_task(mp.api_music.proxy_get(f'{url_prefix}volume&value=' + str(volume)))
 
         hass.services.register(DOMAIN, 'android', android_service)
 
