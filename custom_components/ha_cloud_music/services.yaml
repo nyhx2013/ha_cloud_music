@@ -52,3 +52,12 @@ cache:
     url:
       description: mp3音乐链接
       example: '不会用千万别乱调用，可能会把系统搞卡死崩溃'
+android:
+  description: 安卓设备服务
+  fields:
+    brightness:
+      description: 屏幕亮度1-255
+      example: 100
+    volume:
+      description: 系统音乐声音1-15
+      example: 10

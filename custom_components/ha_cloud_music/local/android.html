@@ -74,7 +74,7 @@
             if (currentTime != position) {
                 position = currentTime;
                 var arr = [];
-                arr.push(audio.volume * 100);
+                arr.push(Math.ceil(audio.volume * 100));
                 arr.push(currentTime);
                 arr.push(Math.floor(isNaN(audio.duration) ? 0 : audio.duration));
                 arr.push("playing");

@@ -140,6 +140,23 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
         _ApiVoice = ApiVoice(hass, mp.api_music)
         hass.bus.listen('ha_voice_text_event', _ApiVoice.text_event)
 
+    # 注册服务【Android平板】    
+    android_host = config.get("android_host")
+    if android_host is not None:
+        def android_service(call):
+            url_prefix = f'http://{android_host}:8124/set?key='
+            data = call.data
+            # 设置屏幕亮度
+            brightness = data.get('brightness')
+            if brightness is not None:
+                hass.async_create_task(mp.api_music.proxy_get(f'{url_prefix}brightness&value=' + brightness))
+            # 设置音乐声音
+            volume = data.get('volume')            
+            if volume is not None:
+                hass.async_create_task(mp.api_music.proxy_get(f'{url_prefix}volume&value=' + volume))
+
+        hass.services.register(DOMAIN, 'android', android_service)
+
     ################### 注册服务 ################### 
 
     # 显示插件信息
@@ -207,6 +224,7 @@ class MediaPlayer(MediaPlayerEntity):
         _sound_mode_list = ['网页播放器']
         if 'android_host' in config:
             _sound_mode_list.append('Android播放器')
+            
         # 如果是Docker环境，则不显示VLC播放器
         if os.path.isfile("/.dockerenv") == True:
             _sound_mode_list.append('MPD播放器')
