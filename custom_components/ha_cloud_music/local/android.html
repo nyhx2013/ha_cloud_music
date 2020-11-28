@@ -65,7 +65,7 @@
 
         audio.onended = function () {
             log("结束了")
-            fetch("http://" + ip + ":8124/set?key=music_set&value=0,0,0,idle")
+            fetch("http://" + ip + ":8124/set?key=music_set&value=0,0,0,end")
         }
 
         var position = 0;
