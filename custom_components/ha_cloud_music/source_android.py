@@ -74,9 +74,10 @@ class MediaPlayerAndroid():
         self.timer.start()  
 
     def reloadURL(self, url, position):
+        time.sleep(1)
         # 重新加载URL
         self.load(url)
-        time.sleep(1)
+        time.sleep(2)
         # 先把声音设置为0，然后调整位置之后再还原
         self.set_volume_level(0)
         time.sleep(1)
