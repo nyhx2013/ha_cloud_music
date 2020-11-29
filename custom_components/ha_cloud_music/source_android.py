@@ -70,7 +70,7 @@ class MediaPlayerAndroid():
             print('出现异常', e)
         
         # 递归调用自己
-        self.timer = threading.Timer(2, self.update)
+        self.timer = threading.Timer(4, self.update)
         self.timer.start()  
 
     def reloadURL(self, url, position):
