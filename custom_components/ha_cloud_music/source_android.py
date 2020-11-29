@@ -45,7 +45,7 @@ class MediaPlayerAndroid():
         try:
             android_host = self.config['android_host']
             url = f'http://{android_host}:8124/get?key=music'
-            result = requests.get(url)
+            result = requests.get(url, timeout=3)
             res = result.json()
             print(res)
             media_position = res['media_position']
