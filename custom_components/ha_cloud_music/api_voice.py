@@ -94,7 +94,7 @@ class ApiVoice():
                     return
 
         # 播放(电台|歌单|歌曲|新闻|广播|专辑)(.*)
-        result = matcher_singer_music(text)
+        result = matcher_play_music(text)
         if result is not None:
             action = result[0]
             _name = result[1]
