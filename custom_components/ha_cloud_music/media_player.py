@@ -81,6 +81,7 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
     })    
     mp.api_music = ApiMusic(mp, {
         'api_url': api_url, 
+        'qq_api_url': config.get('qq_api_url', '').strip('/'), 
         'uid': uid, 
         'user': user, 
         'password': password
@@ -667,6 +668,10 @@ class MediaPlayer(MediaPlayerEntity):
             elif music_info['type'] == 'djradio' or music_info['type'] == 'cloud':                
                 # 如果传入的是网易电台
                 url = await self.api_music.get_song_url(music_info['id'])
+                return url
+            elif music_info['type'] == 'qq':                
+                # 如果传入的是QQ音乐
+                url = await self.api_music.get_qq_song_url(music_info['mid'])
                 return url
         
         url = await self.api_music.get_redirect_url(music_info['url'])

@@ -17,6 +17,7 @@ class ApiMusic():
         self.hass = media._hass
         self.media = media
         self.api_url = cfg['api_url']
+        self.qq_api_url = cfg['qq_api_url']
         self.uid = cfg['uid']
         self.user = cfg['user']
         self.password = cfg['password']
@@ -88,12 +89,25 @@ class ApiMusic():
             self.log('【接口出现异常】' + url, e)
         return result
 
+    # QQ音乐
+    async def qq_get(self, url):
+        if self.qq_api_url != '':
+            res = await self.proxy_get(self.qq_api_url + url)
+            if res is not None and res['response']["code"] == 0:
+                return res['response']
+
     ###################### 获取音乐播放URL ######################    
     
     # 获取音乐URL
     async def get_song_url(self, id):
         obj = await self.get("/song/url?id=" + str(id))
         return obj['data'][0]['url']
+
+    # 获取QQ音乐URL
+    async def get_qq_song_url(self, id):
+        res = await self.qq_get("/getMusicVKey?songmid=" + str(id))
+        if res is not None and len(res['playLists']) > 0:
+            return res['playLists'][0]
 
     # 获取重写向后的地址
     async def get_redirect_url(self, url):
@@ -344,14 +358,15 @@ class ApiMusic():
         else:
             return None
 
-    # 播放歌手的热门歌曲
+    # 播放音乐
     async def play_song(self, name):
         hass = self.hass
+        _list = []
+        # 搜索网易云音乐
         obj = await self.get('/search?keywords='+ name)
         if obj['code'] == 200:
             songs = obj['result']['songs']
             if len(songs) > 0:
-                _list = songs
                 _newlist = map(lambda item: {
                     "id": int(item['id']),
                     "name": item['name'],
@@ -361,12 +376,28 @@ class ApiMusic():
                     "url": "https://music.163.com/song/media/outer/url?id=" + str(item['id']),
                     "song": item['name'],
                     "singer": len(item['artists']) > 0 and item['artists'][0]['name'] or '未知'
-                    }, _list)
-                # 调用服务，执行播放
-                await self.media.play_media('music_playlist', list(_newlist))
-        else:
-            return None
-            
+                    }, songs)
+                _list.extend(list(_newlist))
+        # 搜索QQ音乐
+        res = await self.qq_get('/getSmartbox?key=' + name)
+        if res is not None:
+            songs = res['data']['song']
+            if songs['count'] > 0:
+                _newlist = map(lambda item: {
+                    "id": int(item['id']),
+                    "mid": item['mid'],
+                    "name": item['name'],
+                    "album": "QQ音乐",
+                    "image": "http://p3.music.126.net/3TTjFNIrtcUzoMlB1D1fDA==/109951164969055590.jpg?param=500y500",
+                    "duration": 0,
+                    "type": "qq",
+                    "song": item['name'],
+                    "singer": item['singer']
+                    }, songs['itemlist'])
+                _list.extend(list(_newlist))        
+        # 调用服务，执行播放
+        if len(_list) > 0:
+            await self.media.play_media('music_playlist', _list)
 
     # 播放歌单
     async def play_list_hotsong(self, name):
