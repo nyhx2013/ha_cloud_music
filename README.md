@@ -26,7 +26,8 @@
 ```yaml
 media_player:
   - platform: ha_cloud_music
-    api_url: 接口请求地址（文档：https://neteasecloudmusicapi.vercel.app）
+    api_url: （必填）网易云音乐接口请求地址（文档：https://neteasecloudmusicapi.vercel.app）
+    qq_api_url: （非必填）QQ音乐接口请求地址（文档：https://github.com/Rain120/qq-music-api）
     mpd_host: MPD播放器host（如果你有的话）
 
 ```
@@ -54,6 +55,7 @@ recorder:
 - 支持设置Android设备屏幕亮度
 - 支持设置Android系统音乐音量
 - 增加QQ音乐歌曲搜索播放（需要配置接口）
+
 ### V4.3
 - 支持媒体浏览器功能
 - 调整卡片样式问题
