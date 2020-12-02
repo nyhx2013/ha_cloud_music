@@ -117,7 +117,7 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
             require_admin=True
         )
         # 添加状态卡片
-        hass.components.frontend.add_extra_js_url(hass, WEB_PATH + '/data/card.js')
+        hass.components.frontend.add_extra_js_url(hass, WEB_PATH + '/card/ha_cloud_music.js?v=' + VERSION)
     ################### 注册静态目录与接口网关 ###################
 
     ################### 注册服务 ################### 
@@ -282,8 +282,8 @@ class MediaPlayer(MediaPlayerEntity):
         # 当前媒体状态属性
         attr = super().state_attributes
         play_mode_list = ['列表循环','顺序播放','随机播放','单曲循环']
-        attr.update({'custom_ui_more_info': 'more-info-ha_cloud_music', 
-            'custom_ui_state_card': 'more-info-state-ha_cloud_music', 
+        attr.update({'custom_ui_more_info': 'ha_cloud_music-panel', 
+            'custom_ui_state_card': 'ha_cloud_music-player', 
             'tts_volume': self.api_tts.tts_volume,
             'tts_mode': self.api_tts.tts_mode,
             'media_url': self.media_url,
