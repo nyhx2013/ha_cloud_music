@@ -24,6 +24,37 @@ class ApiConfig():
         }
         self.write('tts.json', content)
 
+    ''' 【设置/获取】最爱列表 '''
+    def get_love_playlist(self):
+        res = self.read('love.json')
+        if res is None:
+            return []
+        return res
+
+    def set_love_playlist(self, media):
+        res = self.get_love_playlist()
+        playlist = media.music_playlist
+        index = media.music_index
+        # 判断当前播放音乐是否存在
+        music_info = playlist[index]
+        length = len(list(filter(lambda m: m['id'] == music_info['id'] and m['type'] == music_info['type'], res)))
+        if length == 0:
+            res.append(music_info)
+        self.write('love.json', res)
+    
+    # 删除收藏
+    def delete_love_playlist(self, id, type):
+        res = self.get_love_playlist()
+        index = -1
+        for i, item in enumerate(res):
+            print(item)
+            print(i)
+            if item['id'] == id and item.get('type', '') == type:
+                index = i
+        if index >= 0:
+            res.pop(index)
+            self.write('love.json', res)
+
     ''' 【设置/获取】播放列表 '''
     def get_playlist(self):
         return self.read('playlist.json')

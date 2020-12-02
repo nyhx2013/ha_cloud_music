@@ -71,9 +71,6 @@ class HaCloudMusicPanel extends HTMLElement {
             <div data-title="列表">
                 <ha_cloud_music-playlist></ha_cloud_music-playlist>
             </div>
-            <div data-title="搜索">
-                <ha_cloud_music-search></ha_cloud_music-search>
-            </div>
             <div data-title="设置">
                 <ha_cloud_music-setting></ha_cloud_music-setting>
             </div>
@@ -82,6 +79,9 @@ class HaCloudMusicPanel extends HTMLElement {
             </div>
             <div data-title="广播">
                 <ha_cloud_music-fmlist></ha_cloud_music-fmlist>
+            </div>
+            <div data-title="最爱">
+                <ha_cloud_music-lovelist></ha_cloud_music-lovelist>               
             </div>
         </ha_cloud_music-tabs>        
         `

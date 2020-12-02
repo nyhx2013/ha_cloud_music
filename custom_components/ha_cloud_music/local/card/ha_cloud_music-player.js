@@ -108,23 +108,38 @@ class HaCloudMusicPlayer extends HTMLElement {
         </div>
         <!-- 音乐进度 -->
         <div class="progress">
-          <div>00:00</div>
+          <div><ha-icon class="mdi-cards-heart" icon="mdi:cards-heart" title="喜欢"></ha-icon></div>
+          <div class="time-position">00:00</div>
           <div>
              <input class="ha-paper-slider" type="range" min="0" max="100" value="50" style="width:200px" title="调整播放进度" />
           </div>                 
-          <div>00:00</div>
+          <div class="time-length">00:00</div>
+          <div><ha-icon class="icon-music-search" icon="mdi:search-web" title="音乐搜索"></ha-icon></div>
         </div>
+        <ha_cloud_music-search class="hide"></ha_cloud_music-search>
         `
         shadow.appendChild(ha_card)
         // 创建样式
         const style = document.createElement('style')
         style.textContent = `
+            .hide{display:none;}
             .controls,
             .progress{ display:flex; text-align: center; align-items: center;}
             .controls>div,
             .progress>div{width:100%;}
-            .controls ha-icon{--mdc-icon-size: 30px;cursor:pointer;}
-            .action{cursor:pointer;}
+            .red{color:red;}
+            ha-icon,
+            .action{
+                cursor:pointer;
+            }
+            .controls ha-icon{--mdc-icon-size: 30px;}
+            .mdi-cards-heart{
+                --mdc-icon-size: 25px;
+            }
+            .icon-music-search{
+                --mdc-icon-size: 30px;
+                color: gray;
+            }
 
             @keyframes rotate{
                 from{ transform: rotate(0deg) }
@@ -182,6 +197,16 @@ class HaCloudMusicPlayer extends HTMLElement {
             })
             this.toast(`调整音乐进度到${seek_position}秒`)
         }
+
+        $('.mdi-cards-heart').onclick = () => {
+            $('.mdi-cards-heart').classList.add('red')
+            ha_cloud_music.fetchApi({ type: 'love_set' }).then((res) => {
+                this.toast(res.msg)
+            })
+        }
+        $('.icon-music-search').onclick = () => {
+            $('ha_cloud_music-search').classList.toggle('hide')
+        }
     }
 
     // 更新界面数据
@@ -205,8 +230,8 @@ class HaCloudMusicPlayer extends HTMLElement {
             $('.play_mode').setAttribute('icon', mode.icon)
         }
 
-        $('.progress div:nth-child(1)').textContent = `${this.timeForamt(attrs.media_position / 60)}:${this.timeForamt(attrs.media_position % 60)}`
-        $('.progress div:nth-child(3)').textContent = `${this.timeForamt(attrs.media_duration / 60)}:${this.timeForamt(attrs.media_duration % 60)}`
+        $('.progress .time-position').textContent = `${this.timeForamt(attrs.media_position / 60)}:${this.timeForamt(attrs.media_position % 60)}`
+        $('.progress .time-length').textContent = `${this.timeForamt(attrs.media_duration / 60)}:${this.timeForamt(attrs.media_duration % 60)}`
         if (attrs.media_position <= attrs.media_duration) {
             $('.progress .ha-paper-slider').value = attrs.media_position / attrs.media_duration * 100
         }

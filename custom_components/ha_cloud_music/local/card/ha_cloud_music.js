@@ -31,6 +31,7 @@ window.ha_cloud_music = {
 import('./ha_cloud_music-player.js')
 import('./ha_cloud_music-tabs.js').then(async () => {
     await import('./ha_cloud_music-playlist.js')
+    await import('./ha_cloud_music-lovelist.js')
     await import('./ha_cloud_music-search.js')
     await import('./ha_cloud_music-setting.js')
     await import('./ha_cloud_music-voice.js')
