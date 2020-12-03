@@ -218,6 +218,15 @@ class HaCloudMusicPlayer extends HTMLElement {
         if ('entity_picture' in attrs) {
             action.src = attrs.entity_picture
         }
+        // 判断是否红心
+        if ('favourite' in attrs) {
+            const classList = $('.mdi-cards-heart').classList
+            if (attrs.favourite) {
+                if (!classList.contains('red')) classList.add('red')
+            } else {
+                if (classList.contains('red')) classList.remove('red')
+            }
+        }
         // 如果是在播放中，则转圈圈
         if (_stateObj.state == "playing") {
             if (!action.classList.contains('rotate')) action.classList.add('rotate')

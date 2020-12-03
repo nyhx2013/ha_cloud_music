@@ -31,13 +31,19 @@ class ApiConfig():
             return []
         return res
 
+    # 当前是否喜欢
+    def is_love_playlist(self, id, type):
+        res = self.get_love_playlist()
+        length = len(list(filter(lambda m: m['id'] == id and m.get('type', '') == type, res)))
+        return length > 0
+
     def set_love_playlist(self, media):
         res = self.get_love_playlist()
         playlist = media.music_playlist
         index = media.music_index
         # 判断当前播放音乐是否存在
         music_info = playlist[index]
-        length = len(list(filter(lambda m: m['id'] == music_info['id'] and m['type'] == music_info['type'], res)))
+        length = len(list(filter(lambda m: m['id'] == music_info['id'] and m.get('type', '') == music_info['type'], res)))
         if length == 0:
             res.append(music_info)
         self.write('love.json', res)

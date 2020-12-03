@@ -1,4 +1,5 @@
 window.ha_cloud_music = {
+    eventQueue: {},
     get hass() {
         return document.querySelector('home-assistant').hass
     },
@@ -8,7 +9,7 @@ window.ha_cloud_music = {
             body: JSON.stringify(params)
         }).then(res => res.json())
     },
-    callService(service_name, service_data = {}){
+    callService(service_name, service_data = {}) {
         let arr = service_name.split('.')
         let domain = arr[0]
         let service = arr[1]
@@ -25,6 +26,12 @@ window.ha_cloud_music = {
     },
     toast(message) {
         this.fire("hass-notification", { message })
+    },
+    onmessage({ type, data }) {
+        this.eventQueue[type](data)
+    },
+    addEventListener(type, func) {
+        this.eventQueue[type] = func
     }
 }
 

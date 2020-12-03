@@ -10,8 +10,9 @@ from homeassistant.const import (STATE_IDLE, STATE_PAUSED, STATE_PLAYING, STATE_
 from homeassistant.components.media_player.errors import BrowseError
 from .browse_media import build_item_response, library_payload
 
+# SUPPORT_TURN_ON | SUPPORT_TURN_OFF | 
 SUPPORT_FEATURES = SUPPORT_PAUSE | SUPPORT_VOLUME_SET | SUPPORT_VOLUME_MUTE | SUPPORT_SELECT_SOUND_MODE | \
-    SUPPORT_TURN_ON | SUPPORT_TURN_OFF | SUPPORT_PLAY_MEDIA | SUPPORT_PLAY | SUPPORT_NEXT_TRACK | \
+    SUPPORT_PLAY_MEDIA | SUPPORT_PLAY | SUPPORT_NEXT_TRACK | \
     SUPPORT_PREVIOUS_TRACK | SUPPORT_SELECT_SOURCE | SUPPORT_CLEAR_PLAYLIST | SUPPORT_SEEK | SUPPORT_VOLUME_STEP | \
     SUPPORT_BROWSE_MEDIA
 
@@ -206,7 +207,9 @@ class MediaPlayer(MediaPlayerEntity):
         self._media_player = None
         # 音量
         self._volume_level = 1
-        
+        # 喜欢
+        self.favourite = False
+
         self._source_list = None
         self._source = None
         # 播放模式（0：列表循环，1：顺序播放，2：随机播放，3：单曲循环）
@@ -287,6 +290,8 @@ class MediaPlayer(MediaPlayerEntity):
             'tts_volume': self.api_tts.tts_volume,
             'tts_mode': self.api_tts.tts_mode,
             'media_url': self.media_url,
+            'favourite': self.favourite,
+            'version': VERSION,
             'play_mode': play_mode_list[self._play_mode]})
         return attr
 
@@ -653,7 +658,9 @@ class MediaPlayer(MediaPlayerEntity):
         # 设置专辑名称
         if 'album' in music_info:
             self._media_album_name = music_info['album']
-        
+        # 查看是否加入喜欢
+        self.favourite = self.api_config.is_love_playlist(music_info['id'], music_info.get('type', ''))
+
         # 如果有传入类型，则根据类型处理
         if 'type' in music_info:
             if music_info['type'] == 'url' and music_info['url'] == '':

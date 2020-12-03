@@ -6,16 +6,15 @@ class HaCloudMusicFMList extends HTMLElement {
     }
 
     async _fetch(url) {
+        try {
+            if (url == 'https://rapi.qingting.fm/categories?type=channel' && localStorage["ha_cloud_music-fmlist"]) {
+                return JSON.parse(localStorage["ha_cloud_music-fmlist"])
+            }
+        } catch {
+
+        }
         const res = await fetch(url).then(res => res.json())
         return res.Data
-    }
-
-    showLoading() {
-        //  this.$('.loading').style.display = 'block'
-    }
-
-    hideLoading() {
-        //  this.$('.loading').style.display = 'none'
     }
 
     // 创建界面
@@ -26,10 +25,6 @@ class HaCloudMusicFMList extends HTMLElement {
         const ha_card = document.createElement('div');
         ha_card.className = 'ha-cloud-music-fm-list'
         ha_card.innerHTML = `
-        <!-- loading -->
-        <div class="loading">
-           <span>加载中</span>
-        </div>
         <!-- 电台列表 -->
         <div class="fm-list">
             <!--
@@ -52,8 +47,7 @@ class HaCloudMusicFMList extends HTMLElement {
         const style = document.createElement('style')
         style.textContent = `
             .ha-cloud-music-fm-list{}
-            .loading{width:100%;height:100%;position:fixed;background-color:rgba(255,255,255,.9);text-align:center;display:none;}
-            .fm-list{ text-align: center;
+             .fm-list{ text-align: center;
                 display: grid; 
                 grid-column-gap: 2%;
                 grid-row-gap: 8px;
@@ -82,6 +76,9 @@ class HaCloudMusicFMList extends HTMLElement {
         // 请求数据
         this._fetch('https://rapi.qingting.fm/categories?type=channel').then(res => {
             // console.log(res)
+            if (!localStorage["ha_cloud_music-fmlist"]) {
+                localStorage["ha_cloud_music-fmlist"] = JSON.stringify(res)
+            }
             const df = document.createDocumentFragment()
             res.forEach(({ id, title }) => {
                 const div = document.createElement('div')
@@ -113,7 +110,7 @@ class HaCloudMusicFMList extends HTMLElement {
 
     loadMoreData() {
         let { $ } = this
-        this.showLoading()
+        ha_cloud_music.showLoading()
         const button = $('.fm-info button')
         let id = button.dataset['id']
         let page = button.dataset['page']
@@ -161,7 +158,7 @@ class HaCloudMusicFMList extends HTMLElement {
                 button.classList.add('hide')
             }
         }).finally(() => {
-            this.hideLoading()
+            ha_cloud_music.hideLoading()
         })
     }
 }
