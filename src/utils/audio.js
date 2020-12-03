@@ -6,375 +6,297 @@ import { setVolume } from '@/utils/storage'
 
 // 音频对象
 let audio = {
-  volume: 0,
-  currentTime: 0,
-  media_position: 0
+    volume: 0,
+    currentTime: 0,
+    media_position: 0
 }
 
 export default class {
-  constructor() {
-    // 操作中。。。
-    this.loading = false
-    this.isReady = false
-    this.ver = ""
-    // 初始化播放模式
-    this.ready()
-  }
-
-  get hass() {
-    return new Promise(async (resolve, reject) => {
-      let res = await top.window.hassConnection
-      if (res == null) {
-        Vue.prototype.$mmToast("请在Home Assistant中使用")
-        reject("请在Home Assistant中使用")
-        return
-      }
-      // 如果过期，则刷新令牌
-      if (res.auth.expired) {
-        res.auth.refreshAccessToken()
-      }
-      let conn = res.conn
-      // 查找自定义播放器
-      let entity_id = Object.keys(conn._ent.state).find(key => key.indexOf('media_player.yun_yin_le') === 0)
-      // 获取当前播放器对象
-      let ha_cloud_music = conn._ent.state[entity_id]
-      // 获取播放器的状态与属性
-      let { state, attributes } = ha_cloud_music
-      // 修复属性
-      if (typeof attributes.media_playlist === 'string') {
-        attributes.playlist = JSON.parse(attributes.media_playlist)
-      } else {
-        attributes.playlist = attributes.media_playlist || []
-      }
-      attributes['index'] = attributes.playlist.findIndex((ele, index) => attributes.source == ((index + 1) + '.' + ele.song + ' - ' + ele.singer))
-
-      // 生成对象
-      let o = Object.create(null)
-      o.attr = attributes
-      o.entity_id = entity_id
-      o.isReady = ['playing', 'paused'].includes(state)
-      o.isPlaying = state == 'playing'
-      o.state = state
-      o.fetch = (url, data) => {
-        return top.document.querySelector('home-assistant').hass.fetchWithAuth(url, {
-          method: 'POST',
-          body: JSON.stringify(data)
-        }).then(res => res.json())
-      }
-      o.call = async (service_data, service = 'play_media', domain = 'media_player') => {
-        o.fetch(`/api/services/${domain}/${service}`, service_data).then(arr => {
-          if (Array.isArray(arr) && arr.length === 1) {
-            let { attributes } = arr[0]
-            if (service === 'media_seek') {
-              audio.currentTime = attributes.media_position
-            }
-          }
-        })
-      }
-      resolve(o)
-    })
-  }
-
-  ready() {
-    this.hass.then(({ attr, isReady }) => {
-      // this.log(store.state.playlist)
-      this.isReady = isReady
-      this.log(attr)
-      let { index, volume_level, playlist } = attr
-      // 设置音量
-      setVolume(volume_level)
-      // 根据HA播放器，设置对应的状态
-      store.commit('SET_CURRENTINDEX', index)
-      store.commit('SET_PLAYING', isReady)
-      // 根据HA播放器，设置对应的播放模式（0、1、2、3）
-      store.commit('SET_PLAYMODE', this.playMode[attr.play_mode] || 0)
-      // 设置列表
-      store.dispatch('setPlaylist', { list: playlist })
-      // 设置全屏模式
-      try {
-        let haPanelIframe = top.document.body
-          .querySelector("home-assistant")
-          .shadowRoot.querySelector("home-assistant-main")
-          .shadowRoot.querySelector("app-drawer-layout partial-panel-resolver ha-panel-iframe").shadowRoot
-        let ha_card = haPanelIframe.querySelector("iframe");
-        ha_card.style.position = 'absolute'
-        if (this.query('show_mode') === 'fullscreen') {
-          haPanelIframe.querySelector('app-toolbar').style.display = 'none'
-          ha_card.style.top = '0'
-          ha_card.style.height = '100%'
-        }
-      } catch (ex) {
-        this.log(ex)
-      }
-      // 初始化版本
-      this.ver = this.query('ver')
-      // 初始化用户ID
-      let uid = this.query('uid')
-      if (uid) {
-        store.dispatch('setUid', uid)
-      }
-      // 开始执行定时更新
-      this.update()
-    })
-  }
-
-  /**
-   * 当前播放源
-   */
-  get src() {
-    return audio.src
-  }
-  set src(value) {
-    if (value === audio.src) {
-      return
-    }
-    audio.currentTime = 0
-    audio.src = value
-    store.commit('SET_PLAYING', true)
-    /**
-     * 如果当前播放的歌曲，和HA播放器里一致，则不进行操作
-     */
-    let { currentIndex, playlist } = store.state
-
-    if (playlist.length > 0) {
-      // 格式化当前播放列表
-      let pl = []
-      playlist.forEach((ele, index) => {
-        pl.push({
-          song: ele.name,
-          singer: ele.singer,
-          ...ele
-        })
-      })
-      //播放歌单
-      this.hass.then(({ attr, fetch, entity_id }) => {
-        // 获取当前播放的音乐
-        let { song, singer } = pl[currentIndex]
-        let { media_title, media_artist, index } = attr
-        // 如果歌名、歌手、当前索引不一样，则播放
-        if (song != media_title || singer != media_artist || index != currentIndex) {
-          fetch('/ha_cloud_music-api', {
-            type: 'play_media',
-            index: currentIndex,
-            list: pl
-          }).then((data) => {
-            // console.log(data)
-          })
-        }
-      })
-    }
-  }
-  /**
-   * 当前进度
-   */
-  get currentTime() {
-    return audio.currentTime
-  }
-
-  set currentTime(value) {
-    this.debounce(() => {
-      this.log('调整进度', value)
-      this.load().then(() => {
-        this.hass.then(({ call, entity_id }) => {
-          call({
-            entity_id,
-            seek_position: value
-          }, 'media_seek')
-        })
-      }).finally(() => {
-        audio.currentTime = value
-      })
-    }, 1000)
-  }
-  // 当前声音
-  get volume() {
-    return audio.volume
-  }
-
-  set volume(value) {
-    if (Number.isNaN(value)) return
-
-    this.debounce(() => {
-      this.load().then(() => {
-        this.hass.then(({ call, entity_id, attr }) => {
-          let { volume_level } = attr
-          this.log('调整音量：%s, HA音乐：%s', value, volume_level)
-          if (volume_level != value) {
-            call({
-              entity_id,
-              volume_level: value
-            }, 'volume_set')
-          }
-        })
-      }).finally(() => {
-        audio.volume = value
-      })
-    }, 1000)
-  }
-
-  // 播放
-  play() {
-    this.load().then(() => {
-      this.hass.then(({ call, entity_id }) => {
-        call({
-          entity_id,
-        }, 'media_play')
-      }).catch(ex => {
-        audio.play()
-      }).finally(() => {
-        // 触发播放事件
-        if (typeof this.onplay === 'function') {
-          this.onplay()
-        }
-      })
-    })
-  }
-
-  // 暂停
-  pause() {
-    this.load().then(() => {
-      this.hass.then(({ call, entity_id }) => {
-        call({
-          entity_id,
-        }, 'media_pause')
-      }).catch(ex => {
-        audio.pause()
-      })
-    })
-  }
-
-  // 设置播放模式
-  get playMode() {
-    return {
-      '列表循环': 0,
-      '顺序播放': 1,
-      '随机播放': 2,
-      '单曲循环': 3
-    }
-  }
-  set playMode(mode) {
-    this.load().then(() => {
-      let arr = Object.entries(this.playMode)
-      let obj = arr.find(ele => ele[1] === mode)
-      Vue.prototype.$mmToast(obj[0])
-      this.hass.then(({ call }) => {
-        call({
-          play_mode: mode
-        }, 'config', 'ha_cloud_music')
-      })
-    })
-  }
-
-  load(time = 3000) {
-    Vue.prototype.loading()
-    if (this.load.prototype.timer) {
-      clearTimeout(this.load.prototype.timer)
-    }
-    this.loading = true
-    return new Promise((resolve) => {
-      this.load.prototype.timer = setTimeout(() => {
+    constructor() {
         this.loading = false
-        this.load.prototype.timer = null
-      }, time)
-      resolve()
-    })
-  }
+        this.isReady = false
+        this.ready()
+    }
 
+    static get isSupport() {
+        return !!top.document.querySelector('home-assistant')
+    }
 
+    get hass() {
+        return top.document.querySelector('home-assistant').hass
+    }
 
-  // 定时更新
-  update() {
-    setInterval(async () => {
-      try {
-        // 操作中的时候，不执行更新操作
-        if (this.loading === false) {
-          let { attr, isPlaying } = await this.hass
-          let { media_position, play_mode, media_title, media_artist, index, volume_level } = attr
+    get entity_id() {
+        return 'media_player.yun_yin_le'
+    }
 
-          audio.volume = volume_level
+    // 实体
+    get entity() {
+        return this.hass.states[this.entity_id]
+    }
 
-          if (isPlaying) {
-            if (audio.media_position !== media_position) {
-              this.log('【校准进度】当前进度：%s HA进度：%s 上一次更新进度：%s', audio.currentTime, media_position, audio.media_position)
-              audio.currentTime = audio.media_position = media_position
-            } else {
-              audio.currentTime += 1
+    // 实体属性
+    get attributes() {
+        return this.entity.attributes
+    }
+
+    // 当前播放索引
+    get index() {
+        const { media_playlist, source } = this.attributes
+        const playlist = media_playlist || []
+        return playlist.findIndex((ele, index) => source == ((index + 1) + '.' + ele.song + ' - ' + ele.singer))
+    }
+
+    // 请求接口
+    fetchApi(url, data) {
+        const loading = Vue.loading()
+        this.loading = true
+        return this.hass.fetchWithAuth(url, {
+            method: 'POST',
+            body: JSON.stringify(data)
+        }).then(res => res.json()).finally(() => {
+            this.loading = false
+            loading.close()
+        })
+    }
+
+    // 调用服务
+    callService(service, data) {
+        const arr = service.split('.')
+        return this.fetchApi(`/api/services/${arr[0]}/${arr[1]}`, data)
+    }
+
+    // 调用服务
+    callMediaPlayerService(service, data) {
+        return this.callService(`media_player.${service}`, {
+            entity_id: this.entity_id,
+            ...data
+        })
+    }
+
+    ready() {
+        // 获取播放器的状态与属性
+        const { state, attributes } = this.entity
+        const isReady = ['playing', 'paused'].includes(state)
+        this.isReady = isReady
+        const playlist = attributes.media_playlist || []
+        // 设置音量
+        setVolume(attributes.volume_level)
+        // 根据HA播放器，设置对应的状态
+        store.commit('SET_CURRENTINDEX', this.index)
+        store.commit('SET_PLAYING', isReady)
+        // 根据HA播放器，设置对应的播放模式（0、1、2、3）
+        store.commit('SET_PLAYMODE', this.playMode[attributes.play_mode] || 0)
+        // 设置列表
+        store.dispatch('setPlaylist', { list: playlist })
+        console.log(`播放状态：${isReady}, 模式：${attributes.play_mode}，索引：${this.index}`)
+        // 显示模式
+        this.showMode()
+        // 开始执行定时更新
+        this.update()
+    }
+
+    showMode() {
+        // 设置全屏模式
+        try {
+            let haPanelIframe = top.document.body
+                .querySelector("home-assistant")
+                .shadowRoot.querySelector("home-assistant-main")
+                .shadowRoot.querySelector("app-drawer-layout partial-panel-resolver ha-panel-iframe").shadowRoot
+            let ha_card = haPanelIframe.querySelector("iframe");
+            ha_card.style.position = 'absolute'
+            if (this.query('show_mode') === 'fullscreen') {
+                haPanelIframe.querySelector('app-toolbar').style.display = 'none'
+                ha_card.style.top = '0'
+                ha_card.style.height = '100%'
             }
-          }
-          if (this.isEqual({ media_title, media_artist, index }) === false) {
-            store.commit('SET_PLAYMODE', this.playMode[play_mode] || 0)
-            store.commit('SET_CURRENTINDEX', index)
-          }
+        } catch (ex) {
+            this.log(ex)
         }
-      } catch (ex) {
-
-      }
-      // 更新进度条
-      if (typeof this.ontimeupdate === 'function') {
-        this.ontimeupdate()
-      }
-    }, 1000)
-  }
-
-
-  /* ******************************自定义服务****************************** */
-  log() {
-    // console.log(...arguments)
-  }
-
-  // 判断当前播放音乐，是否与HA一致
-  isEqual({ media_title, media_artist, index }) {
-    let { currentIndex, playlist } = store.state
-    let { name, singer } = playlist[currentIndex]
-    if (name != media_title || singer != media_artist || index != currentIndex) {
-      return false
     }
-    return true
-  }
 
-  query(name) {
-    let url = new URLSearchParams(location.search)
-    return url.get(name)
-  }
-
-  /**
-  * 防抖
-  * @param {Function} fn
-  * @param {Number} wait
-  */
-  debounce(fn, wait) {
-    let cache = this.debounce.prototype.cache || {}
-    let fnKey = fn.toString()
-    let timeout = cache[fnKey]
-    if (timeout != null) clearTimeout(timeout)
-    cache[fnKey] = setTimeout(() => {
-      fn()
-      // 清除内存占用
-      if (Object.keys(cache).length === 0) {
-        this.debounce.prototype.cache = null
-      } else {
-        delete this.debounce.prototype.cache[fnKey]
-      }
-    }, wait)
-    this.debounce.prototype.cache = cache
-  }
-
-  /**
-  * 生成UUID
-  *
-  */
-  get uuid() {
-    var s = []
-    var hexDigits = '0123456789abcdef'
-    for (var i = 0; i < 36; i++) {
-      s[i] = hexDigits.substr(Math.floor(Math.random() * 0x10), 1)
+    /**
+     * 当前播放源
+     */
+    get src() {
+        return audio.src
     }
-    s[14] = '4' // bits 12-15 of the time_hi_and_version field to 0010
-    s[19] = hexDigits.substr((s[19] & 0x3) | 0x8, 1) // bits 6-7 of the clock_seq_hi_and_reserved to 01
-    s[8] = s[13] = s[18] = s[23] = '-'
+    set src(value) {
+        if (value === audio.src) {
+            return
+        }
+        audio.currentTime = 0
+        audio.src = value
+        store.commit('SET_PLAYING', true)
+        /**
+         * 如果当前播放的歌曲，和HA播放器里一致，则不进行操作
+         */
+        let { currentIndex, playlist } = store.state
 
-    var uuid = s.join('')
-    return uuid
-  }
+        if (playlist.length > 0) {
+            // 格式化当前播放列表
+            const list = []
+            playlist.forEach((ele, index) => {
+                list.push({
+                    song: ele.name,
+                    ...ele
+                })
+            })
+            //播放歌单
+            const { media_title, media_artist } = this.attributes
+            // 获取当前播放的音乐
+            let { song, singer } = list[currentIndex]
+            // 如果歌名、歌手、当前索引不一样，则播放
+            if (song != media_title || singer != media_artist || this.index != currentIndex) {
+                this.fetchApi('/ha_cloud_music-api', {
+                    type: 'play_media',
+                    index: currentIndex,
+                    list
+                })
+            }
+        }
+    }
+    /**
+     * 当前进度
+     */
+    get currentTime() {
+        return audio.currentTime
+    }
 
+    set currentTime(value) {
+        this.debounce(() => {
+            this.log('调整进度', value)
+            this.callMediaPlayerService('media_seek', { seek_position: value }).finally(() => {
+                audio.currentTime = value
+            })
+        }, 1000)
+    }
+    // 当前声音
+    get volume() {
+        return audio.volume
+    }
+
+    set volume(value) {
+        if (Number.isNaN(value)) return
+        this.debounce(() => {
+            const { volume_level } = this.attributes
+            this.log('调整音量：%s, HA音乐：%s', value, volume_level)
+            if (volume_level != value) {
+                this.callMediaPlayerService('volume_set', { volume_level: value }).finally(() => {
+                    audio.volume = value
+                })
+            }
+        }, 1000)
+    }
+
+    // 播放
+    play() {
+        this.callMediaPlayerService('media_play').finally(() => {
+            // 触发播放事件
+            if (typeof this.onplay === 'function') {
+                this.onplay()
+            }
+        })
+    }
+
+    // 暂停
+    pause() {
+        this.callMediaPlayerService('media_pause')
+    }
+
+    // 设置播放模式
+    get playMode() {
+        return {
+            '列表循环': 0,
+            '顺序播放': 1,
+            '随机播放': 2,
+            '单曲循环': 3
+        }
+    }
+
+    set playMode(mode) {
+        let arr = Object.entries(this.playMode)
+        let obj = arr.find(ele => ele[1] === mode)
+        Vue.prototype.$mmToast(obj[0])
+        this.callService('ha_cloud_music.config', {
+            play_mode: mode
+        })
+    }
+
+    // 定时更新
+    update() {
+        setInterval(async () => {
+            // 操作中的时候，不执行更新操作
+            if (this.loading === false) {
+                const { state, attributes } = this.entity
+                const isPlaying = state == 'playing'
+                let { media_position, play_mode, media_title, media_artist, volume_level } = attributes
+                const PLAYMODE = this.playMode[play_mode] || 0
+                // 设置音量
+                audio.volume = volume_level
+
+                if (isPlaying) {
+                    if (audio.media_position !== media_position) {
+                        this.log('【校准进度】当前进度：%s HA进度：%s 上一次更新进度：%s', audio.currentTime, media_position, audio.media_position)
+                        audio.currentTime = audio.media_position = media_position
+                    } else {
+                        audio.currentTime += 1
+                    }
+                }
+                store.commit('SET_PLAYING', isPlaying)
+                const { index } = this
+                if (this.isEqual({ media_title, media_artist, index }) === false) {
+                    store.commit('SET_PLAYMODE', PLAYMODE)
+                    store.commit('SET_CURRENTINDEX', index)
+                }
+            }
+            // 更新进度条
+            if (typeof this.ontimeupdate === 'function') {
+                this.ontimeupdate()
+            }
+        }, 1000)
+    }
+
+
+    /* ******************************自定义服务****************************** */
+    log() {
+        // console.log(...arguments)
+    }
+
+    // 判断当前播放音乐，是否与HA一致
+    isEqual({ media_title, media_artist, index }) {
+        let { currentIndex, playlist } = store.state
+        let { name, singer } = playlist[currentIndex]
+        if (name != media_title || singer != media_artist || index != currentIndex) {
+            return false
+        }
+        return true
+    }
+
+    query(name) {
+        let url = new URLSearchParams(location.search)
+        return url.get(name)
+    }
+
+    /**
+    * 防抖
+    * @param {Function} fn
+    * @param {Number} wait
+    */
+    debounce(fn, wait) {
+        let cache = this.debounce.prototype.cache || {}
+        let fnKey = fn.toString()
+        let timeout = cache[fnKey]
+        if (timeout != null) clearTimeout(timeout)
+        cache[fnKey] = setTimeout(() => {
+            fn()
+            // 清除内存占用
+            if (Object.keys(cache).length === 0) {
+                this.debounce.prototype.cache = null
+            } else {
+                delete this.debounce.prototype.cache[fnKey]
+            }
+        }, wait)
+        this.debounce.prototype.cache = cache
+    }
 }

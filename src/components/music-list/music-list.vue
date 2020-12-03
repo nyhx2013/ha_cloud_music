@@ -5,10 +5,20 @@
       <div class="list-item list-header">
         <span class="list-name">歌曲</span>
         <span class="list-artist">歌手</span>
-        <span v-if="listType === 1" class="list-time">时长</span>
-        <span v-else class="list-album">专辑</span>
+        <span
+          v-if="listType === 1"
+          class="list-time"
+        >时长</span>
+        <span
+          v-else
+          class="list-album"
+        >专辑</span>
       </div>
-      <div ref="listContent" class="list-content" @scroll="listScroll($event)">
+      <div
+        ref="listContent"
+        class="list-content"
+        @scroll="listScroll($event)"
+      >
         <div
           v-for="(item,index) in list"
           :key="item.id"
@@ -16,7 +26,10 @@
           :class="{'on':playing&&currentMusic.id===item.id}"
           @dblclick="selectItem(item,index,$event)"
         >
-          <span class="list-num" v-text="index+1"></span>
+          <span
+            class="list-num"
+            v-text="index+1"
+          ></span>
           <div class="list-name">
             <span>{{ item.name }}</span>
             <div class="list-menu">
@@ -29,7 +42,10 @@
             </div>
           </div>
           <span class="list-artist">{{ item.singer }}</span>
-          <span v-if="listType === 1" class="list-time">
+          <span
+            v-if="listType === 1"
+            class="list-time"
+          >
             {{ (item.duration % 3600) | format }}
             <mm-icon
               class="hover list-menu-icon-del"
@@ -38,12 +54,18 @@
               @click.stop="deleteItem(index)"
             />
           </span>
-          <span v-else class="list-album">{{ item.album }}</span>
+          <span
+            v-else
+            class="list-album"
+          >{{ item.album }}</span>
         </div>
         <slot name="listBtn"></slot>
       </div>
     </template>
-    <mm-no-result v-else title="弄啥呢，怎么啥也没有！！！" />
+    <mm-no-result
+      v-else
+      title="弄啥呢，怎么啥也没有！！！"
+    />
   </div>
 </template>
 
@@ -165,7 +187,8 @@ export default {
     },
     // 删除事件
     deleteItem(index) {
-      this.$emit('del', index) // 触发删除事件
+      this.$mmToast('不能删除哦')
+      // this.$emit('del', index) // 触发删除事件
     },
     ...mapMutations({
       setPlaying: 'SET_PLAYING'

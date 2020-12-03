@@ -42,9 +42,8 @@ export default {
   methods: {
     // 清空列表事件
     clearList() {
-      top.alert('懒得写这个功能，所以这里不让清除')
-      // this.clearPlayList()
-      // this.$mmToast('列表清空成功')
+      this.clearPlayList()
+      this.$mmToast('列表清空成功')
     },
     // 播放暂停事件
     selectItem(item, index) {
@@ -55,11 +54,10 @@ export default {
     },
     // 删除事件
     deleteItem(index) {
-      top.alert('懒得写这个功能，所以这里不让删除')
-      // let list = [...this.playlist]
-      // list.splice(index, 1)
-      // this.removerPlayListItem({ list, index })
-      // this.$mmToast('删除成功')
+      let list = [...this.playlist]
+      list.splice(index, 1)
+      this.removerPlayListItem({ list, index })
+      this.$mmToast('删除成功')
     },
     ...mapMutations({
       setPlaying: 'SET_PLAYING',

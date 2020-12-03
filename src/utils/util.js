@@ -23,8 +23,7 @@ export const randomSortArray = function shuffle(array) {
     result[rand] = result[index]
     result[index] = value
   }
-  // return result
-  return array
+  return result
 }
 
 // 防抖函数
@@ -46,26 +45,25 @@ export function addZero(s) {
 }
 
 // 歌词解析
+const timeExp = /\[(\d{2,}):(\d{2})(?:\.(\d{2,3}))?]/g
 export function parseLyric(lrc) {
-  let lyrics = lrc.split('\n')
-  let lrcObj = []
-  for (let i = 0; i < lyrics.length; i++) {
-    let lyric = decodeURIComponent(lyrics[i])
-    let timeReg = /\[\d*:\d*((\.|:)\d*)*\]/g
-    let timeRegExpArr = lyric.match(timeReg)
-    if (!timeRegExpArr) continue
-    let clause = lyric.replace(timeReg, '')
-    for (let k = 0, h = timeRegExpArr.length; k < h; k++) {
-      let t = timeRegExpArr[k]
-      let min = Number(String(t.match(/\[\d*/i)).slice(1))
-      let sec = Number(String(t.match(/:\d*/i)).slice(1))
-      let time = min * 60 + sec
-      if (clause !== '') {
-        lrcObj.push({ time: time, text: clause })
-      }
+  const lines = lrc.split('\n')
+  const lyric = []
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i]
+    const result = timeExp.exec(line)
+    if (!result) {
+      continue
+    }
+    const text = line.replace(timeExp, '').trim()
+    if (text) {
+      lyric.push({
+        time: (result[1] * 6e4 + result[2] * 1e3 + (result[3] || 0) * 1) / 1e3,
+        text
+      })
     }
   }
-  return lrcObj
+  return lyric
 }
 
 // 时间格式化
@@ -73,4 +71,37 @@ export function format(value) {
   let minute = Math.floor(value / 60)
   let second = Math.floor(value % 60)
   return `${addZero(minute)}:${addZero(second)}`
+}
+
+/**
+ * https://github.com/videojs/video.js/blob/master/src/js/utils/promise.js
+ * Silence a Promise-like object.
+ *
+ * This is useful for avoiding non-harmful, but potentially confusing "uncaught
+ * play promise" rejection error messages.
+ *
+ * @param  {Object} value
+ *         An object that may or may not be `Promise`-like.
+ */
+export function isPromise(v) {
+  return v !== undefined && v !== null && typeof v.then === 'function'
+}
+
+export function silencePromise(value) {
+  if (isPromise(value)) {
+    value.then(null, () => {})
+  }
+}
+
+// 判断 string 类型
+export function isString(v) {
+  return typeof v === 'string'
+}
+
+// http 链接转化成 https
+export function toHttps(url) {
+  if (!isString(url)) {
+    return url
+  }
+  return url.replace('http://', 'https://')
 }

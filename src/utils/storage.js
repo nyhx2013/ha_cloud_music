@@ -83,18 +83,14 @@ export function setMode(mode) {
   return mode
 }
 
-/**
- * 网易云用户uid
- * @type USERID_KEY：key值
- */
-const USERID_KEY = '__mmPlayer_userID__'
 // 获取用户uid
 export function getUserId() {
-  return Number(storage.get(USERID_KEY, null))
+  const query = new URLSearchParams(location.search)
+  const uid = query.get('uid')
+  if (/^\d+$/.test(uid)) return uid
 }
 // 修改用户uid
 export function setUserId(uid) {
-  storage.set(USERID_KEY, uid)
   return uid
 }
 

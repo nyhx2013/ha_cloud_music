@@ -122,6 +122,14 @@
         }
       }
     </style>
+    <script>
+      ;(function() {
+        if (!!window.ActiveXObject || 'ActiveXObject' in window) {
+          window.location = './prompt.html'
+          return false
+        }
+      })()
+    </script>
     <% if ( NODE_ENV === 'production' ) { %>
     <script>
       var _hmt = _hmt || []

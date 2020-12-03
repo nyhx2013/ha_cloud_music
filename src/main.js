@@ -30,15 +30,14 @@ Vue.use(VueLazyload, {
   loading: require('assets/img/default.png')
 })
 
+// 访问版本统计
+window._hmt && window._hmt.push(['_setCustomVar', 1, 'version', VERSION, 1])
+
 const redirectList = ['/music/details', '/music/comment']
 router.beforeEach((to, from, next) => {
   window._hmt &&
-    window._hmt.push([
-      '_trackPageview',
-      `'/#'${to.fullPath}${
-        to.fullPath.indexOf('?') < 0 ? '?' : '&'
-      }version=${VERSION}`
-    ])
+    to.path &&
+    window._hmt.push(['_trackPageview', '/#' + to.fullPath])
   if (redirectList.includes(to.path)) {
     next()
   } else {
@@ -54,23 +53,25 @@ router.beforeEach((to, from, next) => {
 // 当前版本为：V${VERSION}
 // 作者：茂茂
 // Github：https://github.com/maomao1996/Vue-mmPlayer
-// 歌曲来源于网易云音乐 (http://music.163.com)`
+// 歌曲来源于网易云音乐 (https://music.163.com)`
+// // eslint-disable-next-line no-console
 // console.info(`%c${window.mmplayer}`, `color:blue`)
-
 // 动态注册组件
-Vue.loading = Vue.prototype.loading = function(timeout = 4) {
+Vue.loading = () => {
   let v = new Vue({
     store,
     router,
     render: h => h(Loading)
   }).$mount(document.createElement('div'))
   document.body.appendChild(v.$el)
-  setTimeout(() => {
-    document.body.removeChild(v.$el)
-  }, timeout * 1000)
+  return {
+    close() {
+      document.body.removeChild(v.$el)
+    }
+  }
 }
 
-/* eslint-disable no-new */
+// eslint-disable-next-line no-new
 new Vue({
   el: '#mmPlayer',
   store,

@@ -2,7 +2,9 @@
   <!--头部-->
   <header class="mm-header">
     <h1 class="header">
-      <a>mmPlayer在线音乐播放器&nbsp;<span style="font-size:12px;">{{ audioEle ? audioEle.ver : '' }}</span></a>
+      <a href="https://github.com/maomao1996/Vue-mmPlayer" target="_blank">
+        mmPlayer 在线音乐播放器
+      </a>
     </h1>
     <dl class="user">
       <template v-if="user.userId">
@@ -10,13 +12,9 @@
           <img class="avatar" :src="`${user.avatarUrl}?param=50y50`" />
           <span>{{ user.nickname }}</span>
         </router-link>
-<!--
-        <dd class="user-btn" @click="openDialog(2)">退出</dd>
--->
+        <!-- <dd class="user-btn" @click="openDialog(2)">退出</dd> -->
       </template>
-<!--
-      <dd v-else class="user-btn" @click="openDialog(0)">登录</dd>
--->
+      <!-- <dd v-else class="user-btn" @click="openDialog(0)">登录</dd> -->
     </dl>
     <!--登录-->
     <mm-dialog
@@ -49,10 +47,10 @@
       <div class="mm-dialog-text">
         <p>
           1、
-          <a
-            target="_blank"
-            href="https://music.163.com"
-          >点我(https://music.163.com)</a>打开网易云音乐官网
+          <a target="_blank" href="https://music.163.com">
+            点我(https://music.163.com)
+          </a>
+          打开网易云音乐官网
         </p>
         <p>2、点击页面右上角的“登录”</p>
         <p>3、点击您的头像，进入我的主页</p>
@@ -60,7 +58,11 @@
       </div>
     </mm-dialog>
     <!--退出-->
-    <mm-dialog ref="outDialog" body-text="确定退出当前用户吗？" @confirm="out" />
+    <mm-dialog
+      ref="outDialog"
+      body-text="确定退出当前用户吗？"
+      @confirm="out"
+    />
   </header>
 </template>
 
@@ -68,6 +70,7 @@
 import { getUserPlaylist } from 'api'
 import { mapGetters, mapActions } from 'vuex'
 import MmDialog from 'base/mm-dialog/mm-dialog'
+import { toHttps } from '@/utils/util'
 
 export default {
   name: 'MmHeader',
@@ -81,7 +84,6 @@ export default {
     }
   },
   computed: {
-    ...mapGetters(['audioEle']),
     ...mapGetters(['uid'])
   },
   created() {
@@ -90,24 +92,21 @@ export default {
   methods: {
     // 打开对话框
     openDialog(key) {
-
-      this.$mmToast('不支持操作')
-
-      // switch (key) {
-      //   case 0:
-      //     this.$refs.loginDialog.show()
-      //     break
-      //   case 1:
-      //     this.$refs.loginDialog.hide()
-      //     this.$refs.helpDialog.show()
-      //     break
-      //   case 2:
-      //     this.$refs.outDialog.show()
-      //     break
-      //   case 3:
-      //     this.$refs.loginDialog.hide()
-      //     break
-      // }
+      switch (key) {
+        case 0:
+          this.$refs.loginDialog.show()
+          break
+        case 1:
+          this.$refs.loginDialog.hide()
+          this.$refs.helpDialog.show()
+          break
+        case 2:
+          this.$refs.outDialog.show()
+          break
+        case 3:
+          this.$refs.loginDialog.hide()
+          break
+      }
     },
     // 退出登录
     out() {
@@ -127,21 +126,19 @@ export default {
     },
     // 获取用户数据
     _getUserPlaylist(uid) {
-      getUserPlaylist(uid).then(res => {
-        if (res.data.code === 200) {
-          this.uidValue = ''
-          if (res.data.playlist.length === 0 || !res.data.playlist[0].creator) {
-            this.$mmToast(`未查询找 UID 为 ${uid} 的用户信息`)
-            return
-          }
-          this.setUid(uid)
-          let obj = res.data.playlist[0].creator
-          obj.avatarUrl = obj.avatarUrl.replace('http://', 'https://')
-          this.user = obj
-          setTimeout(() => {
-            this.$mmToast(`${this.user.nickname} 欢迎使用 mmPlayer`)
-          }, 200)
+      getUserPlaylist(uid).then(({ playlist = [] }) => {
+        this.uidValue = ''
+        if (playlist.length === 0 || !playlist[0].creator) {
+          this.$mmToast(`未查询找 UID 为 ${uid} 的用户信息`)
+          return
         }
+        const creator = playlist[0].creator
+        this.setUid(uid)
+        creator.avatarUrl = toHttps(creator.avatarUrl)
+        this.user = creator
+        setTimeout(() => {
+          this.$mmToast(`${this.user.nickname} 欢迎使用 mmPlayer`)
+        }, 200)
       })
     },
     ...mapActions(['setUid'])
