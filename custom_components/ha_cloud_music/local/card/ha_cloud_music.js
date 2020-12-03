@@ -3,6 +3,9 @@ window.ha_cloud_music = {
     get hass() {
         return document.querySelector('home-assistant').hass
     },
+    get version() {
+        return this.hass.states['media_player.yun_yin_le'].attributes.version
+    },
     fetchApi(params) {
         return this.hass.fetchWithAuth('/ha_cloud_music-api', {
             method: 'POST',
@@ -32,16 +35,19 @@ window.ha_cloud_music = {
     },
     addEventListener(type, func) {
         this.eventQueue[type] = func
+    },
+    load(name) {
+        return import(`./ha_cloud_music-${name}.js?ver=${this.version}`)
     }
 }
-
-import('./ha_cloud_music-player.js')
-import('./ha_cloud_music-tabs.js').then(async () => {
-    await import('./ha_cloud_music-playlist.js')
-    await import('./ha_cloud_music-lovelist.js')
-    await import('./ha_cloud_music-search.js')
-    await import('./ha_cloud_music-setting.js')
-    await import('./ha_cloud_music-voice.js')
-    await import('./ha_cloud_music-fmlist.js')
-    import('./ha_cloud_music-panel.js')
+// 加载模块
+ha_cloud_music.load('player')
+ha_cloud_music.load('tabs').then(async () => {
+    await ha_cloud_music.load('playlist')
+    await ha_cloud_music.load('lovelist')
+    await ha_cloud_music.load('search')
+    await ha_cloud_music.load('setting')
+    await ha_cloud_music.load('voice')
+    await ha_cloud_music.load('fmlist')
+    ha_cloud_music.load('panel')
 })
