@@ -18,7 +18,7 @@ class ApiMusic():
         self.media = media
         self.api_url = cfg['api_url']
         self.qq_api_url = cfg['qq_api_url']
-        self.uid = cfg['uid']
+        self.uid = cfg.get('uid', '')
         self.user = cfg['user']
         self.password = cfg['password']
         self.ximalaya_api = cfg.get('ximalaya_api', 'http://localhost:3002/id/')

@@ -38,9 +38,10 @@ class ApiView(HomeAssistantView):
                 return self.json({"code": 0, "msg": "播放成功"})
             elif _type == 'love_get':
                 res = mp.api_config.get_love_playlist()
-                return self.json({"code": 0, "msg": "收藏到我的最爱", "data": res})
+                return self.json({"code": 0, "msg": "最爱列表", "data": res})
             elif _type == 'love_set':
                 mp.api_config.set_love_playlist(mp)
+                mp.favourite = True
                 return self.json({"code": 0, "msg": "收藏到我的最爱"})
             elif _type == 'love_delete':
                 mp.api_config.delete_love_playlist(response['id'], response.get('music_type', ''))

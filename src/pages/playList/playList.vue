@@ -42,8 +42,8 @@ export default {
   methods: {
     // 清空列表事件
     clearList() {
-      this.clearPlayList()
-      this.$mmToast('列表清空成功')
+      // this.clearPlayList()
+      this.$mmToast('不能操作哦')
     },
     // 播放暂停事件
     selectItem(item, index) {

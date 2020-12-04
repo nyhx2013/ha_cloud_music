@@ -83,13 +83,14 @@ export default class {
         // 设置音量
         setVolume(attributes.volume_level)
         // 根据HA播放器，设置对应的状态
-        store.commit('SET_CURRENTINDEX', this.index)
+        const { index } = this
+        if (index >= 0) store.commit('SET_CURRENTINDEX', index)
         store.commit('SET_PLAYING', isReady)
         // 根据HA播放器，设置对应的播放模式（0、1、2、3）
         store.commit('SET_PLAYMODE', this.playMode[attributes.play_mode] || 0)
         // 设置列表
         store.dispatch('setPlaylist', { list: playlist })
-        console.log(`播放状态：${isReady}, 模式：${attributes.play_mode}，索引：${this.index}`)
+        console.log(`播放状态：${isReady}, 模式：${attributes.play_mode}，索引：${index}`)
         // 显示模式
         this.showMode()
         // 开始执行定时更新
@@ -247,7 +248,7 @@ export default class {
                 const { index } = this
                 if (this.isEqual({ media_title, media_artist, index }) === false) {
                     store.commit('SET_PLAYMODE', PLAYMODE)
-                    store.commit('SET_CURRENTINDEX', index)
+                    if (index >= 0) store.commit('SET_CURRENTINDEX', index)
                 }
             }
             // 更新进度条
