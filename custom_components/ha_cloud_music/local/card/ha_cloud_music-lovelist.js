@@ -28,6 +28,9 @@ class HaCloudMusicLovelist extends HTMLElement {
 
         /* ***************** 附加代码 ***************** */
         this.reload()
+        ha_cloud_music.addEventListener('love_set', () => {
+            this.reload()
+        })
     }
 
     reload() {

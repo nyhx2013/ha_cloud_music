@@ -43,7 +43,7 @@ class ApiConfig():
         index = media.music_index
         # 判断当前播放音乐是否存在
         music_info = playlist[index]
-        length = len(list(filter(lambda m: m['id'] == music_info['id'] and m.get('type', '') == music_info['type'], res)))
+        length = len(list(filter(lambda m: m['id'] == music_info['id'] and m.get('type', '') == music_info.get('type', ''), res)))
         if length == 0:
             res.append(music_info)
         self.write('love.json', res)

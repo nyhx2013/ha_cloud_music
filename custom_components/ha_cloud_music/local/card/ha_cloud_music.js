@@ -3,8 +3,11 @@ window.ha_cloud_music = {
     get hass() {
         return document.querySelector('home-assistant').hass
     },
+    get entity_id() {
+        return 'media_player.yun_yin_le'
+    },
     get version() {
-        return this.hass.states['media_player.yun_yin_le'].attributes.version
+        return this.hass.states[this.entity_id].attributes.version
     },
     fetchApi(params) {
         return this.hass.fetchWithAuth('/ha_cloud_music-api', {
@@ -18,6 +21,13 @@ window.ha_cloud_music = {
         let service = arr[1]
         this.hass.callService(domain, service, service_data)
     },
+    // 媒体服务
+    callMediaPlayerService(service_name, service_data = {}) {
+        this.hass.callService('media_player', service_name, {
+            entity_id: this.entity_id,
+            ...service_data
+        })
+    },
     fire(type, data) {
         const event = new Event(type, {
             bubbles: true,
@@ -30,7 +40,7 @@ window.ha_cloud_music = {
     toast(message) {
         this.fire("hass-notification", { message })
     },
-    onmessage({ type, data }) {
+    onmessage(type, data) {
         this.eventQueue[type](data)
     },
     addEventListener(type, func) {

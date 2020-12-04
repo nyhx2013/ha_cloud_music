@@ -29,38 +29,6 @@ class HaCloudMusicPlayer extends HTMLElement {
     }
 
     /*
-     * 触发事件
-     * type: 事件名称
-     * data: 事件参数
-     */
-    fire(type, data) {
-        const event = new Event(type, {
-            bubbles: true,
-            cancelable: false,
-            composed: true
-        });
-        event.detail = data;
-        this.dispatchEvent(event);
-    }
-
-    /*
-     * 调用服务
-     * service: 服务名称(例：light.toggle)
-     * service_data：服务数据(例：{ entity_id: "light.xiao_mi_deng_pao" } )
-     */
-    callService(service_name, service_data = {}) {
-        let arr = service_name.split('.')
-        let domain = arr[0]
-        let service = arr[1]
-        this._hass.callService(domain, service, service_data)
-    }
-
-    // 通知
-    toast(message) {
-        this.fire("hass-notification", { message })
-    }
-
-    /*
      * 接收HA核心对象
      */
     set hass(hass) {
@@ -77,7 +45,6 @@ class HaCloudMusicPlayer extends HTMLElement {
     // 接收当前状态对象
     set stateObj(value) {
         this._stateObj = value
-        // console.log(value)
         if (this.isCreated) this.updated()
     }
 
@@ -158,21 +125,22 @@ class HaCloudMusicPlayer extends HTMLElement {
         /* ***************** 附加代码 ***************** */
         let { $ } = this
         $('.prev').onclick = () => {
-            this.toast("上一曲")
-            this.callService("media_player.media_previous_track", { entity_id: this._stateObj.entity_id })
+            ha_cloud_music.toast("上一曲")
+            ha_cloud_music.callMediaPlayerService("media_previous_track")
         }
         $('.next').onclick = () => {
-            this.toast("下一曲")
-            this.callService("media_player.media_next_track", { entity_id: this._stateObj.entity_id })
+            ha_cloud_music.toast("下一曲")
+            ha_cloud_music.callMediaPlayerService("media_next_track")
         }
         $('.action').onclick = () => {
-            this.toast(this._stateObj.state == "playing" ? '暂停音乐' : '播放音乐')
-            this.callService("media_player.media_play_pause", { entity_id: this._stateObj.entity_id })
+            const { state } = this.stateObj
+            ha_cloud_music.toast(state == "playing" ? '暂停音乐' : '播放音乐')
+            ha_cloud_music.callMediaPlayerService("media_play_pause")
         }
         $('.controls-list').onclick = () => {
-            this.toast("重新开始播放")
+            ha_cloud_music.toast("重新开始播放")
             let { source } = this.stateObj.attributes
-            if (source) this.callService("media_player.select_source", { entity_id: this._stateObj.entity_id, source })
+            if (source) ha_cloud_music.callMediaPlayerService("select_source", { source })
         }
         $('.play_mode').onclick = () => {
             let icon = $('.play_mode').getAttribute('icon')
@@ -180,28 +148,27 @@ class HaCloudMusicPlayer extends HTMLElement {
             let mode = obj.value
             mode = mode >= 3 ? 0 : mode + 1
             // 设置播放模式
-            this.callService("ha_cloud_music.config", { play_mode: mode })
+            ha_cloud_music.callService("ha_cloud_music.config", { play_mode: mode })
 
             let newMode = this.playMode[mode]
-            this.toast(newMode.name)
+            ha_cloud_music.toast(newMode.name)
             $('.play_mode').setAttribute('icon', newMode.icon)
 
         }
 
         $('.progress .ha-paper-slider').onchange = () => {
-            let attr = this.stateObj.attributes
-            let seek_position = $('.progress .ha-paper-slider').value / 100 * attr.media_duration
-            this.callService("media_player.media_seek", {
-                entity_id: this._stateObj.entity_id,
-                seek_position
-            })
-            this.toast(`调整音乐进度到${seek_position}秒`)
+            const { media_duration } = this.stateObj.attributes
+            let seek_position = Math.floor($('.progress .ha-paper-slider').value / 100 * media_duration)
+            ha_cloud_music.callMediaPlayerService("media_seek", { seek_position })
+            ha_cloud_music.toast(`调整音乐进度到${seek_position}秒`)
         }
 
         $('.mdi-cards-heart').onclick = () => {
             $('.mdi-cards-heart').classList.add('red')
             ha_cloud_music.fetchApi({ type: 'love_set' }).then((res) => {
-                this.toast(res.msg)
+                ha_cloud_music.toast(res.msg)
+                // 通知最爱列表更新
+                ha_cloud_music.onmessage('love_set')
             })
         }
         $('.icon-music-search').onclick = () => {
@@ -213,36 +180,36 @@ class HaCloudMusicPlayer extends HTMLElement {
     updated() {
         let { $, _stateObj } = this
         // console.log(_stateObj)
-        let action = $('.action')
-        let attrs = _stateObj.attributes
-        if ('entity_picture' in attrs) {
-            action.src = attrs.entity_picture
-        }
-        // 判断是否红心
-        if ('favourite' in attrs) {
-            const classList = $('.mdi-cards-heart').classList
-            if (attrs.favourite) {
-                if (!classList.contains('red')) classList.add('red')
-            } else {
-                if (classList.contains('red')) classList.remove('red')
-            }
+        const { state, attributes } = _stateObj
+        const { entity_picture, favourite, play_mode, media_position, media_duration } = attributes
+        // 封面播放图
+        const action = $('.action')
+        if (entity_picture) {
+            action.src = entity_picture
         }
         // 如果是在播放中，则转圈圈
-        if (_stateObj.state == "playing") {
+        if (state == "playing") {
             if (!action.classList.contains('rotate')) action.classList.add('rotate')
         } else {
             action.classList.remove('rotate')
         }
+        // 判断是否红心
+        const classList = $('.mdi-cards-heart').classList
+        const isFavourite = classList.contains('red')
+        if (favourite) {
+            if (!isFavourite) classList.add('red')
+        } else {
+            if (isFavourite) classList.remove('red')
+        }
         // 设备模式
-        let mode = this.playMode.find(ele => ele.name == attrs.play_mode)
+        let mode = this.playMode.find(ele => ele.name == play_mode)
         if (mode) {
             $('.play_mode').setAttribute('icon', mode.icon)
         }
-
-        $('.progress .time-position').textContent = `${this.timeForamt(attrs.media_position / 60)}:${this.timeForamt(attrs.media_position % 60)}`
-        $('.progress .time-length').textContent = `${this.timeForamt(attrs.media_duration / 60)}:${this.timeForamt(attrs.media_duration % 60)}`
-        if (attrs.media_position <= attrs.media_duration) {
-            $('.progress .ha-paper-slider').value = attrs.media_position / attrs.media_duration * 100
+        $('.progress .time-position').textContent = `${this.timeForamt(media_position / 60)}:${this.timeForamt(media_position % 60)}`
+        $('.progress .time-length').textContent = `${this.timeForamt(media_duration / 60)}:${this.timeForamt(media_duration % 60)}`
+        if (media_position <= media_duration) {
+            $('.progress .ha-paper-slider').value = media_position / media_duration * 100
         }
     }
 
