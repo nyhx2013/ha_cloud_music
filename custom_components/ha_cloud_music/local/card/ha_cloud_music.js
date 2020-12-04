@@ -37,17 +37,21 @@ window.ha_cloud_music = {
         this.eventQueue[type] = func
     },
     load(name) {
+        if (Array.isArray(name)) {
+            const arr = name.map(ele => {
+                return this.load(ele)
+            })
+            return Promise.all(arr)
+        }
         return import(`./ha_cloud_music-${name}.js?ver=${this.version}`)
     }
 }
-// 加载模块
-ha_cloud_music.load('player')
-ha_cloud_music.load('tabs').then(async () => {
-    await ha_cloud_music.load('playlist')
-    await ha_cloud_music.load('lovelist')
-    await ha_cloud_music.load('search')
-    await ha_cloud_music.load('setting')
-    await ha_cloud_music.load('voice')
-    await ha_cloud_music.load('fmlist')
-    ha_cloud_music.load('panel')
-})
+
+setTimeout(() => {
+    // 加载模块
+    ha_cloud_music.load('player')
+    ha_cloud_music.load('tabs').then(async () => {
+        await ha_cloud_music.load(['playlist', 'lovelist', 'search', 'setting', 'voice', 'fmlist', 'version'])
+        ha_cloud_music.load('panel')
+    })
+}, 1000)

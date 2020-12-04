@@ -52,11 +52,7 @@ class HaCloudMusicPanel extends HTMLElement {
                 <ha_cloud_music-lovelist></ha_cloud_music-lovelist>               
             </div>
         </ha_cloud_music-tabs>
-        <div class="version-info">
-            <div class="line"></div>
-            <a href="https://github.com/shaonianzhentan/ha_cloud_music" target="_blank">插件版本：<span class="version"></span></a>
-            <div class="line"></div>
-        </div>
+        <ha_cloud_music-version></ha_cloud_music-version>     
         `
         shadow.appendChild(ha_card)
         // 创建样式
@@ -78,9 +74,7 @@ class HaCloudMusicPanel extends HTMLElement {
             top:50%;
             transform:translateY(-50%);
         }
-        .version-info{text-align:center;display:flex;padding:10px 0;margin-top:10px;}
-        .version-info a{text-decoration:none;color:gray;width: 300px;}
-        .version-info .line{border-bottom:1px solid #ccc; height:10px;width:60%;}
+        
         `
         shadow.appendChild(style);
         // 保存核心DOM对象
@@ -103,9 +97,9 @@ class HaCloudMusicPanel extends HTMLElement {
     // 更新界面数据
     updated() {
         let { $, _stateObj } = this
-        $('.version').textContent = _stateObj.attributes.version
         $('ha_cloud_music-playlist').updated(_stateObj)
         $('ha_cloud_music-setting').updated(_stateObj)
+        $('ha_cloud_music-version').updated(_stateObj)
     }
 
 
