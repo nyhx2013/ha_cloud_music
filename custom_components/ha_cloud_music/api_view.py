@@ -35,6 +35,7 @@ class ApiView(HomeAssistantView):
                                 'index': response['index'],
                                 'list': response['list']
                             })
+                mp.update_entity()
                 return self.json({"code": 0, "msg": "播放成功"})
             elif _type == 'love_get':
                 res = mp.api_config.get_love_playlist()
