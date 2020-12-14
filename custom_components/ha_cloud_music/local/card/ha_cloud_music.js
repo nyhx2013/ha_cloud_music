@@ -6,8 +6,15 @@ window.ha_cloud_music = {
     get entity_id() {
         return 'media_player.yun_yin_le'
     },
+    get entity() {
+        try {
+            return this.hass.states[this.entity_id]
+        } catch {
+            return null
+        }
+    },
     get version() {
-        return this.hass.states[this.entity_id].attributes.version
+        return this.entity.attributes.version
     },
     fetchApi(params) {
         return this.hass.fetchWithAuth('/ha_cloud_music-api', {
@@ -55,13 +62,18 @@ window.ha_cloud_music = {
         }
         return import(`./ha_cloud_music-${name}.js?ver=${this.version}`)
     }
-}
+};
 
-setTimeout(() => {
-    // 加载模块
-    ha_cloud_music.load('player')
-    ha_cloud_music.load('tabs').then(async () => {
-        await ha_cloud_music.load(['playlist', 'lovelist', 'search', 'setting', 'voice', 'fmlist', 'version'])
-        ha_cloud_music.load('panel')
-    })
-}, 1000)
+(() => {
+    const timer = setInterval(() => {
+        if (!ha_cloud_music.entity) return
+        clearInterval(timer)
+        // 加载模块
+        ha_cloud_music.load('player')
+        ha_cloud_music.load('tabs').then(async () => {
+            await ha_cloud_music.load(['playlist', 'lovelist', 'search', 'setting', 'voice', 'fmlist', 'version'])
+            ha_cloud_music.load('panel')
+        })
+    }, 3000)
+})();
+
