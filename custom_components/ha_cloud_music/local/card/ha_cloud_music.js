@@ -53,14 +53,19 @@ window.ha_cloud_music = {
     addEventListener(type, func) {
         this.eventQueue[type] = func
     },
-    load(name) {
+    async load(name) {
         if (Array.isArray(name)) {
             const arr = name.map(ele => {
                 return this.load(ele)
             })
             return Promise.all(arr)
         }
-        return import(`./ha_cloud_music-${name}.js?ver=${this.version}`)
+        const tagName = `ha_cloud_music-${name}`
+        const result = await import(`./${tagName}.js?ver=${this.version}`)
+        return {
+            tagName,
+            result
+        }
     }
 };
 
@@ -74,6 +79,6 @@ window.ha_cloud_music = {
             await ha_cloud_music.load(['playlist', 'lovelist', 'search', 'setting', 'voice', 'fmlist', 'version'])
             ha_cloud_music.load('panel')
         })
-    }, 3000)
+    }, 2000)
 })();
 

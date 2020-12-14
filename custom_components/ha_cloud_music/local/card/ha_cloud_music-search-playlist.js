@@ -1,24 +1,8 @@
-class HaCloudMusicFMList extends HTMLElement {
-
-    constructor() {
-        super()
-        this.created()
-    }
-
-    async _fetch(url) {
-        try {
-            if (url == 'https://rapi.qingting.fm/categories?type=channel' && localStorage["ha_cloud_music-fmlist"]) {
-                return JSON.parse(localStorage["ha_cloud_music-fmlist"])
-            }
-        } catch {
-
-        }
-        const res = await fetch(url).then(res => res.json())
-        return res.Data
-    }
+class HaCloudMusicSearchPlayList extends HTMLElement {
 
     // 创建界面
-    created() {
+    created(type, value) {
+        this.type = type
         /* ***************** 基础代码 ***************** */
         const shadow = this.attachShadow({ mode: 'open' });
         // 创建面板
@@ -27,13 +11,6 @@ class HaCloudMusicFMList extends HTMLElement {
         ha_card.innerHTML = `
         <!-- 电台列表 -->
         <div class="fm-list">
-            <!--
-            <div class="fm-item">
-                <img src="https://p2.music.126.net/WEIm9ckMQ9AmN7kKDn30VQ==/109951163686912767.jpg?param=300y300" />
-                <br/>
-                音乐台
-            </div>
-            -->
         </div>                
         <!-- 电台信息 -->
         <div class="fm-info hide">
@@ -72,15 +49,15 @@ class HaCloudMusicFMList extends HTMLElement {
 
         /* ***************** 附加代码 ***************** */
         let { $ } = this
-
+        ha_cloud_music.showLoading()
         // 请求数据
-        this._fetch('https://rapi.qingting.fm/categories?type=channel').then(res => {
-            // console.log(res)
-            if (!localStorage["ha_cloud_music-fmlist"]) {
-                localStorage["ha_cloud_music-fmlist"] = JSON.stringify(res)
-            }
+        ha_cloud_music.fetchApi({
+            type: `search-${type}`,
+            name: value
+        }).then(res => {
             const df = document.createDocumentFragment()
-            res.forEach(({ id, title }) => {
+            res.forEach(({ id, name, cover }) => {
+                const title = name
                 const div = document.createElement('div')
                 div.classList.add('fm-item')
                 div.onclick = () => {
@@ -93,10 +70,12 @@ class HaCloudMusicFMList extends HTMLElement {
                     this.loadMoreData()
                 }
                 div.title = title
-                div.innerHTML = `<img src="https://p2.music.126.net/WEIm9ckMQ9AmN7kKDn30VQ==/109951163686912767.jpg?param=300y300" /><br/>${title}`
+                div.innerHTML = `<img src="${cover}?param=300y300" /><br/>${title}`
                 df.appendChild(div)
             })
             $('.fm-list').appendChild(df)
+        }).finally(() => {
+            ha_cloud_music.hideLoading()
         })
         // 返回
         $('.info-title span').onclick = () => {
@@ -125,37 +104,33 @@ class HaCloudMusicFMList extends HTMLElement {
                 const index = parseInt(li.dataset['index'])
                 ha_cloud_music.toast(`开始播放【${list[index].name}】`)
                 // 播放FM
-                ha_cloud_music.fetchApi({ type: 'play_media', list, index })
+                ha_cloud_music.showLoading()
+                ha_cloud_music.fetchApi({ type: 'play_media', list, index }).finally(() => {
+                    ha_cloud_music.hideLoading()
+                })
             }
         }
-        this._fetch(`https://rapi.qingting.fm/categories/${id}/channels?with_total=true&page=${page}&pagesize=${pagesize}`).then(res => {
-            // console.log(res)
+        ha_cloud_music.fetchApi({
+            type: `search-${this.type}`,
+            id,
+            page,
+            size: pagesize
+        }).then(res => {
             $('.fm-list').classList.add('hide')
             $('.fm-info').classList.remove('hide')
             const ol = document.createDocumentFragment()
-            res.items.forEach(ele => {
-                const name = (ele.nowplaying && ele.nowplaying.title) || ele.title
+            res.list.forEach(ele => {
                 const li = document.createElement('li')
                 li.dataset['index'] = this.music_list.length
-                li.innerHTML = `${name} - ${ele.title}`
+                li.innerHTML = `${ele.song} - ${ele.singer}`
                 ol.appendChild(li)
-                this.music_list.push({
-                    album: ele.categories[0].title,
-                    duration: ele.audience_count,
-                    id: ele.content_id,
-                    image: ele.cover,
-                    name,
-                    song: name,
-                    singer: ele.title,
-                    type: 'url',
-                    url: `http://lhttp.qingting.fm/live/${ele.content_id}/64k.mp3`
-                })
+                this.music_list.push(ele)
             })
             $('.fm-info ol').appendChild(ol)
             button.dataset['page'] = ++page
             // 判断是否能加载更多
             let len = $('.fm-info ol').querySelectorAll('li').length
-            if (res.total == len) {
+            if (!res.total || res.total == len) {
                 button.classList.add('hide')
             }
         }).finally(() => {
@@ -165,4 +140,4 @@ class HaCloudMusicFMList extends HTMLElement {
 }
 
 // 定义DOM对象元素
-customElements.define('ha_cloud_music-fmlist', HaCloudMusicFMList);
+customElements.define('ha_cloud_music-search-playlist', HaCloudMusicSearchPlayList);

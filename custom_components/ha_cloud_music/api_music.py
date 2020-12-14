@@ -140,7 +140,63 @@ class ApiMusic():
 
     ###################### 获取音乐播放URL ######################
 
-    ###################### 搜索音乐列表 ######################
+    ###################### 搜索音乐列表 ######################    
+    # 音乐搜索
+    async def search_music(self, name):
+        _list = []
+        # 搜索网易云音乐
+        obj = await self.get('/search?keywords='+ name)
+        if obj['code'] == 200:
+            songs = obj['result']['songs']
+            if len(songs) > 0:
+                _newlist = map(lambda item: {
+                    "search_source": "网易云音乐",
+                    "id": int(item['id']),
+                    "name": item['name'],
+                    "album": item['album']['name'],
+                    "image": item['album']['artist']['img1v1Url']+"?param=300y300",
+                    "duration": int(item['duration']) / 1000,
+                    "url": "https://music.163.com/song/media/outer/url?id=" + str(item['id']),
+                    "song": item['name'],
+                    "singer": len(item['artists']) > 0 and item['artists'][0]['name'] or '未知'
+                    }, songs)
+                _list.extend(list(_newlist))
+        # 搜索QQ音乐
+        res = await self.qq_get('/getSmartbox?key=' + name)
+        if res is not None:
+            songs = res['data']['song']
+            if songs['count'] > 0:
+                _newlist = map(lambda item: {
+                    "search_source": "QQ音乐",
+                    "id": int(item['id']),
+                    "mid": item['mid'],
+                    "name": item['name'],
+                    "album": "QQ音乐",
+                    "image": "http://p3.music.126.net/3TTjFNIrtcUzoMlB1D1fDA==/109951164969055590.jpg?param=300y300",
+                    "duration": 0,
+                    "type": "qq",
+                    "song": item['name'],
+                    "singer": item['singer']
+                    }, songs['itemlist'])
+                _list.extend(list(_newlist))
+        # 搜索咪咕音乐
+        res = await self.proxy_get("http://m.music.migu.cn/migu/remoting/scr_search_tag?rows=10&type=2&keyword=" + urllib.parse.quote(name) + "&pgc=1")
+        if res is not None:
+            songs = res['musics']
+            if res['pgt'] > 0:
+                _newlist = map(lambda item: {
+                    "search_source": "咪咕音乐",
+                    "id": int(item['id']),
+                    "name": item['songName'],
+                    "album": item['albumName'],
+                    "image": item['cover'] != 'null' and item['cover'] or 'https://m.music.migu.cn/migu/fs/media/p/149/163/5129/image/20171120/1332871.jpg',
+                    "duration": 0,
+                    "url": item['mp3'],
+                    "song": item['songName'],
+                    "singer": item['singerName']
+                    }, songs)
+                _list.extend(list(_newlist))
+        return _list
 
     async def search_ximalaya(self, name):
         _newlist = []
@@ -360,48 +416,13 @@ class ApiMusic():
 
     # 播放音乐
     async def play_song(self, name):
-        hass = self.hass
-        _list = []
-        # 搜索网易云音乐
-        obj = await self.get('/search?keywords='+ name)
-        if obj['code'] == 200:
-            songs = obj['result']['songs']
-            if len(songs) > 0:
-                _newlist = map(lambda item: {
-                    "id": int(item['id']),
-                    "name": item['name'],
-                    "album": item['album']['name'],
-                    "image": item['album']['artist']['img1v1Url'],
-                    "duration": int(item['duration']) / 1000,
-                    "url": "https://music.163.com/song/media/outer/url?id=" + str(item['id']),
-                    "song": item['name'],
-                    "singer": len(item['artists']) > 0 and item['artists'][0]['name'] or '未知'
-                    }, songs)
-                _list.extend(list(_newlist))
-        # 搜索QQ音乐
-        res = await self.qq_get('/getSmartbox?key=' + name)
-        if res is not None:
-            songs = res['data']['song']
-            if songs['count'] > 0:
-                _newlist = map(lambda item: {
-                    "id": int(item['id']),
-                    "mid": item['mid'],
-                    "name": item['name'],
-                    "album": "QQ音乐",
-                    "image": "http://p3.music.126.net/3TTjFNIrtcUzoMlB1D1fDA==/109951164969055590.jpg?param=500y500",
-                    "duration": 0,
-                    "type": "qq",
-                    "song": item['name'],
-                    "singer": item['singer']
-                    }, songs['itemlist'])
-                _list.extend(list(_newlist))        
+        _list = self.search_music(name)      
         # 调用服务，执行播放
         if len(_list) > 0:
             await self.media.play_media('music_playlist', _list)
 
     # 播放歌单
     async def play_list_hotsong(self, name):
-        hass = self.hass
         obj = await self.get('/search?keywords='+ name +'&type=1000')
         if obj['code'] == 200:
             artists = obj['result']['playlists']

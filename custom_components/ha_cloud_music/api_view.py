@@ -22,13 +22,41 @@ class ApiView(HomeAssistantView):
                 _result = await mp.api_music.proxy_get(response['url'])
                 return self.json(_result)
             elif _type == 'search-ximalaya':
-                _result = await mp.api_music.search_ximalaya(_name)
+                _id = response.get('id')
+                _page = response.get('page', 1)
+                if _id is not None:
+                    res = await mp.api_music.ximalaya_playlist(_id, _page)
+                    _result = {
+                        'list': res,
+                        'total': res[0]['load']['total']
+                    }
+                else:
+                    _result = await mp.api_music.search_ximalaya(_name)
                 return self.json(_result)
             elif _type == 'search-djradio':
-                _result = await mp.api_music.search_djradio(_name)
+                _id = response.get('id')
+                _page = response.get('page', 1)
+                if _id is not None:
+                    res = await mp.api_music.djradio_playlist(_id, int(_page) - 1, 50)
+                    _result = {
+                        'list': res,
+                        'total': res[0]['load']['total']
+                    }
+                else:
+                    _result = await mp.api_music.search_djradio(_name)
                 return self.json(_result)
             elif _type == 'search-playlist':
-                _result = await mp.api_music.search_playlist(_name)
+                _id = response.get('id')
+                if _id is not None:
+                    res = await mp.api_music.music_playlist(_id)
+                    _result = {
+                        'list': res['list']
+                    }
+                else:
+                    _result = await mp.api_music.search_playlist(_name)
+                return self.json(_result)
+            elif _type == 'search-music':
+                _result = await mp.api_music.search_music(_name)
                 return self.json(_result)
             elif _type == 'play_media':
                 await mp.play_media('music_playlist', {
