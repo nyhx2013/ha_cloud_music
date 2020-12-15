@@ -386,7 +386,9 @@ function getAudioUrl(id) {
                         body.code = 1
                         body.msg = data.msg
                     } else {
-                        body.data = getPayAudio(data)
+                        const audioUrl = getPayAudio(data)
+                        body.data = audioUrl
+                        log(audioUrl)
                     }
                     resolve(body)
                 });
