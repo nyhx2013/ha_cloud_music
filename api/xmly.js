@@ -349,7 +349,7 @@ const getPayAudio = t => {
 };
 
 function log(...args) {
-    console.log(new Date(), args)
+    console.log(new Date().toLocaleString(), args)
 }
 /*********** 监听服务 ******************/
 const fs = require('fs');
@@ -373,7 +373,7 @@ function getAudioUrl(id) {
                 }
             }, (res) => {
                 console.log('状态码:', res.statusCode);
-                console.log('请求头:', res.headers);
+                // console.log('请求头:', res.headers);
                 let arr = []
                 res.setEncoding('utf8');
                 res.on('data', (d) => {
