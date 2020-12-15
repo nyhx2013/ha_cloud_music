@@ -21,7 +21,7 @@ class ApiMusic():
         self.uid = cfg.get('uid', '')
         self.user = cfg['user']
         self.password = cfg['password']
-        self.ximalaya_api = cfg.get('ximalaya_api', 'http://localhost:3002/id/')
+        self.ximalaya_api = cfg.get('ximalaya_api', 'http://localhost:3002').strip('/')
 
     async def login(self):
         # 如果有用户名密码，则登录
@@ -364,7 +364,7 @@ class ApiMusic():
 
     # 获取VIP音频链接
     async def get_ximalaya_vip_audio_url(self, id):
-        obj = await self.proxy_get(self.ximalaya_api + str(id))
+        obj = await self.proxy_get(self.ximalaya_api + "/?id=" + str(id))
         if obj['code'] == 0:
             return obj['data']
         return None
