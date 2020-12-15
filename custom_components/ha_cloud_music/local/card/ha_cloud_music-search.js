@@ -13,7 +13,7 @@ class HaCloudMusicSearch extends HTMLElement {
         ha_card.className = 'ha_cloud_music-search'
         ha_card.innerHTML = `
 <div class="search-input">
-    <input type="search" value="好听的歌" placeholder="请输入要搜索的关键词" />
+    <input type="search" value="" placeholder="请输入要搜索的关键词" />
 </div>
 <div class="search-radio">
     <label><input type="radio" name="search-radio" value="playlist" checked />歌单</label>
