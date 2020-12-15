@@ -1,6 +1,7 @@
 from homeassistant.components.http import HomeAssistantView
 
 from .const import DOMAIN_API, DOMAIN
+from .util import trim_char
 
 ##### 网关控制
 class ApiView(HomeAssistantView):
@@ -14,7 +15,7 @@ class ApiView(HomeAssistantView):
         mp = hass.data[DOMAIN]
         if 'type' in response:
             _type = response['type']
-            _name = response.get('name', '')
+            _name = trim_char(response.get('name', ''))
             if _type == 'web':
                 _result = await mp.api_music.get(response['url'])
                 return self.json(_result)
@@ -71,6 +72,7 @@ class ApiView(HomeAssistantView):
             elif _type == 'love_set':
                 mp.api_config.set_love_playlist(mp)
                 mp.favourite = True
+                mp.update_entity()
                 return self.json({"code": 0, "msg": "收藏到我的最爱"})
             elif _type == 'love_delete':
                 mp.api_config.delete_love_playlist(response['id'], response.get('music_type', ''))

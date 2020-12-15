@@ -10,7 +10,8 @@ class HaCloudMusicTabs extends HTMLElement {
         let arr = []
         let eleArr = []
         for (let ele of this.children) {
-            arr.push(`<span>${ele.dataset['title']}</span>`)
+            const title = ele.dataset['title']
+            arr.push(`<span title="${title}">${title}</span>`)
             eleArr.push(ele)
         }
         // 创建面板
@@ -59,8 +60,10 @@ class HaCloudMusicTabs extends HTMLElement {
         }
         let { $ } = this
         ha_card.onclick = (event) => {
-            let title = event.path[0].textContent.trim()
-            toggleTabs(title)
+            const ele = event.path[0]
+            if (ele.nodeName == 'SPAN') {
+                toggleTabs(ele.textContent.trim())
+            }
         }
         toggleTabs('列表')
     }
