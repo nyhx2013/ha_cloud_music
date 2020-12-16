@@ -17,11 +17,11 @@ class ApiMusic():
         self.hass = media._hass
         self.media = media
         self.api_url = cfg['api_url']
-        self.qq_api_url = cfg['qq_api_url']
+        self.qq_api_url = cfg.get('qq_api_url', '').strip('/')
         self.uid = cfg.get('uid', '')
         self.user = cfg['user']
         self.password = cfg['password']
-        self.ximalaya_api = cfg.get('ximalaya_api', 'http://localhost:3002').strip('/')
+        self.xmly_api_url = cfg.get('xmly_api_url', '').strip('/')
 
     async def login(self):
         # 如果有用户名密码，则登录
@@ -97,7 +97,11 @@ class ApiMusic():
                 return res['response']
 
     ###################### 获取音乐播放URL ######################    
-    
+    async def get_http_code(self, url):
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url) as response:
+                return response.status
+
     # 获取音乐URL
     async def get_song_url(self, id):
         obj = await self.get("/song/url?id=" + str(id))
@@ -107,7 +111,16 @@ class ApiMusic():
     async def get_qq_song_url(self, id):
         res = await self.qq_get("/getMusicVKey?songmid=" + str(id))
         if res is not None and len(res['playLists']) > 0:
-            return res['playLists'][0]
+            url = res['playLists'][0]
+            http_code = await self.get_http_code(url)
+            if http_code == 403:
+                # 如果没有权限，说明这个只有尊贵的QQ音乐绿砖会员才能收听
+                # 我木有钱，只想白嫖，所以调用这位老哥的开放接口
+                vip_url = 'https://api.qq.jsososo.com/song/url?id=' + str(id)
+                print(f"使用白嫖接口：{vip_url}")
+                res = await self.proxy_get(vip_url)
+                return res['data']
+            return url
 
     # 获取重写向后的地址
     async def get_redirect_url(self, url):
@@ -364,10 +377,11 @@ class ApiMusic():
 
     # 获取VIP音频链接
     async def get_ximalaya_vip_audio_url(self, id):
-        obj = await self.proxy_get(self.ximalaya_api + "/?id=" + str(id))
-        if obj['code'] == 0:
-            return obj['data']
-        return None
+        if self.xmly_api_url != '':
+            obj = await self.proxy_get(self.xmly_api_url + "/?id=" + str(id))
+            if obj['code'] == 0:
+                return obj['data']
+
     ###################### 获取音乐列表 ######################
 
     ###################### 播放音乐列表 ######################
@@ -585,4 +599,3 @@ class ApiMusic():
                     "url": songid
                 })
         return children
-
