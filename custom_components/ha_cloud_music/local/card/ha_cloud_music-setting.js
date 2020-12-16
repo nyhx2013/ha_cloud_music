@@ -171,7 +171,7 @@ class HaCloudMusicSetting extends HTMLElement {
         $('.cache-button').onclick = () => {
             const { media_url, media_title, media_artist } = this.stateObj.attributes
             if (media_url) {
-                if (media_url.includes('music.126.net') || media_url.includes('nf.migu.cn')) {
+                if (this.validatorDownloadUrl(media_url)) {
                     if (loading) return ha_cloud_music.toast('你这样点，会把系统搞卡死')
                     loading = true
                     console.log(media_url)
@@ -192,6 +192,11 @@ class HaCloudMusicSetting extends HTMLElement {
         }
     }
 
+    // 验证下载链接
+    validatorDownloadUrl(media_url) {
+        return ['isure.stream.qqmusic.qq.com', 'music.126.net', 'nf.migu.cn'].some(host => media_url.includes(host))
+    }
+
     updated(stateObj) {
         let { $ } = this
         this.stateObj = stateObj
@@ -205,7 +210,8 @@ class HaCloudMusicSetting extends HTMLElement {
         // 显示缓存按钮
         const { media_url } = attr
         if (media_url) {
-            if (media_url.includes('music.126.net') || media_url.includes('nf.migu.cn')) {
+            // 支持咪咕音乐、QQ音乐、网易云音乐
+            if (this.validatorDownloadUrl(media_url)) {
                 $('.cache-button').classList.remove('hide')
             } else {
                 $('.cache-button').classList.add('hide')

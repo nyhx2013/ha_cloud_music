@@ -55,6 +55,7 @@ recorder:
 - 加入喜马拉雅音频解析接口文件：[xmly.js](./api/)
 - 加入白嫖[@jsososo](https://github.com/jsososo/QQMusicApi)的尊贵QQ音乐绿钻会员接口😂
 - 调整喜马拉雅接口配置名称😊（我尊贵的喜马拉雅年度会员，考虑要不要放出来给大家白嫖🙂）
+- 支持缓存QQ音乐文件
 
 ### V4.4
 - 优化语音识别逻辑
