@@ -80,7 +80,7 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
         'tts_after_message': tts_after_message,
         'tts_mode': tts_mode
     })    
-    mp.api_music = ApiMusic(mp, cfg)
+    mp.api_music = ApiMusic(mp, config)
     # 开始登录    
     hass.async_create_task(mp.api_music.login())
     
