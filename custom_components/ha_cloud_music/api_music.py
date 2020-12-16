@@ -13,15 +13,18 @@ LOG_ID = '1234'
 
 class ApiMusic():
 
-    def __init__(self, media, cfg):
+    def __init__(self, media, config):
         self.hass = media._hass
         self.media = media
-        self.api_url = cfg['api_url']
-        self.qq_api_url = cfg.get('qq_api_url', '').strip('/')
-        self.uid = cfg.get('uid', '')
-        self.user = cfg['user']
-        self.password = cfg['password']
-        self.xmly_api_url = cfg.get('xmly_api_url', '').strip('/')
+        # 网易云音乐接口地址
+        self.api_url = config.get("api_url", '').strip('/')
+        self.qq_api_url = config.get('qq_api_url', '').strip('/')
+        self.xmly_api_url = config.get('xmly_api_url', '').strip('/')
+        # 网易云音乐用户ID
+        self.uid = str(config.get("uid", ''))
+        # 用户名和密码        
+        self.user = str(config.get("user", ''))
+        self.password = str(config.get("password", ''))
 
     async def login(self):
         # 如果有用户名密码，则登录

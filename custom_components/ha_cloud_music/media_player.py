@@ -20,7 +20,7 @@ _LOGGER = logging.getLogger(__name__)
 ################### 接口定义 ###################
 # 常量
 from .const import DOMAIN, VERSION, ROOT_PATH, WEB_PATH
-from .api_config import ApiConfig, TrueOrFalse
+from .api_config import ApiConfig
 # 网易云接口
 from .api_music import ApiMusic
 # 网关视图
@@ -41,15 +41,10 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
     # 名称与图标
     sidebar_title = config.get("sidebar_title", "云音乐")
     sidebar_icon = config.get("sidebar_icon","mdi:music")
-    # 网易云音乐用户ID
-    uid = str(config.get("uid", ''))
-    # 用户名和密码
-    user = str(config.get("user", ''))
-    password = str(config.get("password", ''))
+    
     # 显示模式 全屏：fullscreen
     show_mode = config.get("show_mode", "default")
-    # 网易云音乐接口地址
-    api_url = str(config.get("api_url", '')).strip('/')
+    
     # TTS相关配置
     tts_before_message = config.get("tts_before_message", '')
     tts_after_message = config.get("tts_after_message", '')
@@ -60,10 +55,6 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
     # 是否开启语音文字处理程序（默认启用）
     is_voice = config.get('is_voice', True)
 
-    # 检测配置
-    if api_url == '':
-        _LOGGER.error("检测到未配置api_url参数！")
-        return
     ################### 系统配置 ###################
 
     ################### 定义实体类 ###################    
@@ -80,7 +71,11 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
         'tts_after_message': tts_after_message,
         'tts_mode': tts_mode
     })    
-    mp.api_music = ApiMusic(mp, config)
+    mp.api_music = ApiMusic(mp, config)    
+    # 检测配置
+    if mp.api_music.api_url == '':
+        mp.notify("检测到未配置api_url参数！", "error")
+        return
     # 开始登录    
     hass.async_create_task(mp.api_music.login())
     
@@ -143,13 +138,13 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
     
     配置信息：
     
-        API_URL：''' + api_url + '''
+        API_URL：''' +  mp.api_music.api_url + '''
                 
         侧边栏名称：''' + sidebar_title + '''
         
         侧边栏图标：''' + sidebar_icon + '''
         
-        显示模式：''' + TrueOrFalse(show_mode == 'fullscreen', '全局模式', '默认模式') + '''
+        显示模式：''' + (show_mode == 'fullscreen' and '全局模式' or '默认模式') + '''
         
         用户ID：''' + mp.api_music.uid + '''
 
@@ -728,7 +723,7 @@ class MediaPlayer(MediaPlayerEntity):
         # （禁用/启用）通知
         if 'is_notify' in _obj:
             is_notify = bool(_obj['is_notify'])
-            _str = TrueOrFalse(is_notify, '启用通知', '禁用通知')
+            _str = is_notify and '启用通知' or '禁用通知'
             # 如果没有启用通知，则现在启用
             if self.is_notify == False:
                 self.is_notify = True

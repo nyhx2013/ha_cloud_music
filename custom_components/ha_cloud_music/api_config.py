@@ -2,11 +2,6 @@ import json, os, shutil, hashlib, base64
 
 from .const import DOMAIN, VERSION, DOMAIN_API, WEB_PATH, ROOT_PATH
 
-def TrueOrFalse(val, trueStr, falseStr):
-    if val:
-        return trueStr
-    return falseStr
-
 class ApiConfig():
 
     def __init__(self, _dir):        
