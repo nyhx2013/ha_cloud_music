@@ -647,7 +647,7 @@ class MediaPlayer(MediaPlayerEntity):
         if 'album' in music_info:
             self._media_album_name = music_info['album']
         # 查看是否加入喜欢
-        self.favourite = self.api_config.is_love_playlist(music_info['id'], music_info.get('type', ''))
+        self.favourite = self.api_config.is_love_playlist(music_info.get('id', -1), music_info.get('type', ''))
 
         # 如果有传入类型，则根据类型处理
         if 'type' in music_info:
