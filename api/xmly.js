@@ -360,12 +360,14 @@ function getAudioUrl(id) {
     return new Promise((resolve) => {
         const fileName = './xmly.cookie'
         if (!fs.existsSync(fileName)) {
-            resolve({
+            log('cookie不存在，请先创建VIP凭据xmly.cookie')
+            return resolve({
                 code: 1,
                 msg: 'cookie不存在'
             })
         }
         const cookie = fs.readFileSync(fileName)
+        log('开始调用接口尝试解析')
         https.get(`https://mpay.ximalaya.com/mobile/track/pay/${id}?device=pc&isBackend=false&_=${Date.now()}`,
             {
                 headers: {
@@ -380,19 +382,22 @@ function getAudioUrl(id) {
                     arr.push(d)
                 });
                 res.on('end', (d) => {
-                    let data = JSON.parse(arr.join(''))
+                    const str = arr.join('')
+                    let data = JSON.parse(str)
                     let body = { code: 0, msg: '获取音频成功', data }
                     if (data.ret != 0) {
                         body.code = 1
                         body.msg = data.msg
+                        log('解析失败：', str)
                     } else {
                         const audioUrl = getPayAudio(data)
                         body.data = audioUrl
-                        log(audioUrl)
+                        log('音频地址：', audioUrl)
                     }
                     resolve(body)
                 });
             }).on('error', (e) => {
+                log('请求异常：', e)
                 resolve({
                     code: 1,
                     msg: e.toString()
