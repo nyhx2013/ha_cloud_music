@@ -634,6 +634,9 @@ class MediaPlayer(MediaPlayerEntity):
     ###################  自定义方法  ##########################
 
     async def get_url(self, music_info):
+        # 当前资源类型
+        _id = music_info.get('id', -1)
+        _type =  music_info.get('type', '')
         self._media_name = music_info['song'] + ' - ' + music_info['singer']
         self._source = str(self.music_index + 1) + '.' + self._media_name
         # 歌名
@@ -647,28 +650,33 @@ class MediaPlayer(MediaPlayerEntity):
         if 'album' in music_info:
             self._media_album_name = music_info['album']
         # 查看是否加入喜欢
-        self.favourite = self.api_config.is_love_playlist(music_info.get('id', -1), music_info.get('type', ''))
-
-        # 如果有传入类型，则根据类型处理
-        if 'type' in music_info:
-            if music_info['type'] == 'url' and music_info['url'] == '':
-                # 如果传入的是能直接播放的音频，但是url又为空，可能是喜马拉雅没有VIP视频的资源
-                # 这个时候就调用外部接口获取VIP的资源
-                # 需要自己部署接口
-                url = await self.api_music.get_ximalaya_vip_audio_url(music_info['id'])
-                return url
-            elif music_info['type'] == 'url':
-                # 如果传入的是能直接播放的音频
-                return music_info['url']
-            elif music_info['type'] == 'djradio' or music_info['type'] == 'cloud':                
-                # 如果传入的是网易电台
-                url = await self.api_music.get_song_url(music_info['id'])
-                return url
-            elif music_info['type'] == 'qq':                
-                # 如果传入的是QQ音乐
-                url = await self.api_music.get_qq_song_url(music_info['mid'])
-                return url
+        self.favourite = self.api_config.is_love_playlist(_id, _type)
         
+        if _type == 'url':
+            # 如果传入的是能直接播放的音频
+            return music_info['url']
+        elif _type == 'djradio' or _type == 'cloud':
+            # 如果传入的是网易电台
+            url = await self.api_music.get_song_url(_id)
+            return url
+        elif _type == 'qq':                
+            # 如果传入的是QQ音乐
+            url = await self.api_music.get_qq_song_url(music_info['mid'])
+            return url
+        elif _type == 'xmly':
+            # 喜马拉雅资源
+            _url = music_info.get('url', '')
+            if _url != '':
+                # 判断当前资源是否可用
+                http_code = await self.api_music.get_http_code(_url)
+                if http_code == 200:
+                    return _url
+            print('当前音频只有尊贵的喜马拉雅VIP会员才能收听。。。尝试解析中。。。')
+            url = await self.api_music.get_ximalaya_vip_audio_url(_id)
+            if url is None:
+                self.notify("该音频只有尊贵的喜马拉雅VIP会员才能收听😂", "error")
+            return url
+
         url = await self.api_music.get_redirect_url(music_info['url'])
         # 如果没有url，则去咪咕搜索
         if url == None:

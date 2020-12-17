@@ -216,14 +216,14 @@ class ApiMusic():
 
     async def search_ximalaya(self, name):
         _newlist = []
-        url = 'https://m.ximalaya.com/m-revision/page/search?kw=' + name + '&core=all&page=1&rows=20'
+        url = f'https://m.ximalaya.com/m-revision/page/search?kw={name}&core=all&page=1&rows=20'
         obj = await self.proxy_get(url)
         if obj['ret'] == 0:
             artists = obj['data']['albumViews']['albums']
             _newlist = list(map(lambda item: {
                 "id": item['albumInfo']['id'],
                 "name": item['albumInfo']['title'],
-                "cover": item['albumInfo']['cover_path'],
+                "cover": item['albumInfo'].get('cover_path', 'https://imagev2.xmcdn.com/group79/M02/77/6C/wKgPEF6masWTCICAAAA7qPQDtNY545.jpg!strip=1&quality=7&magick=webp&op_type=5&upload_type=cover&name=web_large&device_type=ios'),
                 "intro": item['albumInfo']['intro'],
                 "creator": item['albumInfo']['nickname']
             }, artists))
@@ -335,7 +335,7 @@ class ApiMusic():
                         'index': index,
                         'total': _totalCount
                     },
-                    "type": "url",
+                    "type": "xmly",
                     "url": item['playUrl64'],
                     "singer": item['nickname']
                     }, _list)
@@ -382,7 +382,7 @@ class ApiMusic():
     async def get_ximalaya_vip_audio_url(self, id):
         if self.xmly_api_url != '':
             obj = await self.proxy_get(self.xmly_api_url + "/?id=" + str(id))
-            if obj['code'] == 0:
+            if obj is not None and obj['code'] == 0:
                 return obj['data']
 
     ###################### 获取音乐列表 ######################
