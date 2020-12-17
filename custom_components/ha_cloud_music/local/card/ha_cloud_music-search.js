@@ -48,18 +48,27 @@ class HaCloudMusicSearch extends HTMLElement {
         let txtSearchInput = $('.search-input input')
         txtSearchInput.onkeypress = (event) => {
             if (event.keyCode == 13) {
-                let value = txtSearchInput.value.trim()
-                if (value) {
-                    txtSearchInput.value = ''
-                    let type = $(".search-radio input:checked").value
-                    ha_cloud_music.toast(`正在搜索【${value}】`)
-                    $('.search-list').innerHTML = ''
-                    ha_cloud_music.load(type == 'music' ? 'search-musiclist' : 'search-playlist').then(({ tagName }) => {
-                        const element = document.createElement(tagName)
-                        $('.search-list').appendChild(element)
-                        element.created(type, value)
-                    })
-                }
+                searchAction()
+            }
+        }
+        $('.search-radio').querySelectorAll("input[type='radio']").forEach(ele => {
+            ele.onclick = () => {
+                searchAction()
+            }
+        })
+
+        const searchAction = () => {
+            let value = txtSearchInput.value.trim()
+            if (value) {
+                txtSearchInput.value = ''
+                let type = $(".search-radio input:checked").value
+                ha_cloud_music.toast(`正在搜索【${value}】`)
+                $('.search-list').innerHTML = ''
+                ha_cloud_music.load(type == 'music' ? 'search-musiclist' : 'search-playlist').then(({ tagName }) => {
+                    const element = document.createElement(tagName)
+                    $('.search-list').appendChild(element)
+                    element.created(type, value)
+                })
             }
         }
     }
