@@ -26,6 +26,7 @@ class MediaPlayerWEB():
         self.is_tts = False
         self.is_on = True
         # 不同字段
+        self.count = 0
         self.volume_level = 1
         self.is_support = True
         # 监听web播放器的更新
@@ -40,16 +41,42 @@ class MediaPlayerWEB():
 
     def update(self, hass, connection, msg):
         data = msg['data']
-        # 音乐结束
-        if self._media is not None and self.is_tts == False and self.is_on == True and data.get('is_end') == 1:
-            print('执行下一曲')
-            self._media.media_end_next()
-        else:
-            self.volume_level = data.get('volume_level')
-            self._muted = data.get('is_volume_muted')
-            self.media_duration = data.get('media_duration')
-            self.media_position = data.get('media_position')
-            self.media_position_updated_at = datetime.datetime.now()
+        if self._media is not None:
+            # 消息类型
+            type = data.get('type', '')
+            # 客户端ID
+            client_id = data.get('client_id', '')
+            if type == 'init':
+                # 初始化连接成功
+                self.hass.bus.fire("ha_cloud_music_event", {"type": "init", "data": {
+                    'client_id': client_id,
+                    'volume_level': self.volume_level,
+                    'media_url': self._media.media_url,
+                    'media_position': self.media_position
+                }})
+            elif type == 'update':
+                media_position = data.get('media_position', 0)
+                media_duration = data.get('media_duration', 0)                
+                print(self.media_position)
+                print(self.media_duration)
+                # 更新进度
+                if self.media_duration is not None and self.media_position is not None \
+                    and self.media_duration > 0 and self.media_position > 0 \
+                    and self.media_position + 2 >= self.media_duration \
+                    and self.count > 0:
+                    print('执行下一曲')
+                    self.count = -10
+                    self._media.media_end_next()
+                # 防止通信太慢，导致进度跟不上自动下下一曲
+                self.count = self.count + 1
+                if self.count > 100:
+                    self.count = 0
+                # 更新数据
+                self.volume_level = data.get('volume_level')
+                self._muted = data.get('is_volume_muted')
+                self.media_duration = media_duration
+                self.media_position = media_position
+                self.media_position_updated_at = datetime.datetime.now()        
         # 回调结果
         # self.connection = connection
 
@@ -69,10 +96,12 @@ class MediaPlayerWEB():
         self.set_volume_level(self._media.volume_level)
 
     def load(self, url):
-        # 加载URL
-        self.hass.bus.fire("ha_cloud_music_event", {"type": "load", "data": url})
-        # 不是TTS时才设置状态
-        if self.is_tts == False:
+        # 使用TTS服务
+        if self.is_tts:
+            self.hass.bus.fire("ha_cloud_music_event", {"type": "tts", "data": url})
+        else:
+            # 加载URL
+            self.hass.bus.fire("ha_cloud_music_event", {"type": "load", "data": url})
             self.state = 'playing'
 
     def play(self):

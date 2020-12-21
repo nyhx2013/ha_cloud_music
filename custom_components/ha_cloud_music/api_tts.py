@@ -104,11 +104,11 @@ class ApiTTS():
         if self.media._media_player != None and self.media.state == STATE_PLAYING:
            self.media.media_pause()
            self.media_position = self.media.media_position
-           self.media_url = self.media.media_url        
+           self.media_url = self.media.media_url
         # 播放当前文字内容
         self.play_url(text)
         # 恢复当前播放到保存的进度
-        if self.media_url != None:
+        if self.media_url is not None:
             self.log('恢复当前播放URL', self.media_url)
             #self.media._media_player.load(self.media_url)
             #time.sleep(2)
