@@ -368,7 +368,7 @@ function getAudioUrl(id) {
         }
         const cookie = fs.readFileSync(fileName, 'utf8').trim()
         log('开始调用接口尝试解析')
-        console.log(cookie)
+        // console.log(cookie)
         https.get(`https://mpay.ximalaya.com/mobile/track/pay/${id}?device=pc&isBackend=false&_=${Date.now()}`,
             {
                 headers: {
