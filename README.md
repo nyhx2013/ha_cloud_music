@@ -44,8 +44,7 @@ recorder:
 
 [完整配置文档](./docs/ "完整配置文档")
 
-<font face="黑体" color=green size=5>计划实现功能</font>
-
+### 计划实现功能
 - [ ] 播放速度控制 2x 3x
 - [ ] 控制蓝牙设备切换
 
