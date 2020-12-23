@@ -34,7 +34,6 @@ from .source_web import MediaPlayerWEB
 from .source_vlc import MediaPlayerVLC
 from .source_mpd import MediaPlayerMPD
 from .source_other import MediaPlayerOther
-from .source_android import MediaPlayerAndroid
 
 def setup_platform(hass, config, add_entities, discovery_info=None):
 
@@ -105,23 +104,6 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
     if is_voice == True:
         _ApiVoice = ApiVoice(hass, mp.api_music)
         hass.bus.listen('ha_voice_text_event', _ApiVoice.text_event)
-
-    # 注册服务【Android平板】    
-    android_host = config.get("android_host")
-    if android_host is not None:
-        def android_service(call):
-            url_prefix = f'http://{android_host}:8124/set?key='
-            data = call.data
-            # 设置屏幕亮度
-            brightness = data.get('brightness')
-            if brightness is not None:
-                hass.async_create_task(mp.api_music.proxy_get(f'{url_prefix}brightness&value=' + str(brightness)))
-            # 设置音乐声音
-            volume = data.get('volume')            
-            if volume is not None:
-                hass.async_create_task(mp.api_music.proxy_get(f'{url_prefix}volume&value=' + str(volume)))
-
-        hass.services.register(DOMAIN, 'android', android_service)
 
     ################### 注册服务 ################### 
 
@@ -214,8 +196,6 @@ class MediaPlayer(MediaPlayerEntity):
         self.is_notify = True
 
         _sound_mode_list = ['网页播放器']
-        if 'android_host' in config:
-            _sound_mode_list.append('Android播放器')
             
         # 如果是Docker环境，则不显示VLC播放器
         if os.path.isfile("/.dockerenv") == True:
@@ -581,15 +561,6 @@ class MediaPlayer(MediaPlayerEntity):
 
         if sound_mode == '网页播放器':
             self._media_player = MediaPlayerWEB(self._config, self)
-        elif sound_mode == 'Android播放器':
-            # 判断是否配置android_host
-            if 'android_host' not in self._config:
-                self.notify("Android播放器需要配置android_host", "error")
-                self._media_player = None
-            self._media_player = MediaPlayerAndroid(self._config, self)
-            if self._media_player.is_support == False:
-                self.notify("不支持Android播放器，请确定是否正确配置", "error")
-                self._media_player = None
         elif sound_mode == 'MPD播放器':
             # 判断是否配置mpd_host
             if 'mpd_host' not in self._config:
