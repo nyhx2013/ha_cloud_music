@@ -75,28 +75,29 @@ class MediaPlayerMPD():
             if not self._is_connected:
                 self._connect()
 
-            self._status = self._client.status()
-            # currentsong = self._client.currentsong()
-            position = self._status.get("time")
-            media_position = 0
-            media_duration = 0
-            # 读取音乐时长和进度
-            if isinstance(position, str) and ':' in position:
-                arr = position.split(':')
-                media_position = int(arr[0])
-                media_duration = int(arr[1])
-                # 判断是否下一曲
-                if media_duration > 0:
-                    # print("当前进度：%s，总时长：%s"%(media_position, media_duration))
-                    if media_duration - media_position <= 3:
-                        print('执行下一曲方法')
-                        if self._media is not None and self.state == 'playing' and self.is_tts == False and self.is_on == True:
-                            self.state = 'idle'
-                            self._media.media_end_next()
-            # print("当前进度：%s，总时长：%s"%(media_position, media_duration))
-            self.media_position = media_position
-            self.media_duration = media_duration
-            self.media_position_updated_at = datetime.datetime.now()
+            if self.is_tts == False:
+                self._status = self._client.status()
+                # currentsong = self._client.currentsong()
+                position = self._status.get("time")
+                media_position = 0
+                media_duration = 0
+                # 读取音乐时长和进度
+                if isinstance(position, str) and ':' in position:
+                    arr = position.split(':')
+                    media_position = int(arr[0])
+                    media_duration = int(arr[1])
+                    # 判断是否下一曲
+                    if media_duration > 0:
+                        # print("当前进度：%s，总时长：%s"%(media_position, media_duration))
+                        if media_duration - media_position <= 3:
+                            print('执行下一曲方法')
+                            if self._media is not None and self.state == 'playing' and self.is_on == True:
+                                self.state = 'idle'
+                                self._media.media_end_next()
+                # print("当前进度：%s，总时长：%s"%(media_position, media_duration))
+                self.media_position = media_position
+                self.media_duration = media_duration
+                self.media_position_updated_at = datetime.datetime.now()
         except Exception as e:
             print('出现异常', e)
             self._disconnect()

@@ -39,14 +39,15 @@ class MediaPlayerVLC():
             self._media.media_end_next()
 
     def update(self, event):
-        # 更新
-        media_duration = int(self._client.get_length() / 1000)
-        media_position = int(self._client.get_position() * media_duration)
-        # print("当前进度：%s，总时长：%s"%(media_position, media_duration))
-        self.media_position = media_position
-        self.media_duration = media_duration
-        self.media_position_updated_at = datetime.datetime.now()
-        self._muted = (self._client.audio_get_mute() == 1)
+        # 如果是TTS中，则不更新进度
+        if self.is_tts == False:
+            media_duration = int(self._client.get_length() / 1000)
+            media_position = int(self._client.get_position() * media_duration)
+            # print("当前进度：%s，总时长：%s"%(media_position, media_duration))
+            self.media_position = media_position
+            self.media_duration = media_duration
+            self.media_position_updated_at = datetime.datetime.now()
+            self._muted = (self._client.audio_get_mute() == 1)
 
     def reloadURL(self, url, position):
         # 重新加载URL
