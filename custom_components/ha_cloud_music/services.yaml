@@ -31,6 +31,9 @@ config:
     play_mode:
       description: 播放模式（0：列表循环，1：顺序播放，2：随机播放，3：单曲循环）
       example: 1
+    media_rate:
+      description: 注意：播放速度只支持内置VLC（1为正常速度）
+      example: 1
     tts_mode:
       description: TTS声音模式（1：标准男声，2：标准女声，3：情感男声，4：情感女声）
       example: 4
