@@ -31,7 +31,11 @@ class MediaPlayerVLC():
     @property
     def volume_level(self):
         return self._client.audio_get_volume() / 100
-    
+
+    @property
+    def rate(self):
+        return self._client.get_rate()
+
     def end(self, event):
         # 音乐结束
         if self._media is not None and self.is_tts == False and self.is_on == True:
@@ -118,10 +122,15 @@ class MediaPlayerVLC():
         self._client.release()
         self._instance.release()
 
+    def set_rate(self, rate):
+        # 设置播放速度
+        return self._client.set_rate(rate)
+
 '''
 mm = MediaPlayerVLC({})
 if mm.is_support:
-    mm.load('http://music.jiluxinqing.com/mp3/2014122718214050.mp3')
+    mm.load('https://m701.music.126.net/20201225165051/fd7f6db013996a3316a31bce123d9399/jdymusic/obj/wo3DlMOGwrbDjj7DisKw/5258591663/61bf/33cf/e6a5/da47602351f7f71aea8c1e88de587411.mp3')
+    mm.set_rate(1)
 
 while True:
     pass

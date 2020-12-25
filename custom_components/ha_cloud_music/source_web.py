@@ -19,6 +19,7 @@ class MediaPlayerWEB():
         self.config = config
         self._media = media
         self._muted = False
+        self.rate = 1
         self.media_position = 0
         self.media_duration = 0
         self.media_position_updated_at = datetime.datetime.now()
@@ -141,3 +142,7 @@ class MediaPlayerWEB():
     def stop(self):
         # 停止
         self.hass.bus.fire("ha_cloud_music_event", {"type": "pause"})
+
+    def set_rate(self, rate):
+        # 设置播放速度
+        return 1

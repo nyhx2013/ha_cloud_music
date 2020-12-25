@@ -253,11 +253,12 @@ class MediaPlayer(MediaPlayerEntity):
         # 当前媒体状态属性
         attr = super().state_attributes
         play_mode_list = ['列表循环','顺序播放','随机播放','单曲循环']
-        attr.update({'custom_ui_more_info': 'ha_cloud_music-panel', 
-            'custom_ui_state_card': 'ha_cloud_music-player', 
+        attr.update({'custom_ui_more_info': 'ha_cloud_music-panel',
+            'custom_ui_state_card': 'ha_cloud_music-player',
             'tts_volume': self.api_tts.tts_volume,
             'tts_mode': self.api_tts.tts_mode,
             'media_url': self.media_url,
+            'media_rate': self.media_rate,
             'favourite': self.favourite,
             'version': VERSION,
             'play_mode': play_mode_list[self._play_mode]})
@@ -335,6 +336,12 @@ class MediaPlayer(MediaPlayerEntity):
         if self._media_player == None:
             return None
         return self._media_player._muted
+
+    @property
+    def media_rate(self):
+        if self._media_player == None:
+            return 1
+        return self._media_player.rate
 
     @property
     def media_duration(self):
@@ -681,6 +688,10 @@ class MediaPlayer(MediaPlayerEntity):
         # 设置播放模式
         if 'play_mode' in _obj:
             self.set_play_mode(_obj['play_mode'])
+        # 设置播放速度
+        if 'media_rate' in _obj:
+            if self._media_player is not None:
+                self._media_player.set_rate(_obj['media_rate'])
         # 设置TTS声音模式
         if 'tts_mode' in _obj:
             mode_list = [1, 2, 3, 4]

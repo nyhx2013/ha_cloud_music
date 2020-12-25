@@ -13,6 +13,7 @@ class MediaPlayerMPD():
         self.config = config
         self._media = media
         self._muted = False
+        self.rate = 1
         self.media_position = 0
         self.media_duration = 0
         self.media_position_updated_at = datetime.datetime.now()
@@ -184,6 +185,10 @@ class MediaPlayerMPD():
         self.timer.cancel()
         self._client.stop()
         self._client.disconnect()
+
+    def set_rate(self, rate):
+        # 设置播放速度
+        return 1
 
     def log(self, msg):
         if self._media is not None:
