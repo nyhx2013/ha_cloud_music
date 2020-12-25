@@ -20,6 +20,22 @@ class HaCloudMusicSetting extends HTMLElement {
             </fieldset>
         </div>
         
+        <div class="rate-source">
+            <fieldset>
+                <legend>播放速度</legend>
+                <select>
+                    <option value="1">正常</option>
+                    <option value="1.2">1.2倍速</option>
+                    <option value="1.3">1.3倍速</option>
+                    <option value="1.4">1.4倍速</option>
+                    <option value="1.5">1.5倍速</option>
+                    <option value="2">2.0倍速</option>
+                    <option value="2.5">2.5倍速</option>
+                    <option value="3">3.0倍速</option>
+                </select>
+            </fieldset>
+        </div>
+        
         <!-- 音量控制 -->
         <div class="volume">
             <ha-icon class="volume-off" icon="mdi:volume-high"></ha-icon>
@@ -70,6 +86,8 @@ class HaCloudMusicSetting extends HTMLElement {
          .volume .ha-paper-slider,
          .tts-volume .ha-paper-slider{width:100%;}
          
+         .rate-source{margin-top: 10px;}
+         .rate-source select,
          .tts-source select,
          .source select{width:100%; border:none;}
          .source-web-player{color:var(--primary-color);text-decoration:none;}
@@ -134,6 +152,16 @@ class HaCloudMusicSetting extends HTMLElement {
                     sound_mode
                 })
                 ha_cloud_music.toast(`更换源播放器：${sound_mode}`)
+            }
+        })
+        // 选择倍速
+        $('.rate-source select').addEventListener('change', function () {
+            let { attributes } = _this.stateObj
+            let media_rate = this.value
+            console.log(media_rate)
+            if (attributes.media_rate != media_rate) {
+                ha_cloud_music.callService('ha_cloud_music.config', { media_rate: Number(media_rate) })
+                ha_cloud_music.toast(`使用${media_rate}倍速播放`)
             }
         })
         // 调整语音转文字音量
@@ -207,6 +235,11 @@ class HaCloudMusicSetting extends HTMLElement {
         $('.volume .ha-paper-slider').value = attr.volume_level * 100
         // 设置TTS音量
         $('.tts-volume .ha-paper-slider').value = attr.tts_volume > 0 ? attr.tts_volume : attr.volume_level * 100
+        // 音乐倍速
+        const media_rate = $('.rate-source select').value
+        if (media_rate != attr.media_rate) {
+            $('.rate-source select').value = attr.media_rate.toFixed(1)
+        }
         // 显示缓存按钮
         const { media_url } = attr
         if (media_url) {

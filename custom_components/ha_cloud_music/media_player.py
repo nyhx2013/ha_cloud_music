@@ -690,8 +690,9 @@ class MediaPlayer(MediaPlayerEntity):
             self.set_play_mode(_obj['play_mode'])
         # 设置播放速度
         if 'media_rate' in _obj:
-            if self._media_player is not None:
-                self._media_player.set_rate(_obj['media_rate'])
+            media_rate = float(_obj['media_rate'])
+            if self._media_player is not None and media_rate > 0 and media_rate < 3:
+                self._media_player.set_rate(media_rate)
         # 设置TTS声音模式
         if 'tts_mode' in _obj:
             mode_list = [1, 2, 3, 4]
