@@ -34,7 +34,7 @@ class MediaPlayerVLC():
 
     @property
     def rate(self):
-        return self._client.get_rate()
+        return round(self._client.get_rate(), 1)
 
     def end(self, event):
         # 音乐结束

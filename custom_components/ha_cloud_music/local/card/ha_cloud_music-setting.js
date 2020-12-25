@@ -238,7 +238,8 @@ class HaCloudMusicSetting extends HTMLElement {
         // 音乐倍速
         const media_rate = $('.rate-source select').value
         if (media_rate != attr.media_rate) {
-            $('.rate-source select').value = attr.media_rate.toFixed(1)
+            console.log(media_rate, attr.media_rate)
+            $('.rate-source select').value = Number(attr.media_rate)
         }
         // 显示缓存按钮
         const { media_url } = attr
