@@ -433,7 +433,7 @@ class ApiMusic():
 
     # 播放音乐
     async def play_song(self, name):
-        _list = self.search_music(name)      
+        _list = await self.search_music(name)
         # 调用服务，执行播放
         if len(_list) > 0:
             await self.media.play_media('music_playlist', _list)

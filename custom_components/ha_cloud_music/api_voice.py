@@ -12,7 +12,6 @@ class ApiVoice():
         data.update({ 'entity_id': 'media_player.yun_yin_le' })
         await self.hass.services.async_call('media_player', action, data)
 
-
     async def text_event(self, event):
         hass = self.hass
         text = event.data.get('text', '').strip(' 。，、＇：∶；?‘’“”〝〞ˆˇ﹕︰﹔﹖﹑·¨….¸;！´？！～—ˉ｜‖＂〃｀@﹫¡¿﹏﹋﹌︴々﹟#﹩$﹠&﹪%*﹡﹢﹦﹤‐￣¯―﹨ˆ˜﹍﹎+=<­­＿_-\ˇ~﹉﹊（）〈〉‹›﹛﹜『』〖〗［］《》〔〕{}「」【】︵︷︿︹︽_﹁﹃︻︶︸﹀︺︾ˉ﹂﹄︼')
