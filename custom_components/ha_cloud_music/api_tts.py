@@ -158,13 +158,17 @@ class ApiTTS():
             if self.tts_volume > 0:
                 print('设置TTS音量：%s'%(self.tts_volume))
                 self.media._media_player.set_volume_level(self.tts_volume / 100)
-
-            self.media._media_player.load(local_url)            
+            # 保存播放速度
+            rate = self.media._media_player.rate
+            # 播放TTS链接
+            self.media._media_player.load(local_url)
             # 计算当前文件时长，设置超时播放时间
             audio = MP3(ob_name)
             self.log('音频时长', audio.info.length)
             time.sleep(audio.info.length + 3)
             self.media._media_player.is_tts = False
+            # 恢复播放速度
+            self.media._media_player.set_rate(rate)
             # 恢复音量
             print('恢复音量：%s'%(volume_level))
             self.media._media_player.set_volume_level(volume_level)            
