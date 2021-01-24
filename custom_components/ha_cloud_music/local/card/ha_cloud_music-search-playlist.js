@@ -108,7 +108,8 @@ class HaCloudMusicSearchPlayList extends HTMLElement {
             this.music_list = []
             $('.fm-info ol').innerHTML = ''
             $('.fm-info ol').onclick = (event) => {
-                const li = event.path[0]
+                const path = event.composedPath()
+                const li = path[0]
                 const list = this.music_list
                 const index = parseInt(li.dataset['index'])
                 ha_cloud_music.toast(`开始播放【${list[index].name}】`)

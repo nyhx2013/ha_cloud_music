@@ -60,7 +60,8 @@ class HaCloudMusicTabs extends HTMLElement {
         }
         let { $ } = this
         ha_card.onclick = (event) => {
-            const ele = event.path[0]
+            const path = event.composedPath()
+            const ele = path[0]
             if (ele.nodeName == 'SPAN') {
                 toggleTabs(ele.textContent.trim())
             }

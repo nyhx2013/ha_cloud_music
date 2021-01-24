@@ -203,7 +203,8 @@ class HaCloudMusicVoice extends HTMLElement {
         }
         // 命令点击
         $('.list').addEventListener('click', (event) => {
-            let ele = event.path[0]
+            const path = event.composedPath()
+            const ele = path[0]
             if ('cmd' in ele.dataset) {
                 let text = ele.dataset['cmd']
                 ha_cloud_music.hass.callApi('POST', 'events/ha_voice_text_event', { text }).then(res => {

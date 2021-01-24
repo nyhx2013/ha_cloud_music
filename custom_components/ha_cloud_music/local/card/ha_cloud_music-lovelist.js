@@ -52,7 +52,8 @@ class HaCloudMusicLovelist extends HTMLElement {
             $('ol').innerHTML = ''
             $('ol').appendChild(df)
             $('ol').onclick = (event) => {
-                let li = event.path[0]
+                const path = event.composedPath()
+                const li = path[0]
                 if (li.nodeName == 'LI') {
                     const list = arr
                     const index = parseInt(li.dataset['index'])
@@ -60,7 +61,7 @@ class HaCloudMusicLovelist extends HTMLElement {
                     // 播放FM
                     ha_cloud_music.fetchApi({ type: 'play_media', list, index })
                 } else {
-                    li = event.path[3]
+                    li = path[3]
                     const index = parseInt(li.dataset['index'])
                     const { id, type } = arr[index]
                     // 删除收藏
