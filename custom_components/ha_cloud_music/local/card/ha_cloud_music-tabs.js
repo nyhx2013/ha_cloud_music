@@ -11,32 +11,17 @@ class HaCloudMusicTabs extends HTMLElement {
         let eleArr = []
         for (let ele of this.children) {
             const title = ele.dataset['title']
-            arr.push(`<span title="${title}">${title}</span>`)
+            arr.push(`<mwc-tab id="${title}" label="${title}"></mwc-tab>`)
             eleArr.push(ele)
         }
         // 创建面板
-        const ha_card = document.createElement('div');
-        ha_card.className = 'ha_cloud_music-tabs'
+        const ha_card = document.createElement('mwc-tab-bar');
         ha_card.innerHTML = arr.join('')
         this.insertBefore(ha_card, this.children[0])
         // 创建样式
         const style = document.createElement('style')
         style.textContent = `
-          .hide{display:none!important;}
-          .ha_cloud_music-tabs{
-            padding: 10px 0;
-            display: grid;
-            grid-template-columns: repeat(5, 20%);
-            text-align: center;
-            border-bottom: 1px solid #eee;
-            margin-bottom: 5px;
-          }
-          .ha_cloud_music-tabs span{
-            cursor: pointer;
-          }
-          .ha_cloud_music-tabs .active{
-            color: var(--primary-color);
-          }
+          .hide{display:none!important;}         
         `
         this.appendChild(style);
         // 保存核心DOM对象
@@ -46,26 +31,20 @@ class HaCloudMusicTabs extends HTMLElement {
 
         /* ***************** 附加代码 ***************** */
         const toggleTabs = (title) => {
-            let tabs = ha_card.querySelectorAll('span')
             for (let i = 0; i < eleArr.length; i++) {
                 let ele = eleArr[i]
                 if (ele.dataset['title'] == title) {
-                    tabs[i].classList.add('active')
                     ele.classList.remove('hide')
                 } else {
-                    tabs[i].classList.remove('active')
                     ele.classList.add('hide')
                 }
             }
         }
         let { $ } = this
-        ha_card.onclick = (event) => {
-            const path = event.composedPath()
-            const ele = path[0]
-            if (ele.nodeName == 'SPAN') {
-                toggleTabs(ele.textContent.trim())
-            }
-        }
+        ha_card.addEventListener("MDCTab:interacted", (event) => {
+            // console.log(event.detail.tabId)
+            toggleTabs(event.detail.tabId)
+        })
         toggleTabs('列表')
     }
 }

@@ -46,7 +46,7 @@ class HaCloudMusicFMList extends HTMLElement {
         // 创建样式
         const style = document.createElement('style')
         style.textContent = `
-            .ha-cloud-music-fm-list{}
+            .ha-cloud-music-fm-list{margin-top:10px;}
              .fm-list{ text-align: center;
                 display: grid; 
                 grid-column-gap: 2%;
