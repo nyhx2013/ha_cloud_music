@@ -39,17 +39,25 @@ class HaCloudMusicSetting extends HTMLElement {
         <!-- 音量控制 -->
         <div class="volume">
             <ha-icon class="volume-off" icon="mdi:volume-high"></ha-icon>
-            <div>
-                <input class="ha-paper-slider" type="range" min="0" max="100" />
-            </div>
+            <paper-slider
+                class="ha-paper-slider"
+                max="100"
+                pin
+                markers
+                style="flex: 1"
+            ></paper-slider>
         </div>
 
         <!-- 音量控制 -->
         <div class="tts-volume">
             <ha-icon class="text-to-speech" icon="mdi:text-to-speech"></ha-icon>
-            <div>
-                <input class="ha-paper-slider" type="range" min="0" max="100" />
-            </div>
+            <paper-slider
+                class="ha-paper-slider"
+                max="100"
+                pin
+                markers
+                style="flex: 1"
+            ></paper-slider>
         </div>
 
         <div class="tts-source">

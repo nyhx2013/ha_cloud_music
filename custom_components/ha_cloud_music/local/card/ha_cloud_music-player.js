@@ -78,7 +78,15 @@ class HaCloudMusicPlayer extends HTMLElement {
           <div><ha-icon class="mdi-cards-heart" icon="mdi:cards-heart" title="喜欢"></ha-icon></div>
           <div class="time-position">00:00</div>
           <div>
-             <input class="ha-paper-slider" type="range" min="0" max="100" value="50" style="width:200px" title="调整播放进度" />
+            <paper-slider
+                class="ha-paper-slider"
+                value="50"
+                max="100"
+                pin
+                markers
+                title="调整播放进度"
+                style="flex: 1"
+            ></paper-slider>
           </div>                 
           <div class="time-length">00:00</div>
           <div><ha-icon class="icon-music-search" icon="mdi:search-web" title="音乐搜索"></ha-icon></div>
