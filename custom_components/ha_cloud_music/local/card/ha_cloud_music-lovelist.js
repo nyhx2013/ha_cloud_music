@@ -53,7 +53,7 @@ class HaCloudMusicLovelist extends HTMLElement {
             $('ol').appendChild(df)
             $('ol').onclick = (event) => {
                 const path = event.composedPath()
-                const li = path[0]
+                let li = path[0]
                 if (li.nodeName == 'LI') {
                     const list = arr
                     const index = parseInt(li.dataset['index'])
