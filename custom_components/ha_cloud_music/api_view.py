@@ -66,6 +66,24 @@ class ApiView(HomeAssistantView):
                             })
                 mp.update_entity()
                 return self.json({"code": 0, "msg": "播放成功"})
+            elif _type == 'sort_play':
+                # 倒序播放
+                mp.music_playlist.reverse()
+                # 重新生成源列表
+                source_list = []
+                for index in range(len(mp.music_playlist)):
+                    music_info = mp.music_playlist[index]
+                    _source = str(index + 1) + '.' + music_info['song'] + ' - ' + music_info['singer']
+                    '''
+                    if mp.music_index == index:
+                        mp._source = _source
+                    '''
+                    source_list.append(_source)
+                mp._source_list = source_list
+                # 播放第一首
+                await mp.play_media('music_load', 0)
+                mp.update_entity()
+                return self.json({"code": 0, "msg": "倒序播放成功"})
             elif _type == 'love_get':
                 res = mp.api_config.get_love_playlist()
                 return self.json({"code": 0, "msg": "最爱列表", "data": res})

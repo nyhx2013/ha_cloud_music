@@ -15,12 +15,14 @@ class HaCloudMusicPlaylist extends HTMLElement {
             <div class="music-list-panel">
                 <ul>
                 </ul>
+                <mwc-button class="btnSort" raised label="列表倒序播放" style="width:100%; margin-top:10px;"></mwc-button>
             </div>
         `
         shadow.appendChild(ha_card)
         // 创建样式
         const style = document.createElement('style')
         style.textContent = `
+        .hide{display:none;}
         .music-list-panel{}
         .music-list-panel ul{margin:0;padding:10px 0;list-style:none;}
         .music-list-panel ul li{padding:10px 0;display:flex;    align-items: center; border-bottom:1px dashed #eee;}
@@ -28,9 +30,7 @@ class HaCloudMusicPlaylist extends HTMLElement {
         .music-list-panel ul li ha-icon{cursor:pointer;float:right;}
         .music-list-panel ul li.active{color: var(--primary-color);}
         .music-list-panel ul li:last-child{display:flex;}
-        .music-list-panel ul li:last-child button{flex:1;padding:10px 0;margin:2px;border:none;
-           cursor: pointer;
-           color: white;background-color:var(--primary-color);}
+        .music-list-panel ul li:last-child mwc-button{flex:1;}
         `
         shadow.appendChild(style);
         // 保存核心DOM对象
@@ -41,6 +41,13 @@ class HaCloudMusicPlaylist extends HTMLElement {
 
         /* ***************** 附加代码 ***************** */
         let { $ } = this
+        $('.btnSort').onclick = () => {
+            ha_cloud_music.fetchApi({
+                type: 'sort_play'
+            }).then(({ code, msg }) => {
+                ha_cloud_music.toast(msg)
+            })
+        }
     }
 
     updated(stateObj) {
@@ -48,6 +55,7 @@ class HaCloudMusicPlaylist extends HTMLElement {
         let attr = stateObj.attributes
         let entity_id = stateObj.entity_id
         let source_list = attr.source_list
+        this.source_list = source_list
         // 音乐列表
         if (source_list && source_list.length > 0) {
             let ul = $('.music-list-panel ul')
@@ -85,15 +93,15 @@ class HaCloudMusicPlaylist extends HTMLElement {
                 let count = index * 50
                 // console.log(obj, count)
                 let li = document.createElement('li')
-                let btn1 = document.createElement('button')
-                btn1.innerHTML = '播放上一页'
+                let btn1 = document.createElement('mwc-button')
+                btn1.label = '播放上一页'
                 btn1.onclick = () => {
                     let playIndex = count - 100 + 1
                     ha_cloud_music.toast(`播放第${playIndex}首音乐`)
                     ha_cloud_music.callService('ha_cloud_music.load', { id, type, index: playIndex })
                 }
-                let btn2 = document.createElement('button')
-                btn2.innerHTML = '播放下一页'
+                let btn2 = document.createElement('mwc-button')
+                btn2.label = '播放下一页'
                 btn2.onclick = () => {
                     let playIndex = count + 1
                     ha_cloud_music.toast(`播放第${playIndex}首音乐`)
@@ -105,6 +113,14 @@ class HaCloudMusicPlaylist extends HTMLElement {
                 fragment.appendChild(li)
             }
             ul.appendChild(fragment)
+            // 如果列表大于3，则可以进行倒序排列
+            const sortClassList = $('.btnSort').classList
+            const isHide = sortClassList.contains('hide')
+            if (source_list.length < 3 && !isHide) {
+                sortClassList.add('hide')
+            } else if (source_list.length >= 3 && isHide) {
+                sortClassList.remove('hide')
+            }
         }
     }
 }
