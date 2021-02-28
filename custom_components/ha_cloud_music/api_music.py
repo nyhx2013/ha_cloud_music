@@ -118,7 +118,7 @@ class ApiMusic():
             url = res['playLists'][0]
             http_code = await self.get_http_code(url)
             if http_code == 403:
-                self.media.notify("只有尊贵的QQ音乐绿砖会员才能收听", "error")
+                self.media.notify("😂只有尊贵的QQ音乐绿砖会员才能收听", "error")
                 return None
                 # 如果没有权限，说明这个只有尊贵的QQ音乐绿砖会员才能收听
                 # 我木有钱，只想白嫖，所以调用这位老哥的开放接口
