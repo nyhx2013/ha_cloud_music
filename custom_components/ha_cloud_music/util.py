@@ -80,11 +80,11 @@ def matcher_play_pause(text):
     if matchObj is not None:
         return matchObj.group(1)
 
-########################################## (上|下|前|后)一(曲|首)
+########################################## ((播放)*)(上|下|前|后)一(曲|首)
 def matcher_prev_next(text):
-    matchObj = re.match(r'(上|下|前|后)一(曲|首)', text)
+    matchObj = re.match(r'((播放)*)(上|下|前|后)一(曲|首)', text)
     if matchObj is not None:
-        return matchObj.group(1)
+        return matchObj.group(3)
 
 ########################################## 集数调整
 def matcher_playlist_index(text):
