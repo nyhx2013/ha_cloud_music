@@ -1,5 +1,6 @@
 import os, hashlib, asyncio, threading, time, aiohttp, json, urllib, mutagen
 from mutagen.mp3 import MP3
+from homeassistant.helpers.network import get_url
 from homeassistant.helpers import template
 from homeassistant.const import (STATE_PLAYING)
 
@@ -147,7 +148,7 @@ class ApiTTS():
             # 如果没有下载，则延时1秒
             time.sleep(1)
         # 生成播放地址
-        local_url = self.hass.config.api.deprecated_base_url + '/tts-local/' + f_name        
+        local_url = get_url(self.hass).strip('/') + '/tts-local/' + f_name
         self.log('本地URL', local_url)
 
         if self.media._media_player != None:
