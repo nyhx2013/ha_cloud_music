@@ -1,6 +1,7 @@
 {
   "domain": "ha_cloud_music",
   "name": "ha_cloud_music",
+  "version": "4.6",
   "documentation": "https://github.com/shaonianzhentan/ha_cloud_music",
   "requirements": [
     "mutagen==1.45.1",
