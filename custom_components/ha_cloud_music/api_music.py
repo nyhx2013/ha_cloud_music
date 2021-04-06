@@ -159,7 +159,25 @@ class ApiMusic():
 
     ###################### 获取音乐播放URL ######################
 
-    ###################### 搜索音乐列表 ######################    
+    ###################### 搜索音乐列表 ######################
+    async def search_migu(self, name, rows = 10):
+        res = await self.proxy_get("http://m.music.migu.cn/migu/remoting/scr_search_tag?rows=" + str(rows)+ "&type=2&keyword=" + urllib.parse.quote(name) + "&pgc=1")
+        if res is not None:
+            songs = res['musics']
+            if res['pgt'] > 0:
+                _newlist = map(lambda item: {
+                    "search_source": "咪咕音乐",
+                    "id": int(item['id']),
+                    "name": item['songName'],
+                    "album": item['albumName'],
+                    "image": item['cover'] != 'null' and item['cover'] or 'https://m.music.migu.cn/migu/fs/media/p/149/163/5129/image/20171120/1332871.jpg',
+                    "duration": 0,
+                    "url": item['mp3'],
+                    "song": item['songName'],
+                    "singer": item['singerName']
+                    }, songs)
+                return list(_newlist)
+
     # 音乐搜索
     async def search_music(self, name):
         _list = []
@@ -199,22 +217,9 @@ class ApiMusic():
                     }, songs['itemlist'])
                 _list.extend(list(_newlist))
         # 搜索咪咕音乐
-        res = await self.proxy_get("http://m.music.migu.cn/migu/remoting/scr_search_tag?rows=10&type=2&keyword=" + urllib.parse.quote(name) + "&pgc=1")
-        if res is not None:
-            songs = res['musics']
-            if res['pgt'] > 0:
-                _newlist = map(lambda item: {
-                    "search_source": "咪咕音乐",
-                    "id": int(item['id']),
-                    "name": item['songName'],
-                    "album": item['albumName'],
-                    "image": item['cover'] != 'null' and item['cover'] or 'https://m.music.migu.cn/migu/fs/media/p/149/163/5129/image/20171120/1332871.jpg',
-                    "duration": 0,
-                    "url": item['mp3'],
-                    "song": item['songName'],
-                    "singer": item['singerName']
-                    }, songs)
-                _list.extend(list(_newlist))
+        migu_list = await self.search_migu(name)
+        if migu_list is not None:
+            _list.extend(migu_list)
         return _list
 
     async def search_ximalaya(self, name):
@@ -409,6 +414,12 @@ class ApiMusic():
     
     # 播放歌手的热门歌曲
     async def play_singer_hotsong(self, name):
+        # 周杰伦特殊对待
+        if name == '周杰伦':
+            migu_list = await self.search_migu(name, 100)
+            await self.media.play_media('music_playlist', migu_list)
+            return None
+
         hass = self.hass
         obj = await self.get('/search?keywords='+ name +'&type=100')
         if obj['code'] == 200:
