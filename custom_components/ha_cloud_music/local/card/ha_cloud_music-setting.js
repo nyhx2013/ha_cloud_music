@@ -15,11 +15,11 @@ class HaCloudMusicSetting extends HTMLElement {
         <!-- 源播放器 -->
         <div class="source">
             <fieldset>
-                <legend><a href="/ha_cloud_music-web/index.html?v=${Date.now()}" target="_blank" title="云音乐网页播放器" class="source-web-player">源播放器</a></legend>
+                <legend>源播放器</legend>
                 <select></select>
             </fieldset>
         </div>
-        
+        <mwc-button id="btnLoadPlayer" raised label="加载网页播放器" style="width:100%;margin:10px 0;"></mwc-button>        
         <div class="rate-source">
             <fieldset>
                 <legend>播放速度</legend>
@@ -77,7 +77,7 @@ class HaCloudMusicSetting extends HTMLElement {
             <input type="text" placeholder="文字转语音" />
         </div>
         <!-- 缓存 --> 
-        <button class="cache-button">缓存当前音乐到media目录</button>
+        <mwc-button  class="cache-button" label="缓存当前音乐到media目录"></mwc-button>
 
         `
         shadow.appendChild(ha_card)
@@ -108,7 +108,7 @@ class HaCloudMusicSetting extends HTMLElement {
             border: 1px solid silver;
             padding: 8px 10px;}
          
-         .cache-button{margin-top:20px; padding:10px; width:100%; border:none; cursor: pointer; color: white; background-color:var(--primary-color);}
+         .cache-button{margin-top:20px; width:100%; }
 
         `
         shadow.appendChild(style);
@@ -225,6 +225,17 @@ class HaCloudMusicSetting extends HTMLElement {
             } else {
                 ha_cloud_music.toast('当前播放链接有问题，不能缓存')
             }
+        }
+        // 加载网页播放器
+        $('#btnLoadPlayer').onclick = () => {
+            if (window.ha_cloud_music.media_player) return ha_cloud_music.toast('已经加载过了，不用重复加载');
+            if (loading) return;
+            loading = true
+            // 加载网页播放器
+            import('./MediaPlayer.js').then(({ MediaPlayer }) => {
+                loading = false
+                window.ha_cloud_music.media_player = new MediaPlayer()
+            })
         }
     }
 

@@ -1,4 +1,5 @@
 window.ha_cloud_music = {
+    media_player: null,
     eventQueue: {},
     get hass() {
         return document.querySelector('home-assistant').hass
@@ -78,7 +79,7 @@ window.ha_cloud_music = {
         ha_cloud_music.load('tabs').then(async () => {
             await ha_cloud_music.load(['playlist', 'lovelist', 'search', 'setting', 'voice', 'fmlist', 'version'])
             ha_cloud_music.load('panel')
-        })
+        })        
     }, 2000)
 })();
 
