@@ -1,0 +1,22 @@
+{
+    "config": {
+        "step": {
+            "user": {
+                "description": "项目: https://github.com/shaonianzhentan/ha_cloud_music",
+                "data": {
+                    "api_url": "网易云音乐接口地址",
+                    "qq_api_url": "QQ音乐接口地址",
+                    "xmly_api_url": "喜马拉雅VIP音乐解析接口",
+                    "mpd_host": "MPD播放器host",
+                    "uid": "网易云音乐的用户ID",
+                    "user": "网易云音乐的账号",
+                    "password": "网易云音乐的密码"
+                }
+            }
+        },
+        "error": {},
+        "abort": {
+            "single_instance_allowed": "仅允许单个配置."
+        }
+    }
+}

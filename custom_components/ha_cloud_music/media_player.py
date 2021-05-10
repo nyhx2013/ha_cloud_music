@@ -19,7 +19,7 @@ SUPPORT_FEATURES = SUPPORT_PAUSE | SUPPORT_VOLUME_SET | SUPPORT_VOLUME_MUTE | SU
 _LOGGER = logging.getLogger(__name__)
 ################### 接口定义 ###################
 # 常量
-from .const import DOMAIN, VERSION, ROOT_PATH, WEB_PATH
+from .const import DOMAIN, VERSION, ROOT_PATH, WEB_PATH, NAME, ICON
 from .api_config import ApiConfig
 # 网易云接口
 from .api_music import ApiMusic
@@ -36,11 +36,6 @@ from .source_mpd import MediaPlayerMPD
 from .source_other import MediaPlayerOther
 
 def setup_platform(hass, config, add_entities, discovery_info=None):
-
-    # 名称与图标
-    sidebar_title = config.get("sidebar_title", "云音乐")
-    sidebar_icon = config.get("sidebar_icon","mdi:music")
-    
     # 显示模式 全屏：fullscreen
     show_mode = config.get("show_mode", "default")
     
@@ -86,24 +81,24 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
 
     ################### 注册服务 ################### 
     # 注册服务【加载歌单】
-    hass.services.register(DOMAIN, 'load', mp.load_songlist)
+    hass.services.async_register(DOMAIN, 'load', mp.load_songlist)
 
     # 注册服务【点歌】
-    hass.services.register(DOMAIN, 'pick', mp.pick_song)
+    hass.services.async_register(DOMAIN, 'pick', mp.pick_song)
 
     # 注册服务【配置】
-    hass.services.register(DOMAIN, 'config', mp.config)
+    hass.services.async_register(DOMAIN, 'config', mp.config)
 
     # 注册服务【tts】
-    hass.services.register(DOMAIN, 'tts', mp.api_tts.speak)
+    hass.services.async_register(DOMAIN, 'tts', mp.api_tts.speak)
 
     # 注册服务【缓存文件】
-    hass.services.register(DOMAIN, 'cache', mp.cache)
+    hass.services.async_register(DOMAIN, 'cache', mp.cache)
 
     # 监听语音小助手的文本
     if is_voice == True:
         _ApiVoice = ApiVoice(hass, mp.api_music)
-        hass.bus.listen('ha_voice_text_event', _ApiVoice.text_event)
+        hass.bus.async_listen('ha_voice_text_event', _ApiVoice.text_event)
 
     ################### 注册服务 ################### 
 
@@ -121,10 +116,6 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
     配置信息：
     
         API_URL：''' +  mp.api_music.api_url + '''
-                
-        侧边栏名称：''' + sidebar_title + '''
-        
-        侧边栏图标：''' + sidebar_icon + '''
         
         显示模式：''' + (show_mode == 'fullscreen' and '全局模式' or '默认模式') + '''
         
@@ -143,20 +134,22 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
         hass.http.register_view(ApiView)
         # 注册菜单栏
         hass.components.frontend.async_register_built_in_panel(
-            "iframe",
-            sidebar_title,
-            sidebar_icon,
-            DOMAIN,
-            {"url": ROOT_PATH + "/index.html?ver=" + VERSION
+            "iframe", NAME, ICON, DOMAIN,
+            { "url": ROOT_PATH + "/index.html?ver=" + VERSION
             + "&show_mode=" + show_mode
-            + "&uid=" + mp.api_music.uid},
+            + "&uid=" + mp.api_music.uid },
             require_admin=False
         )
         # 添加状态卡片
         hass.components.frontend.add_extra_js_url(hass, WEB_PATH + '/card/ha_cloud_music.js?v=' + VERSION)
     ################### 注册静态目录与接口网关 ###################
     return True   
-    
+
+# 集成安装
+async def async_setup_entry(hass, config_entry, async_add_entities):
+    setup_platform(hass, config_entry.data, async_add_entities)
+    return True
+
 ###################媒体播放器##########################
 class MediaPlayer(MediaPlayerEntity):
 

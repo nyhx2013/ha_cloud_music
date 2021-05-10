@@ -1,9 +1,3 @@
-''' 
-
-这是一个网易云音乐的HomeAssistant插件 
-
-在vlc和mpd播放器测试通过，但不保证有其它问题的出现
-
-问题多多懒得搞哦~~~能用就行
-
-'''
+async def async_setup_entry(hass, config_entry):
+    hass.async_create_task(hass.config_entries.async_forward_entry_setup(config_entry, "media_player"))
+    return True
